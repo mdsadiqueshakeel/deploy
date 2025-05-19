@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import Head from 'next/head';
-import Topbar from '../../components/Topbar';
+import Topbar from '@components/Topbar';
 import Sidebar from '../../components/Sidebar';
 import Products from './products';
 import ProfileCard from '../../components/ProfileCard';

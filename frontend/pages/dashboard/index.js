@@ -4,9 +4,11 @@ import Topbar from '@components/Topbar';
 import Sidebar from '@components/Sidebar';
 import ProfileCard from '@components/ProfileCard';
 import Products from '@pages/dashboard/products';
+import ProtectedRoute from '@components/ProtectedRoute';
 
 // Placeholder components for other sections
 const DashboardOverview = () => (
+  
   <div className="p-4">
     <h2 className="mb-4" style={{ color: '#0A2463', fontWeight: '600' }}>
       Dashboard Overview

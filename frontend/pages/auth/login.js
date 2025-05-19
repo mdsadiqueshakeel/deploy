@@ -2,6 +2,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import Head from 'next/head';
+import api from 'services/api'; // Adjust the import path as necessary
 
 export default function Login() {
   const router = useRouter();
@@ -18,20 +19,27 @@ export default function Login() {
     router.push('/admin');
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (!email || !password) {
-      setError('Please fill all required details');
-      return;
-    }
-    setError('');
-     // ✅ Simulated successful login logic
-    console.log('Logging in with:', email, password);
+const handleSubmit = async (e) => {
+  e.preventDefault(); // This must be first
+  
+  // Validation moved after preventDefault
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email)) {
+    setError('Please enter a valid email address');
+    return;
+  }
 
-    // ✅ Redirect to dashboard after successful login
+  try {
+    const response = await api.login({ email, password });
+    
+    // Store token and redirect
+    localStorage.setItem('token', response.data.token);
     router.push('/dashboard');
-  };
-
+  } catch (error) {
+    console.error('Login Error:', error);
+    setError(error.toString());
+  }
+};
   return (
     <>
       <Head>

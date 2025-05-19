@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/router'; // ✅ Import router
 import Link from 'next/link';
 import Head from 'next/head';
+import api from 'services/api'; // ✅ Import your API utility
 
 export default function Signup() {
   const router = useRouter(); // ✅ Initialize router
@@ -11,20 +12,23 @@ export default function Signup() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
+  const handleSubmit = async (e) => {
+  e.preventDefault();
+  try {
     if (!name || !email || !password) {
-      setError('Please fill all required details');
-      return;
+      throw new Error('Please fill all required details');
     }
-    setError('');
 
-    // Simulate signup logic (replace with actual API later)
-    console.log('Signing up with:', name, email, password);
-
-    // ✅ Redirect to login page
-    router.push('/auth/login');
-  };
+    const response = await api.register({ name, email, password });
+    
+    if (response.status === 201) {
+      router.push('/auth/login');
+    }
+  } catch (error) {
+    console.error('Registration Error:', error);
+    setError(error.toString());
+  }
+};
 
   return (
     <>
