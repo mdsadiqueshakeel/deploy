@@ -36,6 +36,27 @@ router.post("/login", async (req, res) => {
   }
 });
 
+// Forgot Password
+router.post("/forgot-password", async (req, res) => {
+  try {
+    const response = await axios.post(`${USER_SERVICE_URL}/api/auth/forgot-password`, req.body);
+    res.status(response.status).json(response.data);
+  } catch (err) {
+    res.status(err.response?.status || 500).json(err.response?.data || { error: "Service error" });
+  }
+});
+
+// Reset Password
+router.post("/reset-password", async (req, res) => {
+  try {
+    const response = await axios.post(`${USER_SERVICE_URL}/api/auth/reset-password`, req.body);
+    res.status(response.status).json(response.data);
+  } catch (err) {
+    res.status(err.response?.status || 500).json(err.response?.data || { error: "Service error" });
+  }
+});
+
+
 // Logout Route
 router.post("/logout", (req, res) => {
   res.clearCookie("token", {
