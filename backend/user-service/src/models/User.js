@@ -17,9 +17,7 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-   referralCode: { type: String, required: true },
 
-   sponsorId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }, // for direct income
    parentId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }, // for binary tree matching
 
     referralCodeLeft: String,
@@ -82,8 +80,5 @@ userSchema.pre("save", async function (next) {
     next(error);
   }
 });
-
-
-userSchema.index({ referralCode: 1 }, { unique: true });
 
 module.exports = mongoose.model("User", userSchema);

@@ -26,9 +26,7 @@ exports.register = async (req, res) => {
     const { name, email, password, referralCode } = req.body;
 
     if (!name || !email || !password || !referralCode) {
-      return res
-        .status(400)
-        .json({ error: "All fields including referralCode are required" });
+      return res.status(400).json({ error: "All fields including referralCode are required" });
     }
 
     const existing = await User.findOne({ email });
@@ -36,49 +34,35 @@ exports.register = async (req, res) => {
       return res.status(409).json({ error: "User already exists" });
     }
 
-    // Check if referral code is valid (can be from referralCode, referralCodeLeft, or referralCodeRight)
-    const sponsor = await User.findOne({
+    // Validate referralCode against LEFT or RIGHT
+    const parent = await User.findOne({
       $or: [
-        { referralCode },
         { referralCodeLeft: referralCode },
-        { referralCodeRight: referralCode },
-      ],
+        { referralCodeRight: referralCode }
+      ]
     });
 
-    if (!sponsor) {
+    if (!parent) {
       return res.status(400).json({ error: "Invalid referral code" });
-    }
-
-    // Hash password
-
-    // Decide sponsorId vs parentId
-    let sponsorId = null;
-    let parentId = null;
-
-    if (sponsor.referralCode === referralCode) {
-      sponsorId = sponsor._id; // direct income logic
-    } else {
-      parentId = sponsor._id; // matching tree logic
     }
 
     const newUser = new User({
       name,
       email,
-      password,
-      referralCode: generateReferralCode(),
+      password, // Will be hashed in pre-save hook
       referralCodeLeft: generateReferralCode(),
       referralCodeRight: generateReferralCode(),
-      sponsorId,
-      parentId,
+      parentId: parent._id
     });
 
     await newUser.save();
 
-    res.status(201).json({ message: "User created", userId: newUser._id });
+    res.status(201).json({ message: "User created successfully", userId: newUser._id });
   } catch (error) {
     res.status(500).json({ error: "Server error", detail: error.message });
   }
 };
+
 
 // USER LOGIN -------------------------------------------------------------------------------------------
 /**
@@ -247,7 +231,7 @@ exports.getProfile = async (req, res) => {
 exports.updateProfile = async (req, res) => {
   try {
     const forbiddenFields = ["_id", "referralCode", "referralCodeLeft", "referralCodeRight",
-      "sponsorId", "parentId", "isAdmin", "isRootSponsor", "leftUser", "rightUser"];
+     "parentId", "isAdmin", "isRootSponsor", "leftUser", "rightUser"];
     const updates = { ...req.body };
 
     // Prevent overwriting restricted fields

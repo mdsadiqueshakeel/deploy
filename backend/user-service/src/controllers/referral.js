@@ -8,29 +8,15 @@ exports.validateReferralCode = async (req, res) => {
 
     const user = await User.findOne({
       $or: [
-        { referralCode },
         { referralCodeLeft: referralCode },
         { referralCodeRight: referralCode }
       ]
     });
 
-    if (!user) {
-      return res.status(404).json({ valid: false, message: "Invalid referral code" });
-    }
+    if (!user) return res.status(404).json({ valid: false, message: "Invalid referral code" });
 
-    let codeType = '';
-    if (user.referralCode === referralCode) codeType = 'direct';
-    else if (user.referralCodeLeft === referralCode) codeType = 'left';
-    else if (user.referralCodeRight === referralCode) codeType = 'right';
-
-    return res.json({
-      valid: true,
-      usedBy: user._id,
-      name: user.name,
-      type: codeType // 'direct', 'left', or 'right'
-    });
-
+    return res.json({ valid: true, parentId: user._id });
   } catch (error) {
-    res.status(500).json({ message: 'Server error', error: error.message });
+    res.status(500).json({ message: "Server error", error: error.message });
   }
 };
