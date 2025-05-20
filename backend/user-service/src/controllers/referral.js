@@ -1,20 +1,35 @@
 const User = require('../models/User');
-const crypto = require('crypto');
-
 // Generate Referral Code (called during signup in auth.js)
-exports.generateReferralCode = () => {
-  return crypto.randomBytes(4).toString('hex').toUpperCase();
-};
 
 // Validate Referral Code
 exports.validateReferralCode = async (req, res) => {
   try {
     const { referralCode } = req.params;
-    const user = await User.findOne({ referralCode });
+
+    const user = await User.findOne({
+      $or: [
+        { referralCode },
+        { referralCodeLeft: referralCode },
+        { referralCodeRight: referralCode }
+      ]
+    });
+
     if (!user) {
-      return res.status(404).json({ message: 'Invalid referral code' });
+      return res.status(404).json({ valid: false, message: "Invalid referral code" });
     }
-    res.json({ valid: true, sponsorId: user._id });
+
+    let codeType = '';
+    if (user.referralCode === referralCode) codeType = 'direct';
+    else if (user.referralCodeLeft === referralCode) codeType = 'left';
+    else if (user.referralCodeRight === referralCode) codeType = 'right';
+
+    return res.json({
+      valid: true,
+      usedBy: user._id,
+      name: user.name,
+      type: codeType // 'direct', 'left', or 'right'
+    });
+
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
   }

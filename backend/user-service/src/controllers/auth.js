@@ -4,46 +4,132 @@ const jwt = require("jsonwebtoken");
 const crypto = require('crypto');
 const nodemailer = require('nodemailer');
 dotenv = require("dotenv").config();
+const { generateReferralCode } = require("../utils/referralUtils");
 
+
+// USER REGISTRATION -------------------------------------------------------------------------------------------
+/**
+ * Registers a new user in the system.
+ * 
+ * This function handles the registration process by validating the input fields,
+ * checking for existing users, validating the referral code, hashing the password,
+ * and saving the new user to the database.
+ * 
+ * @param {Object} req - The request object containing user registration data.
+ * @param {Object} res - The response object used to send back the desired HTTP response.
+ * 
+ * @returns {Promise<void>} - A promise that resolves when the registration process is complete.
+ * 
+ * @throws {Error} - Throws an error if there is a server issue during the registration process.
+ */
 exports.register = async (req, res) => {
-  const { name, email, password } = req.body;
+  try {
+    const { name, email, password, referralCode } = req.body;
 
-  if (!name || !email || !password) {
-    return res.status(400).json({ error: "All fields are required" });
+    if (!name || !email || !password || !referralCode) {
+      return res.status(400).json({ error: "All fields including referralCode are required" });
+    }
+
+    const existing = await User.findOne({ email });
+    if (existing) {
+      return res.status(409).json({ error: "User already exists" });
+    }
+
+    // Check if referral code is valid (can be from referralCode, referralCodeLeft, or referralCodeRight)
+    const sponsor = await User.findOne({
+      $or: [
+        { referralCode },
+        { referralCodeLeft: referralCode },
+        { referralCodeRight: referralCode }
+      ]
+    });
+
+    if (!sponsor) {
+      return res.status(400).json({ error: "Invalid referral code" });
+    }
+
+    // Hash password
+
+    // Decide sponsorId vs parentId
+    let sponsorId = null;
+    let parentId = null;
+
+    if (sponsor.referralCode === referralCode) {
+      sponsorId = sponsor._id; // direct income logic
+    } else {
+      parentId = sponsor._id; // matching tree logic
+    }
+
+    const newUser = new User({
+      name,
+      email,
+      password,
+      referralCode: generateReferralCode(),
+      referralCodeLeft: generateReferralCode(),
+      referralCodeRight: generateReferralCode(),
+      sponsorId,
+      parentId
+    });
+
+    await newUser.save();
+
+    res.status(201).json({ message: "User created", userId: newUser._id });
+  } catch (error) {
+    res.status(500).json({ error: "Server error", detail: error.message });
   }
-
-  const existing = await User.findOne({ email });
-  if (existing) {
-    return res.status(409).json({ error: "User already exists" });
-  }
-
-  const referralCodeLeft = crypto.randomBytes(4).toString("hex").toUpperCase();
-  const referralCodeRight = crypto.randomBytes(4).toString("hex").toUpperCase();
-  const hashed = await bcrypt.hash(password, 10);
-  const user = new User({ name, email, password: hashed, referralCodeLeft, referralCodeRight });
-  await user.save();
-
-  res.status(201).json({ message: "User created" });
 };
+
+// USER LOGIN -------------------------------------------------------------------------------------------
+/**
+ * Logs in an existing user.
+ *
+ * This function handles the login process by validating the input fields,
+ * checking for the user in the database, and verifying the password.
+ *
+ * @param {Object} req - The request object containing user login data.
+ * @param {Object} res - The response object used to send back the desired HTTP response.
+ *
+ * @returns {Promise<void>} - A promise that resolves when the login process is complete.
+ *
+ * @throws {Error} - Throws an error if there is a server issue during the login process.
+ */
 
 exports.login = async (req, res) => {
   const { email, password } = req.body;
 
-  const user = await User.findOne({ email });
-  if (!user) throw new Error("User not found");
+  if (!email || !password) {
+    return res.status(400).json({ message: "All fields are required" });
+  }
 
-  if (!email || !password) throw new Error("All fields are required");
+  const user = await User.findOne({ email });
+  if (!user) return res.status(404).json({ message: "User not found" });
 
   const isValid = await bcrypt.compare(password, user.password);
-  if (!isValid) throw new Error("Invalid credentials");
+  if (!isValid) return res.status(401).json({ message: "Invalid credentials" });
 
-  const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET);
+  const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: "1d" });
+
+  // Just return the token; API Gateway will set the cookie
   res.json({ token });
 };
 
 
 
-// Forgot Password
+
+// USER FORGOT PASSWORD -------------------------------------------------------------------------------------------
+/**
+ * Handles the forgot password process.
+ *
+ * This function generates a reset token, saves it to the user's record,
+ * and sends an email with the reset link to the user.
+ *
+ * @param {Object} req - The request object containing user email.
+ * @param {Object} res - The response object used to send back the desired HTTP response.
+ *
+ * @returns {Promise<void>} - A promise that resolves when the forgot password process is complete.
+ *
+ * @throws {Error} - Throws an error if there is a server issue during the forgot password process.
+ */
 exports.forgotPassword = async (req, res) => {
   try {
     const { email } = req.body;
@@ -61,11 +147,13 @@ exports.forgotPassword = async (req, res) => {
 const transporter = nodemailer.createTransport({
   host: process.env.EMAIL_HOST,
   port: process.env.EMAIL_PORT,
+  secure: false, // use TLS
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS,
   },
 });
+
 
     const mailOptions = {
   from: process.env.EMAIL_FROM,
@@ -73,7 +161,7 @@ const transporter = nodemailer.createTransport({
   subject: 'Password Reset',
   text: `You are receiving this because you requested a password reset.\n
 Please click the following link to reset your password:\n
-http://localhost:5000/auth/reset/${resetToken}\n\n
+http://localhost:5000/api/auth/reset/${resetToken}\n\n
 If you did not request this, please ignore this email.`,
 };
     await transporter.sendMail(mailOptions);
@@ -83,7 +171,20 @@ If you did not request this, please ignore this email.`,
   }
 };
 
-// Reset Password
+// USER RESET PASSWORD -------------------------------------------------------------------------------------------
+/**
+ * Handles the password reset process.
+ *
+ * This function verifies the reset token, updates the user's password,
+ * and clears the reset token and expiration time.
+ *
+ * @param {Object} req - The request object containing reset token and new password.
+ * @param {Object} res - The response object used to send back the desired HTTP response.
+ *
+ * @returns {Promise<void>} - A promise that resolves when the password reset process is complete.
+ *
+ * @throws {Error} - Throws an error if there is a server issue during the password reset process.
+ */
 exports.resetPassword = async (req, res) => {
   try {
     const { token, password } = req.body;
@@ -94,7 +195,7 @@ exports.resetPassword = async (req, res) => {
     if (!user) {
       return res.status(400).json({ message: 'Invalid or expired token' });
     }
-    user.password = password;
+    user.password = await bcrypt.hash(password, 10); // ✅ hash it
     user.resetPasswordToken = null;
     user.resetPasswordExpires = null;
     await user.save();
@@ -104,15 +205,28 @@ exports.resetPassword = async (req, res) => {
   }
 };
 
-// Get User Profile
+// USER PROFILE -------------------------------------------------------------------------------------------
+/**
+ * Retrieves the profile of the logged-in user.
+ *
+ * This function fetches the user's profile information from the database
+ * and returns it in the response.
+ *
+ * @param {Object} req - The request object containing user ID from JWT.
+ * @param {Object} res - The response object used to send back the desired HTTP response.
+ *
+ * @returns {Promise<void>} - A promise that resolves when the profile retrieval process is complete.
+ *
+ * @throws {Error} - Throws an error if there is a server issue during the profile retrieval process.
+ */
+// User Service
 exports.getProfile = async (req, res) => {
   try {
-    const user = await User.findById(req.user.userId).select('-password');
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
-    }
+    const user = await User.findById(req.user.userId).select("-password");
+    if (!user) return res.status(404).json({ message: "User not found" });
+
     res.json(user);
   } catch (error) {
-    res.status(500).json({ message: 'Server error', error: error.message });
+    res.status(500).json({ message: "Server error", error: error.message });
   }
 };
