@@ -8,6 +8,9 @@ router.post("/register", wrapAsync(auth.register));
 router.post("/login", wrapAsync(auth.login));
 router.post('/forgot-password', wrapAsync(auth.forgotPassword));
 router.post('/reset-password', wrapAsync(auth.resetPassword));
+router.put('/profile', jwtAuth, wrapAsync(auth.updateProfile));
+router.put('/change-password', jwtAuth, wrapAsync(auth.changePassword));
+
 
 router.get("/me", jwtAuth, wrapAsync(auth.getProfile));
 

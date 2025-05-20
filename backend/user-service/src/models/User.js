@@ -3,7 +3,9 @@ const bcrypt = require("bcrypt");
 
 const userSchema = new mongoose.Schema(
   {
-    name: String,
+    name: {
+      type: String,
+    },
     email: {
       type: String,
       required: true,
@@ -23,8 +25,36 @@ const userSchema = new mongoose.Schema(
     referralCodeLeft: String,
     referralCodeRight: String,
 
+        // Personal Details
+    phone: {
+      type: Number,
+      default: null,
+    },
+    country: {
+      type: String,
+      default: "India",
+    },
+    panNumber: {
+      type: String,
+      default: null,
+    },
+    aadharNumber: {
+      type: Number,
+      default: null,
+    },
+    avatar: {
+      type: String, // Could be URL or base64
+      default: null,
+    },
 
-isRootSponsor: { type: Boolean, default: false }, 
+    bankDetails: {
+      accountNumber: { type: Number, default: null },
+      ifscCode: { type: String, default: null },
+      bankName: { type: String, default: null },
+      accountHolderName: { type: String, default: null },
+    },
+
+    isRootSponsor: { type: Boolean, default: false }, 
 
     leftUser: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
     rightUser: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
@@ -44,8 +74,13 @@ isRootSponsor: { type: Boolean, default: false },
 );
 userSchema.pre("save", async function (next) {
   if (!this.isModified("password")) return next();
-  this.password = await bcrypt.hash(this.password, 10);
-  next();
+  try {
+    const salt = await bcrypt.genSalt(10);
+    this.password = await bcrypt.hash(this.password, salt);
+    next();
+  } catch (error) {
+    next(error);
+  }
 });
 
 

@@ -89,8 +89,31 @@ router.get("/me", jwtAuth, async (req, res) => {
   }
 });
 
+router.put("/change-password", async (req, res) => {
+  try {
+    const response = await axios.put(`${USER_SERVICE_URL}/api/auth/change-password`, req.body, {
+      headers: {
+        Cookie: req.headers.cookie, // Pass token cookie along
+      },
+    });
+    res.status(response.status).json(response.data);
+  } catch (err) {
+    res.status(err.response?.status || 500).json(err.response?.data || { error: "Service error" });
+  }
+});
 
 
-
+router.put("/profile", jwtAuth, async (req, res) => {
+  try {
+    const response = await axios.put(`${USER_SERVICE_URL}/api/auth/profile`, req.body, {
+      headers: {
+        Cookie: req.headers.cookie, // Pass token cookie along
+      },
+    });
+    res.status(response.status).json(response.data);
+  } catch (err) {
+    res.status(err.response?.status || 500).json(err.response?.data || { error: "Service error" });
+  }
+});
 
 module.exports = router;
