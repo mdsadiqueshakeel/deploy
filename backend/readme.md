@@ -31,6 +31,12 @@ The backend uses **MongoDB**. The main user schema is:
 | parentId             | ObjectId  | Parent in the binary tree                    |
 | referralCodeLeft     | String    | Code for left child                          |
 | referralCodeRight    | String    | Code for right child                         |
+| phone                | Number    | User's phone number                          |
+| country              | String    | Country (default: India)                     |
+| panNumber            | String    | PAN number                                   |
+| aadharNumber         | Number    | Aadhar number                                |
+| avatar               | String    | Avatar URL or base64                         |
+| bankDetails          | Object    | Bank info (accountNumber, ifscCode, bankName, accountHolderName) |
 | isRootSponsor        | Boolean   | Is this the root sponsor?                    |
 | leftUser             | ObjectId  | Left child in binary tree                    |
 | rightUser            | ObjectId  | Right child in binary tree                   |
@@ -112,7 +118,8 @@ All endpoints are available via the API Gateway (`http://localhost:5000/api/auth
 | POST   | `/api/auth/reset-password`  | Reset password                 | `{ token, password }`                |
 | POST   | `/api/auth/logout`      | Logout (clears cookie)            |                                      |
 | GET    | `/api/auth/me`          | Get current user profile          | (JWT cookie required)                |
-| GET    | `/api/referral/validate/:referralCode` | Validate referral code |                                      |
+| PUT    | `/api/auth/profile`     | Update user profile               | (JWT cookie required, see below)     |
+| PUT    | `/api/auth/change-password` | Change password                | `{ currentPassword, newPassword, confirmPassword }` (JWT cookie required) |
 
 - **JWT tokens** are set as HTTP-only cookies on login.
 - **Frontend** should send credentials (cookies) with requests to access protected endpoints.
@@ -124,7 +131,8 @@ All endpoints are available via the API Gateway (`http://localhost:5000/api/auth
 - **Register/Login:** Use `/api/auth/register` and `/api/auth/login`. On login, a JWT cookie is set.
 - **Auth State:** Use `/api/auth/me` to get the current user (send cookie).
 - **Password Reset:** Use `/api/auth/forgot-password` and `/api/auth/reset-password`.
-- **Referral Codes:** Validate codes with `/api/referral/validate/:referralCode` before registration.
+- **Profile Update:** Use `/api/auth/profile` (PUT) to update user details (send cookie).
+- **Change Password:** Use `/api/auth/change-password` (PUT) to change password (send cookie).
 - **Logout:** Call `/api/auth/logout` to clear the session.
 
 **CORS:** The API Gateway is configured for `http://localhost:3000` (React default). Update in [`api-gateway/src/index.js`](api-gateway/src/index.js) if needed.
@@ -140,6 +148,7 @@ MONGO_URI=your-mongodb-uri
 JWT_SECRET=your-jwt-secret
 API_GATEWAY_PORT=5000
 USER_SERVICE_PORT=5001
+USER_SERVICE_URL=http://user-service:5001
 EMAIL_HOST=smtp.gmail.com
 EMAIL_PORT=587
 EMAIL_USER=your-email
@@ -155,6 +164,7 @@ EMAIL_FROM=your-email
 - Referral logic supports both direct and binary tree relationships.
 - Admin users can be seeded via `seed.js`.
 - All errors are returned as JSON.
+- Profile update (`PUT /api/auth/profile`) supports updating personal and bank details, but not referral or admin fields.
 
 ---
 
@@ -163,6 +173,28 @@ EMAIL_FROM=your-email
 - [`api-gateway/src/routes/auth.js`](api-gateway/src/routes/auth.js) — All proxied auth endpoints
 - [`user-service/src/controllers/auth.js`](user-service/src/controllers/auth.js) — Auth logic
 - [`user-service/src/controllers/referral.js`](user-service/src/controllers/referral.js) — Referral validation
+- [`user-service/src/models/User.js`](user-service/src/models/User.js) — User schema
+
+---
+
+## 🧩 Example User Profile Update Payload
+
+```json
+{
+  "name": "New Name",
+  "phone": 9876543210,
+  "country": "India",
+  "panNumber": "ABCDE1234F",
+  "aadharNumber": 123456789012,
+  "avatar": "https://example.com/avatar.png",
+  "bankDetails": {
+    "accountNumber": 1234567890,
+    "ifscCode": "SBIN0000001",
+    "bankName": "State Bank of India",
+    "accountHolderName": "New Name"
+  }
+}
+```
 
 ---
 
