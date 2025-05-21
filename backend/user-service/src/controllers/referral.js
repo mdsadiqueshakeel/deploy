@@ -1,7 +1,5 @@
-const User = require('../models/User');
-// Generate Referral Code (called during signup in auth.js)
+const User = require("../models/User");
 
-// Validate Referral Code
 exports.validateReferralCode = async (req, res) => {
   try {
     const { referralCode } = req.params;
@@ -9,14 +7,20 @@ exports.validateReferralCode = async (req, res) => {
     const user = await User.findOne({
       $or: [
         { referralCodeLeft: referralCode },
-        { referralCodeRight: referralCode }
-      ]
+        { referralCodeRight: referralCode },
+      ],
     });
 
-    if (!user) return res.status(404).json({ valid: false, message: "Invalid referral code" });
+    if (!user) {
+      return res.status(404).json({ valid: false, message: "Invalid referral code" });
+    }
 
-    return res.json({ valid: true, parentId: user._id });
+    res.json({
+      valid: true,
+      referredBy: user._id,
+      message: "Valid referral code"
+    });
   } catch (error) {
-    res.status(500).json({ message: "Server error", error: error.message });
+    res.status(500).json({ error: "Server error", detail: error.message });
   }
 };

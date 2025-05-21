@@ -205,12 +205,53 @@ exports.resetPassword = async (req, res) => {
 // User Service
 exports.getProfile = async (req, res) => {
   try {
-    const user = await User.findById(req.user.userId).select("-password");
-    if (!user) return res.status(404).json({ message: "User not found" });
+    const user = await User.findById(req.user.userId)
+      .select("-password -resetPasswordToken -resetPasswordExpires")
+      .populate('parentId', 'name email')
+      .populate('leftUser rightUser', 'name email')
+      .lean();
+    
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
 
-    res.json(user);
+    // Structure the response
+    const responseData = {
+      basicInfo: {
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        avatar: user.avatar
+      },
+      kycDetails: {
+        panNumber: user.panNumber,
+        aadharNumber: user.aadharNumber,
+        country: user.country
+      },
+      bankDetails: user.bankDetails,
+      referralInfo: {
+        parentId: user.parentId,
+        referralCodeLeft: user.referralCodeLeft,
+        referralCodeRight: user.referralCodeRight,
+        leftUser: user.leftUser,
+        rightUser: user.rightUser,
+        isRootSponsor: user.isRootSponsor
+      },
+      systemInfo: {
+        isAdmin: user.isAdmin,
+        createdAt: user.createdAt
+      },
+      uiSettings: {
+        profileViewState: user.uiSettings?.profileViewState || 'view'
+      }
+    };
+
+    res.json(responseData);
   } catch (error) {
-    res.status(500).json({ message: "Server error", error: error.message });
+    res.status(500).json({ 
+      message: "Server error", 
+      error: error.message 
+    });
   }
 };
 

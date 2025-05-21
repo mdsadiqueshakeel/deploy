@@ -1,14 +1,16 @@
+import { useEffect, useRef } from 'react';
 import { useRouter } from 'next/router';
 
-const Topbar = ({ toggleSidebar, searchQuery, setSearchQuery }) => {
+const Topbar = ({ toggleSidebar, searchQuery, setSearchQuery, coins }) => {
   const router = useRouter();
+  const coinRef = useRef(null); // Ref for the coin display div
 
   const handleLogout = () => {
     router.push('/auth/login');
   };
 
-  const baseLineColor = '#3A86FF'; // Main blue theme color
-  const hoverLineColor = '#0A2463'; // Darker shade for hover
+  const baseLineColor = '#3A86FF';
+  const hoverLineColor = '#0A2463';
 
   const handleSearchChange = (e) => {
     setSearchQuery(e.target.value);
@@ -17,6 +19,20 @@ const Topbar = ({ toggleSidebar, searchQuery, setSearchQuery }) => {
   const handleClearSearch = () => {
     setSearchQuery('');
   };
+
+  // Effect to trigger coin update animation
+  useEffect(() => {
+    if (coinRef.current) {
+      coinRef.current.classList.add('coin-update-animation');
+      const handler = () => {
+        coinRef.current.classList.remove('coin-update-animation');
+      };
+      coinRef.current.addEventListener('animationend', handler);
+      return () => {
+        coinRef.current?.removeEventListener('animationend', handler);
+      };
+    }
+  }, [coins]); // Re-run effect when coins change
 
   return (
     <nav
@@ -99,21 +115,8 @@ const Topbar = ({ toggleSidebar, searchQuery, setSearchQuery }) => {
               e.currentTarget.style.transform = 'scale(1)';
             }}
           >
-            <span
-              className="input-group-text bg-transparent border-0 d-flex align-items-center justify-content-center"
-              style={{
-                padding: '0 10px',
-                background: 'transparent',
-              }}
-            >
-              <i
-                className="bi-search"
-                style={{
-                  color: '#3A86FF',
-                  fontSize: '1rem',
-                  transition: 'color 0.3s ease, transform 0.3s ease',
-                }}
-              ></i>
+            <span className="input-group-text bg-transparent border-0 d-flex align-items-center justify-content-center" style={{ padding: '0 10px' }}>
+              <i className="bi-search" style={{ color: '#3A86FF', fontSize: '1rem', transition: 'color 0.3s ease, transform 0.3s ease' }}></i>
             </span>
             <input
               className="form-control"
@@ -129,7 +132,7 @@ const Topbar = ({ toggleSidebar, searchQuery, setSearchQuery }) => {
                 backgroundColor: 'transparent',
                 fontSize: '0.95rem',
                 padding: '10px 12px',
-                paddingRight: searchQuery ? '30px' : '12px', // Space for clear button
+                paddingRight: searchQuery ? '30px' : '12px',
                 transition: 'all 0.3s ease',
               }}
               onFocus={(e) => {
@@ -175,6 +178,23 @@ const Topbar = ({ toggleSidebar, searchQuery, setSearchQuery }) => {
             )}
           </div>
 
+          {/* Coin Display - now with ref for animation */}
+          <div
+            ref={coinRef} // Attach ref here
+            className="d-flex align-items-center me-3 ms-3"
+            style={{
+              background: 'linear-gradient(135deg, #FFF3B0 0%, #FFD700 100%)',
+              boxShadow: '0 2px 8px rgba(255, 215, 0, 0.3)',
+              borderRadius: '50px', // Apply rounded-pill via style for consistency
+              padding: '8px 15px', // Adjust padding for better look
+            }}
+          >
+            <i className="bi-coin me-2" style={{ color: '#0A2463', fontSize: '1.2rem' }}></i>
+            <span className="fw-bold" style={{ color: '#0A2463' }}>
+              {(coins ?? 0).toLocaleString()}
+            </span>
+          </div>
+
           {/* Logout button */}
           <div className="ms-auto">
             <button
@@ -216,6 +236,18 @@ const Topbar = ({ toggleSidebar, searchQuery, setSearchQuery }) => {
           opacity: 0.8;
           font-style: italic;
         }
+
+        /* Coin update animation */
+        @keyframes coinUpdate {
+          0% { transform: scale(1); box-shadow: 0 2px 8px rgba(255, 215, 0, 0.3); }
+          25% { transform: scale(1.1); box-shadow: 0 0 15px #FFD700; }
+          100% { transform: scale(1); box-shadow: 0 2px 8px rgba(255, 215, 0, 0.3); }
+        }
+
+        .coin-update-animation {
+          animation: coinUpdate 0.8s ease-out; /* Adjusted duration for quick feedback */
+        }
+
 
         @media (max-width: 992px) {
           .navbar {

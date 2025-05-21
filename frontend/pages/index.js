@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import Head from 'next/head';
 import Topbar from '@components/Topbar';
-import Sidebar from '../../components/Sidebar';
-import Products from './products';
-import ProfileCard from '../../components/ProfileCard';
+import Sidebar from '@components/Sidebar';
+import Products from './dashboard/products';
+import ProfileCard from '@components/ProfileCard';
 
 // Placeholder components for other sections
 const DashboardOverview = () => (

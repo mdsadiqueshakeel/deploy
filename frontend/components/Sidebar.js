@@ -1,8 +1,15 @@
 import { useRouter } from 'next/router';
 import { useState, useEffect } from 'react';
+import { fetchProfile } from 'utils/profileService';
 
-const Sidebar = ({ user, isSidebarOpen, toggleSidebar, setActiveSection, activeSection }) => {
+const Sidebar = ({isSidebarOpen, toggleSidebar, setActiveSection, activeSection }) => {
   const router = useRouter();
+  const [user, setUser] = useState({
+    name: '',
+    email: '',
+    avatar: null
+  });
+  const [loading, setLoading] = useState(true);
 
   const navItems = [
     { label: 'Dashboard', path: '/dashboard', icon: 'bi-speedometer2' },
@@ -13,10 +20,6 @@ const Sidebar = ({ user, isSidebarOpen, toggleSidebar, setActiveSection, activeS
     { label: 'Rank & Rewards', path: '/dashboard/rank', icon: 'bi-trophy' },
     { label: 'Support', path: '/dashboard/support', icon: 'bi-headset' },
   ];
-
-  const handleLogout = () => {
-    router.push('/auth/login');
-  };
 
   const handleNavItemClick = (item) => {
     if (router.pathname !== '/dashboard' && item.path.startsWith('/dashboard')) {
@@ -41,13 +44,41 @@ const Sidebar = ({ user, isSidebarOpen, toggleSidebar, setActiveSection, activeS
     }
   };
 
-  // Set active section based on current route
+  // Fetch user profile data
   useEffect(() => {
+    const loadProfile = async () => {
+      try {
+        const profileData = await fetchProfile();
+        if (profileData) {
+          setUser({
+            name: profileData.basicInfo?.name || '',
+            email: profileData.basicInfo?.email || '',
+            avatar: profileData.basicInfo?.avatar || null
+          });
+        }
+      } catch (error) {
+        console.error('Failed to load profile:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    // Listen for profile updates
+    const handleProfileUpdated = () => loadProfile();
+    window.addEventListener('profile-updated', handleProfileUpdated);
+
+    // Set active section based on current route
     const currentItem = navItems.find((item) => item.path === router.pathname);
     if (currentItem && setActiveSection) {
-      setActiveSection(currentItem.label);
+      setActiveSection(currentItem.label);    
     }
-  }, [router.pathname, setActiveSection]);
+
+    loadProfile();
+
+    return () => {
+      window.removeEventListener('profile-updated', handleProfileUpdated);
+    };
+  }, [router.pathname, setActiveSection, fetchProfile]);
 
   return (
     <>
@@ -89,58 +120,75 @@ const Sidebar = ({ user, isSidebarOpen, toggleSidebar, setActiveSection, activeS
         <hr style={{ borderColor: 'rgba(58, 134, 255, 0.3)' }} />
 
         {/* User Profile Container */}
-        <div
-          className="p-3 mb-4 rounded d-flex align-items-center"
-          style={{
-            backgroundColor: 'rgba(58, 134, 255, 0.2)',
-            cursor: 'pointer',
-            transition: 'all 0.3s',
-            border: '1px solid rgba(58, 134, 255, 0.3)',
-          }}
-          onClick={handleProfileClick}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = 'rgba(58, 134, 255, 0.3)';
-            e.currentTarget.style.boxShadow = '0 0 10px rgba(58, 134, 255, 0.2)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = 'rgba(58, 134, 255, 0.2)';
-            e.currentTarget.style.boxShadow = 'none';
-          }}
-        >
+        {!loading && (
           <div
-            className="rounded-circle d-flex align-items-center justify-content-center overflow-hidden me-3"
+            className="p-3 mb-4 rounded d-flex align-items-center"
             style={{
-              width: '48px',
-              height: '48px',
-              backgroundColor: '#3A86FF',
-              color: 'white',
-              fontSize: '20px',
-              flexShrink: 0,
+              backgroundColor: 'rgba(58, 134, 255, 0.2)',
+              cursor: 'pointer',
+              transition: 'all 0.3s',
+              border: '1px solid rgba(58, 134, 255, 0.3)',
+            }}
+            onClick={handleProfileClick}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = 'rgba(58, 134, 255, 0.3)';
+              e.currentTarget.style.boxShadow = '0 0 10px rgba(58, 134, 255, 0.2)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = 'rgba(58, 134, 255, 0.2)';
+              e.currentTarget.style.boxShadow = 'none';
             }}
           >
-            {user?.avatar ? (
-              <img
-                src={user.avatar}
-                alt="User Avatar"
-                style={{
-                  width: '100%',
-                  height: '100%',
-                  objectFit: 'cover',
-                }}
-              />
-            ) : (
-              user?.name?.charAt(0) || 'U'
-            )}
+            <div
+              className="rounded-circle d-flex align-items-center justify-content-center overflow-hidden me-3"
+              style={{
+                width: '48px',
+                height: '48px',
+                backgroundColor: '#3A86FF',
+                color: 'white',
+                fontSize: '20px',
+                flexShrink: 0,
+              }}
+            >
+              {user.avatar ? (
+                <img
+                  src={user.avatar}
+                  alt="User Avatar"
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'cover',
+                  }}
+                />
+              ) : (
+                user.name?.charAt(0)?.toUpperCase() || 'U'
+              )}
+            </div>
+            <div>
+              <strong style={{ display: 'block', fontSize: '1.1rem' }}>
+                {user.name  || 'User'}
+              </strong>
+              <small style={{ color: '#E0E0E0', fontSize: '0.85rem' }}>
+                {user.email || 'user@example.com'}
+              </small>
+            </div>
+
           </div>
-          <div>
-            <strong style={{ display: 'block', fontSize: '1.1rem' }}>
-              {user?.name || 'User'}
-            </strong>
-            <small style={{ color: '#E0E0E0', fontSize: '0.85rem' }}>
-              {user?.email || 'user@example.com'}
-            </small>
+        )}
+
+        {loading && (
+          <div className="p-3 mb-4 rounded d-flex align-items-center">
+            <div className="spinner-border text-light" role="status">
+              <span className="visually-hidden">Loading...</span>
+            </div>
+            <div className="ms-3">
+              <div className="placeholder-glow">
+                <span className="placeholder col-6 bg-light"></span>
+                <span className="placeholder col-8 bg-secondary mt-1"></span>
+              </div>
+            </div>
           </div>
-        </div>
+        )}
 
         <ul className="nav nav-pills flex-column mb-auto">
           {navItems.map((item) => (
@@ -175,24 +223,7 @@ const Sidebar = ({ user, isSidebarOpen, toggleSidebar, setActiveSection, activeS
         </ul>
         <hr style={{ borderColor: 'rgba(58, 134, 255, 0.3)' }} />
         <div className="mt-auto">
-          <button
-            onClick={handleLogout}
-            className="nav-link text-white w-100 text-start border-0 bg-transparent p-0"
-            style={{
-              borderRadius: '5px',
-              transition: 'all 0.3s',
-              cursor: 'pointer',
-            }}
-            onMouseEnter={(e) => {
-              e.target.style.backgroundColor = 'rgba(58, 134, 255, 0.2)';
-            }}
-            onMouseLeave={(e) => {
-              e.target.style.backgroundColor = 'transparent';
-            }}
-          >
-            <i className="bi-box-arrow-right me-2"></i>
-            Logout
-          </button>
+          {/* Logout button can be added here if needed */}
         </div>
       </div>
 

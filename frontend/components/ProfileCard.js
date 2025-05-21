@@ -1,87 +1,116 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef } from "react";
+// import api from "../../utils/api";
+import { useRouter } from "next/router";
+
+import {
+  fetchProfile,
+  updateProfile,
+  updateAvatar,
+  deleteAvatar,
+  changePassword,
+  changeTransactionPassword,
+} from "../utils/profileService";
 
 const ProfileCard = ({ user: propUser }) => {
+  const router = useRouter();
   // Initial user data
   const initialUserData = {
-    name: propUser?.name || '',
-    email: propUser?.email || '',
-    country: propUser?.country || 'India',
-    phone: '',
-    panNumber: '',
-    aadharNumber: '',
-    avatar: propUser?.avatar || '',
+    basicInfo: {
+      name: propUser?.name || "",
+      email: propUser?.email || "",
+      country: propUser?.country || "India",
+      phone: propUser?.phone || "",
+      panNumber: propUser?.panNumber || "",
+      aadharNumber: propUser?.aadharNumber || "",
+      avatar: propUser?.avatar || null,
+    },
     bankDetails: {
-      accountNumber: '',
-      ifscCode: '',
-      bankName: '',
-      accountHolderName: '',
+      accountNumber: propUser?.bankDetails?.accountNumber || "",
+      ifscCode: propUser?.bankDetails?.ifscCode || "",
+      bankName: propUser?.bankDetails?.bankName || "",
+      accountHolderName: propUser?.bankDetails?.accountHolderName || "",
+    },
+    uiSettings: {
+      profileViewState: "view",
     },
   };
 
   // State initialization
   const [user, setUser] = useState(initialUserData);
   const [formData, setFormData] = useState({
-    ...initialUserData,
-    currentPassword: '',
-    newPassword: '',
-    confirmPassword: '',
-    currentTransactionPassword: '',
-    newTransactionPassword: '',
-    confirmTransactionPassword: '',
+    ...initialUserData.basicInfo,
+    bankDetails: { ...initialUserData.bankDetails },
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: "",
+    currentTransactionPassword: "",
+    newTransactionPassword: "",
+    confirmTransactionPassword: "",
   });
   const [isEditing, setIsEditing] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const fileInputRef = useRef(null);
 
-  // Load saved data on component mount and when propUser changes
+  // Load saved data on component mount and when propUser changes  // Load profile data from backend
   useEffect(() => {
-    const loadSavedData = () => {
+    const loadProfileData = async () => {
       try {
-        const savedViewState = localStorage.getItem('profileViewState');
-        const savedUserData = localStorage.getItem('userProfileData');
+        const profileData = await fetchProfile();
 
-        if (savedViewState) {
-          setIsEditing(savedViewState === 'edit');
-        }
+        if (profileData) {
+          setUser({
+            basicInfo: {
+              name: profileData.basicInfo?.name || "",
+              email: profileData.basicInfo?.email || "",
+              country: profileData.basicInfo?.country || "India",
+              phone: profileData.basicInfo?.phone || "",
+              panNumber: profileData.basicInfo?.panNumber || "",
+              aadharNumber: profileData.basicInfo?.aadharNumber || "",
+              avatar: profileData.basicInfo?.avatar || null,
+            },
+            bankDetails: {
+              accountNumber: profileData.bankDetails?.accountNumber || "",
+              ifscCode: profileData.bankDetails?.ifscCode || "",
+              bankName: profileData.bankDetails?.bankName || "",
+              accountHolderName:
+                profileData.bankDetails?.accountHolderName || "",
+            },
+            uiSettings: {
+              profileViewState:
+                profileData.uiSettings?.profileViewState || "view",
+            },
+          });
 
-        if (savedUserData) {
-          const parsedData = JSON.parse(savedUserData);
-          setUser(parsedData);
           setFormData({
-            ...parsedData,
-            currentPassword: '',
-            newPassword: '',
-            confirmPassword: '',
-            currentTransactionPassword: '',
-            newTransactionPassword: '',
-            confirmTransactionPassword: '',
+            ...profileData.basicInfo,
+            bankDetails: { ...profileData.bankDetails },
+            currentPassword: "",
+            newPassword: "",
+            confirmPassword: "",
+            currentTransactionPassword: "",
+            newTransactionPassword: "",
+            confirmTransactionPassword: "",
           });
-        } else {
-          // If no saved data, use the propUser data
-          setUser(initialUserData);
-          setFormData({
-            ...initialUserData,
-            currentPassword: '',
-            newPassword: '',
-            confirmPassword: '',
-            currentTransactionPassword: '',
-            newTransactionPassword: '',
-            confirmTransactionPassword: '',
-          });
+
+          setIsEditing(profileData.uiSettings?.profileViewState === "edit");
         }
-      } catch (error) {
-        console.error('Error loading saved data:', error);
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
       }
     };
 
-    loadSavedData();
+    loadProfileData();
   }, [propUser]);
 
   // Handle form field changes
   const handleChange = (e) => {
     const { name, value } = e.target;
 
-    if (name.startsWith('bankDetails.')) {
-      const fieldName = name.split('.')[1];
+    if (name.startsWith("bankDetails.")) {
+      const fieldName = name.split(".")[1];
       setFormData((prev) => ({
         ...prev,
         bankDetails: {
@@ -101,12 +130,12 @@ const ProfileCard = ({ user: propUser }) => {
   const handleAvatarChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      if (!file.type.startsWith('image/')) {
-        alert('Please select a valid image file (e.g., PNG, JPEG).');
+      if (!file.type.startsWith("image/")) {
+        alert("Please select a valid image file (e.g., PNG, JPEG).");
         return;
       }
       if (file.size > 5 * 1024 * 1024) {
-        alert('Image size must be less than 5MB.');
+        alert("Image size must be less than 5MB.");
         return;
       }
 
@@ -115,13 +144,21 @@ const ProfileCard = ({ user: propUser }) => {
         const updatedUser = { ...user, avatar: reader.result };
         setUser(updatedUser);
         setFormData((prev) => ({ ...prev, avatar: reader.result }));
-        localStorage.setItem('userProfileData', JSON.stringify(updatedUser));
+        localStorage.setItem("userProfileData", JSON.stringify(updatedUser));
       };
       reader.onerror = () => {
-        alert('Error reading the image file.');
+        alert("Error reading the image file.");
       };
       reader.readAsDataURL(file);
     }
+  };
+
+  // Delete avatar handler
+  const handleDeleteAvatar = () => {
+    const updatedUser = { ...user, avatar: null };
+    setUser(updatedUser);
+    setFormData((prev) => ({ ...prev, avatar: null }));
+    localStorage.setItem("userProfileData", JSON.stringify(updatedUser));
   };
 
   // Trigger file input click
@@ -130,81 +167,118 @@ const ProfileCard = ({ user: propUser }) => {
   };
 
   // Handle form submission
-  const handleSubmit = (e) => {
-    e.preventDefault();
+  const handleSubmit = async (e) => {
+  e.preventDefault();
+  setLoading(true);
+  setError(null);
 
-    if (formData.newPassword && formData.newPassword !== formData.confirmPassword) {
-      alert('New passwords do not match!');
-      return;
+  try {
+    // Handle password changes if provided
+    if (formData.newPassword && formData.currentPassword) {
+      if (formData.newPassword !== formData.confirmPassword) {
+        throw new Error('New passwords do not match!');
+      }
+      
+      await changePassword({
+        currentPassword: formData.currentPassword,
+        newPassword: formData.newPassword,
+        confirmPassword: formData.confirmPassword
+      });
     }
 
-    if (
-      formData.newTransactionPassword &&
-      formData.newTransactionPassword !== formData.confirmTransactionPassword
-    ) {
-      alert('New transaction passwords do not match!');
-      return;
-    }
+    // Handle transaction password changes if provided
+    
 
-    const updatedUser = {
-      ...user,
+    // Prepare profile data for update (excluding password fields)
+    const profileUpdateData = {
       name: formData.name,
       email: formData.email,
       phone: formData.phone,
+      country: formData.country,
       panNumber: formData.panNumber,
       aadharNumber: formData.aadharNumber,
-      avatar: formData.avatar,
       bankDetails: {
         accountNumber: formData.bankDetails.accountNumber,
         ifscCode: formData.bankDetails.ifscCode,
         bankName: formData.bankDetails.bankName,
-        accountHolderName: formData.bankDetails.accountHolderName,
-      },
+        accountHolderName: formData.bankDetails.accountHolderName
+      }
     };
 
-    setUser(updatedUser);
+    // Update profile data
+    const updatedUser = await updateProfile(profileUpdateData);
+
+    // Update state with new data
+    setUser(prev => ({
+      ...prev,
+      basicInfo: {
+        ...prev.basicInfo,
+        name: updatedUser.name || formData.name,
+        email: updatedUser.email || formData.email,
+        phone: updatedUser.phone || formData.phone,
+        country: updatedUser.country || formData.country,
+        panNumber: updatedUser.panNumber || formData.panNumber,
+        aadharNumber: updatedUser.aadharNumber || formData.aadharNumber
+      },
+      bankDetails: updatedUser.bankDetails || formData.bankDetails,
+      uiSettings: {
+        profileViewState: 'view'
+      }
+    }));
+
     setIsEditing(false);
-
-    localStorage.setItem('profileViewState', 'view');
-    localStorage.setItem('userProfileData', JSON.stringify(updatedUser));
-
-    console.log('Profile updated:', updatedUser);
-  };
+    window.dispatchEvent(new Event('profile-updated'));
+  } catch (err) {
+    setError(err.message || 'Failed to update profile');
+  } finally {
+    setLoading(false);
+  }
+};
 
   // Switch to edit mode
   const handleEdit = () => {
+    // Reset form data to current user data when entering edit mode
+    setFormData({
+      ...user.basicInfo,
+      bankDetails: { ...user.bankDetails },
+      currentPassword: "",
+      newPassword: "",
+      confirmPassword: "",
+      currentTransactionPassword: "",
+      newTransactionPassword: "",
+      confirmTransactionPassword: "",
+    });
     setIsEditing(true);
-    localStorage.setItem('profileViewState', 'edit');
   };
 
   // Common input style
   const inputStyle = {
-    border: '2px solid #E0E0E0',
-    borderRadius: '8px',
-    color: '#0A2463',
-    backgroundColor: '#F5F5F5',
-    transition: 'all 0.3s',
+    border: "2px solid #E0E0E0",
+    borderRadius: "8px",
+    color: "#0A2463",
+    backgroundColor: "#F5F5F5",
+    transition: "all 0.3s",
   };
 
   // Common button style
   const buttonStyle = {
-    background: 'linear-gradient(135deg, #3A86FF 0%, #0A2463 100%)',
-    color: 'white',
-    borderRadius: '8px',
-    transition: 'all 0.3s',
-    border: 'none',
-    fontWeight: '600',
-    boxShadow: '0 4px 15px rgba(58, 134, 255, 0.4)',
+    background: "linear-gradient(135deg, #3A86FF 0%, #0A2463 100%)",
+    color: "white",
+    borderRadius: "8px",
+    transition: "all 0.3s",
+    border: "none",
+    fontWeight: "600",
+    boxShadow: "0 4px 15px rgba(58, 134, 255, 0.4)",
   };
 
   return (
     <div
       className="card mb-4 shadow-sm"
       style={{
-        borderRadius: '12px',
-        border: 'none',
-        backgroundColor: 'white',
-        boxShadow: '0 10px 25px rgba(58, 134, 255, 0.2)',
+        borderRadius: "12px",
+        border: "none",
+        backgroundColor: "white",
+        boxShadow: "0 10px 25px rgba(58, 134, 255, 0.2)",
       }}
     >
       <div className="card-body p-4">
@@ -214,11 +288,11 @@ const ProfileCard = ({ user: propUser }) => {
             <div
               className="rounded-circle d-flex align-items-center justify-content-center overflow-hidden"
               style={{
-                width: '120px',
-                height: '120px',
-                backgroundColor: '#3A86FF',
-                color: 'white',
-                fontSize: '40px',
+                width: "120px",
+                height: "120px",
+                backgroundColor: "#3A86FF",
+                color: "white",
+                fontSize: "40px",
               }}
             >
               {user.avatar ? (
@@ -226,13 +300,13 @@ const ProfileCard = ({ user: propUser }) => {
                   src={user.avatar}
                   alt="User Avatar"
                   style={{
-                    width: '100%',
-                    height: '100%',
-                    objectFit: 'cover',
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "cover",
                   }}
                 />
               ) : (
-                user.name.charAt(0) || 'U'
+                user.basicInfo.name?.charAt(0) || "U"
               )}
             </div>
           </div>
@@ -240,52 +314,95 @@ const ProfileCard = ({ user: propUser }) => {
           <h5
             className="fw-bold mb-1"
             style={{
-              color: '#0A2463',
-              textShadow: '1px 1px 2px rgba(58, 134, 255, 0.2)',
+              color: "#0A2463",
+              textShadow: "1px 1px 2px rgba(58, 134, 255, 0.2)",
             }}
           >
-            {user.name || 'User Name'}
+            {user.basicInfo.name || "User Name"}
           </h5>
-          <p className="text-muted mb-2">{user.country || 'India'}</p>
-          <p className="text-muted mb-3">{user.email || 'user@example.com'}</p>
+          <p className="text-muted mb-2">{user.basicInfo.country || "India"}</p>
+          <p className="text-muted mb-3">
+            {user.basicInfo.email || "user@example.com"}
+          </p>
 
-          <input
-            type="file"
-            ref={fileInputRef}
-            accept="image/*"
-            style={{ display: 'none' }}
-            onChange={handleAvatarChange}
-          />
-          <button
-            className="btn btn-sm px-4 py-2"
-            style={{
-              border: '2px solid #3A86FF',
-              color: '#3A86FF',
-              borderRadius: '8px',
-              fontWeight: '500',
-              transition: 'all 0.3s',
-              backgroundColor: 'transparent',
-            }}
-            onClick={handleAvatarButtonClick}
-            onMouseEnter={(e) => {
-              e.target.style.backgroundColor = '#3A86FF';
-              e.target.style.color = 'white';
-            }}
-            onMouseLeave={(e) => {
-              e.target.style.backgroundColor = 'transparent';
-              e.target.style.color = '#3A86FF';
-            }}
-          >
-            Change Avatar
-          </button>
+          <div className="d-flex gap-2 justify-content-center">
+            <input
+              type="file"
+              ref={fileInputRef}
+              accept="image/*"
+              style={{ display: "none" }}
+              onChange={handleAvatarChange}
+            />
+            <button
+              className="btn btn-sm px-4 py-2"
+              style={{
+                border: "2px solid #3A86FF",
+                color: "#3A86FF",
+                borderRadius: "8px",
+                fontWeight: "500",
+                transition: "all 0.3s",
+                backgroundColor: "transparent",
+              }}
+              onClick={handleAvatarButtonClick}
+              onMouseEnter={(e) => {
+                e.target.style.backgroundColor = "#3A86FF";
+                e.target.style.color = "white";
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.backgroundColor = "transparent";
+                e.target.style.color = "#3A86FF";
+              }}
+            >
+              Change Avatar
+            </button>
+
+            {user.avatar && (
+              <button
+                className="btn btn-sm px-4 py-2"
+                style={{
+                  border: "2px solid #dc3545",
+                  color: "#dc3545",
+                  borderRadius: "8px",
+                  fontWeight: "500",
+                  transition: "all 0.3s",
+                  backgroundColor: "transparent",
+                }}
+                onClick={handleDeleteAvatar}
+                onMouseEnter={(e) => {
+                  e.target.style.backgroundColor = "#dc3545";
+                  e.target.style.color = "white";
+                }}
+                onMouseLeave={(e) => {
+                  e.target.style.backgroundColor = "transparent";
+                  e.target.style.color = "#dc3545";
+                }}
+              >
+                Delete Avatar
+              </button>
+            )}
+          </div>
         </div>
+
+        {error && (
+          <div className="alert alert-danger mb-4" role="alert">
+            {error}
+          </div>
+        )}
+
+        {loading && (
+          <div className="text-center mb-4">
+            <div className="spinner-border text-primary" role="status">
+              <span className="visually-hidden">Loading...</span>
+            </div>
+          </div>
+        )}
 
         {/* Personal Information Section */}
         <h4
           className="fw-bold mb-4"
           style={{
-            color: '#0A2463',
-            textShadow: '1px 1px 2px rgba(58, 134, 255, 0.2)',
+            color: "#0A2463",
+            textShadow: "1px 1px 2px rgba(58, 134, 255, 0.2)",
           }}
         >
           Profile Information
@@ -297,15 +414,18 @@ const ProfileCard = ({ user: propUser }) => {
             <h5
               className="fw-bold mb-3"
               style={{
-                color: '#0A2463',
-                textShadow: '1px 1px 2px rgba(58, 134, 255, 0.2)',
+                color: "#0A2463",
+                textShadow: "1px 1px 2px rgba(58, 134, 255, 0.2)",
               }}
             >
               Personal Information
             </h5>
 
             <div className="mb-4">
-              <label className="form-label fw-medium" style={{ color: '#0A2463' }}>
+              <label
+                className="form-label fw-medium"
+                style={{ color: "#0A2463" }}
+              >
                 Full Name
               </label>
               <input
@@ -316,19 +436,23 @@ const ProfileCard = ({ user: propUser }) => {
                 onChange={handleChange}
                 style={inputStyle}
                 onFocus={(e) => {
-                  e.target.style.borderColor = '#3A86FF';
-                  e.target.style.boxShadow = '0 0 0 0.25rem rgba(58, 134, 255, 0.25)';
+                  e.target.style.borderColor = "#3A86FF";
+                  e.target.style.boxShadow =
+                    "0 0 0 0.25rem rgba(58, 134, 255, 0.25)";
                 }}
                 onBlur={(e) => {
-                  e.target.style.borderColor = '#E0E0E0';
-                  e.target.style.boxShadow = 'none';
+                  e.target.style.borderColor = "#E0E0E0";
+                  e.target.style.boxShadow = "none";
                 }}
                 required
               />
             </div>
 
             <div className="mb-4">
-              <label className="form-label fw-medium" style={{ color: '#0A2463' }}>
+              <label
+                className="form-label fw-medium"
+                style={{ color: "#0A2463" }}
+              >
                 Email
               </label>
               <input
@@ -339,19 +463,23 @@ const ProfileCard = ({ user: propUser }) => {
                 onChange={handleChange}
                 style={inputStyle}
                 onFocus={(e) => {
-                  e.target.style.borderColor = '#3A86FF';
-                  e.target.style.boxShadow = '0 0 0 0.25rem rgba(58, 134, 255, 0.25)';
+                  e.target.style.borderColor = "#3A86FF";
+                  e.target.style.boxShadow =
+                    "0 0 0 0.25rem rgba(58, 134, 255, 0.25)";
                 }}
                 onBlur={(e) => {
-                  e.target.style.borderColor = '#E0E0E0';
-                  e.target.style.boxShadow = 'none';
+                  e.target.style.borderColor = "#E0E0E0";
+                  e.target.style.boxShadow = "none";
                 }}
                 required
               />
             </div>
 
             <div className="mb-4">
-              <label className="form-label fw-medium" style={{ color: '#0A2463' }}>
+              <label
+                className="form-label fw-medium"
+                style={{ color: "#0A2463" }}
+              >
                 Country
               </label>
               <input
@@ -362,18 +490,22 @@ const ProfileCard = ({ user: propUser }) => {
                 onChange={handleChange}
                 style={inputStyle}
                 onFocus={(e) => {
-                  e.target.style.borderColor = '#3A86FF';
-                  e.target.style.boxShadow = '0 0 0 0.25rem rgba(58, 134, 255, 0.25)';
+                  e.target.style.borderColor = "#3A86FF";
+                  e.target.style.boxShadow =
+                    "0 0 0 0.25rem rgba(58, 134, 255, 0.25)";
                 }}
                 onBlur={(e) => {
-                  e.target.style.borderColor = '#E0E0E0';
-                  e.target.style.boxShadow = 'none';
+                  e.target.style.borderColor = "#E0E0E0";
+                  e.target.style.boxShadow = "none";
                 }}
               />
             </div>
 
             <div className="mb-4">
-              <label className="form-label fw-medium" style={{ color: '#0A2463' }}>
+              <label
+                className="form-label fw-medium"
+                style={{ color: "#0A2463" }}
+              >
                 Phone Number
               </label>
               <input
@@ -384,18 +516,22 @@ const ProfileCard = ({ user: propUser }) => {
                 onChange={handleChange}
                 style={inputStyle}
                 onFocus={(e) => {
-                  e.target.style.borderColor = '#3A86FF';
-                  e.target.style.boxShadow = '0 0 0 0.25rem rgba(58, 134, 255, 0.25)';
+                  e.target.style.borderColor = "#3A86FF";
+                  e.target.style.boxShadow =
+                    "0 0 0 0.25rem rgba(58, 134, 255, 0.25)";
                 }}
                 onBlur={(e) => {
-                  e.target.style.borderColor = '#E0E0E0';
-                  e.target.style.boxShadow = 'none';
+                  e.target.style.borderColor = "#E0E0E0";
+                  e.target.style.boxShadow = "none";
                 }}
               />
             </div>
 
             <div className="mb-4">
-              <label className="form-label fw-medium" style={{ color: '#0A2463' }}>
+              <label
+                className="form-label fw-medium"
+                style={{ color: "#0A2463" }}
+              >
                 PAN Number
               </label>
               <input
@@ -409,18 +545,22 @@ const ProfileCard = ({ user: propUser }) => {
                 pattern="[A-Z]{5}[0-9]{4}[A-Z]{1}"
                 title="Enter valid PAN (e.g., ABCDE1234F)"
                 onFocus={(e) => {
-                  e.target.style.borderColor = '#3A86FF';
-                  e.target.style.boxShadow = '0 0 0 0.25rem rgba(58, 134, 255, 0.25)';
+                  e.target.style.borderColor = "#3A86FF";
+                  e.target.style.boxShadow =
+                    "0 0 0 0.25rem rgba(58, 134, 255, 0.25)";
                 }}
                 onBlur={(e) => {
-                  e.target.style.borderColor = '#E0E0E0';
-                  e.target.style.boxShadow = 'none';
+                  e.target.style.borderColor = "#E0E0E0";
+                  e.target.style.boxShadow = "none";
                 }}
               />
             </div>
 
             <div className="mb-4">
-              <label className="form-label fw-medium" style={{ color: '#0A2463' }}>
+              <label
+                className="form-label fw-medium"
+                style={{ color: "#0A2463" }}
+              >
                 Aadhar Number
               </label>
               <input
@@ -434,12 +574,13 @@ const ProfileCard = ({ user: propUser }) => {
                 pattern="[0-9]{12}"
                 title="12-digit Aadhar number"
                 onFocus={(e) => {
-                  e.target.style.borderColor = '#3A86FF';
-                  e.target.style.boxShadow = '0 0 0 0.25rem rgba(58, 134, 255, 0.25)';
+                  e.target.style.borderColor = "#3A86FF";
+                  e.target.style.boxShadow =
+                    "0 0 0 0.25rem rgba(58, 134, 255, 0.25)";
                 }}
                 onBlur={(e) => {
-                  e.target.style.borderColor = '#E0E0E0';
-                  e.target.style.boxShadow = 'none';
+                  e.target.style.borderColor = "#E0E0E0";
+                  e.target.style.boxShadow = "none";
                 }}
               />
             </div>
@@ -448,15 +589,18 @@ const ProfileCard = ({ user: propUser }) => {
             <h5
               className="fw-bold mb-3 mt-4"
               style={{
-                color: '#0A2463',
-                textShadow: '1px 1px 2px rgba(58, 134, 255, 0.2)',
+                color: "#0A2463",
+                textShadow: "1px 1px 2px rgba(58, 134, 255, 0.2)",
               }}
             >
               Bank Details
             </h5>
 
             <div className="mb-3">
-              <label className="form-label fw-medium" style={{ color: '#0A2463' }}>
+              <label
+                className="form-label fw-medium"
+                style={{ color: "#0A2463" }}
+              >
                 Account Holder Name
               </label>
               <input
@@ -467,18 +611,22 @@ const ProfileCard = ({ user: propUser }) => {
                 onChange={handleChange}
                 style={inputStyle}
                 onFocus={(e) => {
-                  e.target.style.borderColor = '#3A86FF';
-                  e.target.style.boxShadow = '0 0 0 0.25rem rgba(58, 134, 255, 0.25)';
+                  e.target.style.borderColor = "#3A86FF";
+                  e.target.style.boxShadow =
+                    "0 0 0 0.25rem rgba(58, 134, 255, 0.25)";
                 }}
                 onBlur={(e) => {
-                  e.target.style.borderColor = '#E0E0E0';
-                  e.target.style.boxShadow = 'none';
+                  e.target.style.borderColor = "#E0E0E0";
+                  e.target.style.boxShadow = "none";
                 }}
               />
             </div>
 
             <div className="mb-3">
-              <label className="form-label fw-medium" style={{ color: '#0A2463' }}>
+              <label
+                className="form-label fw-medium"
+                style={{ color: "#0A2463" }}
+              >
                 Account Number
               </label>
               <input
@@ -489,18 +637,22 @@ const ProfileCard = ({ user: propUser }) => {
                 onChange={handleChange}
                 style={inputStyle}
                 onFocus={(e) => {
-                  e.target.style.borderColor = '#3A86FF';
-                  e.target.style.boxShadow = '0 0 0 0.25rem rgba(58, 134, 255, 0.25)';
+                  e.target.style.borderColor = "#3A86FF";
+                  e.target.style.boxShadow =
+                    "0 0 0 0.25rem rgba(58, 134, 255, 0.25)";
                 }}
                 onBlur={(e) => {
-                  e.target.style.borderColor = '#E0E0E0';
-                  e.target.style.boxShadow = 'none';
+                  e.target.style.borderColor = "#E0E0E0";
+                  e.target.style.boxShadow = "none";
                 }}
               />
             </div>
 
             <div className="mb-3">
-              <label className="form-label fw-medium" style={{ color: '#0A2463' }}>
+              <label
+                className="form-label fw-medium"
+                style={{ color: "#0A2463" }}
+              >
                 Bank Name
               </label>
               <input
@@ -511,18 +663,22 @@ const ProfileCard = ({ user: propUser }) => {
                 onChange={handleChange}
                 style={inputStyle}
                 onFocus={(e) => {
-                  e.target.style.borderColor = '#3A86FF';
-                  e.target.style.boxShadow = '0 0 0 0.25rem rgba(58, 134, 255, 0.25)';
+                  e.target.style.borderColor = "#3A86FF";
+                  e.target.style.boxShadow =
+                    "0 0 0 0.25rem rgba(58, 134, 255, 0.25)";
                 }}
                 onBlur={(e) => {
-                  e.target.style.borderColor = '#E0E0E0';
-                  e.target.style.boxShadow = 'none';
+                  e.target.style.borderColor = "#E0E0E0";
+                  e.target.style.boxShadow = "none";
                 }}
               />
             </div>
 
             <div className="mb-4">
-              <label className="form-label fw-medium" style={{ color: '#0A2463' }}>
+              <label
+                className="form-label fw-medium"
+                style={{ color: "#0A2463" }}
+              >
                 IFSC Code
               </label>
               <input
@@ -536,30 +692,37 @@ const ProfileCard = ({ user: propUser }) => {
                 pattern="^[A-Z]{4}0[A-Z0-9]{6}$"
                 title="Enter valid IFSC code (e.g., ABCD0123456)"
                 onFocus={(e) => {
-                  e.target.style.borderColor = '#3A86FF';
-                  e.target.style.boxShadow = '0 0 0 0.25rem rgba(58, 134, 255, 0.25)';
+                  e.target.style.borderColor = "#3A86FF";
+                  e.target.style.boxShadow =
+                    "0 0 0 0.25rem rgba(58, 134, 255, 0.25)";
                 }}
                 onBlur={(e) => {
-                  e.target.style.borderColor = '#E0E0E0';
-                  e.target.style.boxShadow = 'none';
+                  e.target.style.borderColor = "#E0E0E0";
+                  e.target.style.boxShadow = "none";
                 }}
               />
             </div>
 
             {/* Password Section */}
-            <hr className="my-4" style={{ borderColor: 'rgba(10, 36, 99, 0.2)' }} />
+            <hr
+              className="my-4"
+              style={{ borderColor: "rgba(10, 36, 99, 0.2)" }}
+            />
             <h5
               className="fw-bold mb-4"
               style={{
-                color: '#0A2463',
-                textShadow: '1px 1px 2px rgba(58, 134, 255, 0.2)',
+                color: "#0A2463",
+                textShadow: "1px 1px 2px rgba(58, 134, 255, 0.2)",
               }}
             >
               Change Password
             </h5>
 
             <div className="mb-4">
-              <label className="form-label fw-medium" style={{ color: '#0A2463' }}>
+              <label
+                className="form-label fw-medium"
+                style={{ color: "#0A2463" }}
+              >
                 Current Password
               </label>
               <input
@@ -570,18 +733,22 @@ const ProfileCard = ({ user: propUser }) => {
                 onChange={handleChange}
                 style={inputStyle}
                 onFocus={(e) => {
-                  e.target.style.borderColor = '#3A86FF';
-                  e.target.style.boxShadow = '0 0 0 0.25rem rgba(58, 134, 255, 0.25)';
+                  e.target.style.borderColor = "#3A86FF";
+                  e.target.style.boxShadow =
+                    "0 0 0 0.25rem rgba(58, 134, 255, 0.25)";
                 }}
                 onBlur={(e) => {
-                  e.target.style.borderColor = '#E0E0E0';
-                  e.target.style.boxShadow = 'none';
+                  e.target.style.borderColor = "#E0E0E0";
+                  e.target.style.boxShadow = "none";
                 }}
               />
             </div>
 
             <div className="mb-4">
-              <label className="form-label fw-medium" style={{ color: '#0A2463' }}>
+              <label
+                className="form-label fw-medium"
+                style={{ color: "#0A2463" }}
+              >
                 New Password
               </label>
               <input
@@ -592,18 +759,22 @@ const ProfileCard = ({ user: propUser }) => {
                 onChange={handleChange}
                 style={inputStyle}
                 onFocus={(e) => {
-                  e.target.style.borderColor = '#3A86FF';
-                  e.target.style.boxShadow = '0 0 0 0.25rem rgba(58, 134, 255, 0.25)';
+                  e.target.style.borderColor = "#3A86FF";
+                  e.target.style.boxShadow =
+                    "0 0 0 0.25rem rgba(58, 134, 255, 0.25)";
                 }}
                 onBlur={(e) => {
-                  e.target.style.borderColor = '#E0E0E0';
-                  e.target.style.boxShadow = 'none';
+                  e.target.style.borderColor = "#E0E0E0";
+                  e.target.style.boxShadow = "none";
                 }}
               />
             </div>
 
             <div className="mb-4">
-              <label className="form-label fw-medium" style={{ color: '#0A2463' }}>
+              <label
+                className="form-label fw-medium"
+                style={{ color: "#0A2463" }}
+              >
                 Confirm New Password
               </label>
               <input
@@ -614,30 +785,37 @@ const ProfileCard = ({ user: propUser }) => {
                 onChange={handleChange}
                 style={inputStyle}
                 onFocus={(e) => {
-                  e.target.style.borderColor = '#3A86FF';
-                  e.target.style.boxShadow = '0 0 0 0.25rem rgba(58, 134, 255, 0.25)';
+                  e.target.style.borderColor = "#3A86FF";
+                  e.target.style.boxShadow =
+                    "0 0 0 0.25rem rgba(58, 134, 255, 0.25)";
                 }}
                 onBlur={(e) => {
-                  e.target.style.borderColor = '#E0E0E0';
-                  e.target.style.boxShadow = 'none';
+                  e.target.style.borderColor = "#E0E0E0";
+                  e.target.style.boxShadow = "none";
                 }}
               />
             </div>
 
             {/* Transaction Password Section */}
-            <hr className="my-4" style={{ borderColor: 'rgba(10, 36, 99, 0.2)' }} />
+            <hr
+              className="my-4"
+              style={{ borderColor: "rgba(10, 36, 99, 0.2)" }}
+            />
             <h5
               className="fw-bold mb-4"
               style={{
-                color: '#0A2463',
-                textShadow: '1px 1px 2px rgba(58, 134, 255, 0.2)',
+                color: "#0A2463",
+                textShadow: "1px 1px 2px rgba(58, 134, 255, 0.2)",
               }}
             >
               Change Transaction Password
             </h5>
 
             <div className="mb-4">
-              <label className="form-label fw-medium" style={{ color: '#0A2463' }}>
+              <label
+                className="form-label fw-medium"
+                style={{ color: "#0A2463" }}
+              >
                 Current Transaction Password
               </label>
               <input
@@ -648,18 +826,22 @@ const ProfileCard = ({ user: propUser }) => {
                 onChange={handleChange}
                 style={inputStyle}
                 onFocus={(e) => {
-                  e.target.style.borderColor = '#3A86FF';
-                  e.target.style.boxShadow = '0 0 0 0.25rem rgba(58, 134, 255, 0.25)';
+                  e.target.style.borderColor = "#3A86FF";
+                  e.target.style.boxShadow =
+                    "0 0 0 0.25rem rgba(58, 134, 255, 0.25)";
                 }}
                 onBlur={(e) => {
-                  e.target.style.borderColor = '#E0E0E0';
-                  e.target.style.boxShadow = 'none';
+                  e.target.style.borderColor = "#E0E0E0";
+                  e.target.style.boxShadow = "none";
                 }}
               />
             </div>
 
             <div className="mb-4">
-              <label className="form-label fw-medium" style={{ color: '#0A2463' }}>
+              <label
+                className="form-label fw-medium"
+                style={{ color: "#0A2463" }}
+              >
                 New Transaction Password
               </label>
               <input
@@ -670,18 +852,22 @@ const ProfileCard = ({ user: propUser }) => {
                 onChange={handleChange}
                 style={inputStyle}
                 onFocus={(e) => {
-                  e.target.style.borderColor = '#3A86FF';
-                  e.target.style.boxShadow = '0 0 0 0.25rem rgba(58, 134, 255, 0.25)';
+                  e.target.style.borderColor = "#3A86FF";
+                  e.target.style.boxShadow =
+                    "0 0 0 0.25rem rgba(58, 134, 255, 0.25)";
                 }}
                 onBlur={(e) => {
-                  e.target.style.borderColor = '#E0E0E0';
-                  e.target.style.boxShadow = 'none';
+                  e.target.style.borderColor = "#E0E0E0";
+                  e.target.style.boxShadow = "none";
                 }}
               />
             </div>
 
             <div className="mb-4">
-              <label className="form-label fw-medium" style={{ color: '#0A2463' }}>
+              <label
+                className="form-label fw-medium"
+                style={{ color: "#0A2463" }}
+              >
                 Confirm New Transaction Password
               </label>
               <input
@@ -692,12 +878,13 @@ const ProfileCard = ({ user: propUser }) => {
                 onChange={handleChange}
                 style={inputStyle}
                 onFocus={(e) => {
-                  e.target.style.borderColor = '#3A86FF';
-                  e.target.style.boxShadow = '0 0 0 0.25rem rgba(58, 134, 255, 0.25)';
+                  e.target.style.borderColor = "#3A86FF";
+                  e.target.style.boxShadow =
+                    "0 0 0 0.25rem rgba(58, 134, 255, 0.25)";
                 }}
                 onBlur={(e) => {
-                  e.target.style.borderColor = '#E0E0E0';
-                  e.target.style.boxShadow = 'none';
+                  e.target.style.borderColor = "#E0E0E0";
+                  e.target.style.boxShadow = "none";
                 }}
               />
             </div>
@@ -707,12 +894,12 @@ const ProfileCard = ({ user: propUser }) => {
               className="btn w-100 py-3 fw-bold"
               style={buttonStyle}
               onMouseEnter={(e) => {
-                e.target.style.boxShadow = '0 6px 20px rgba(58, 134, 255, 0.6)';
-                e.target.style.transform = 'translateY(-2px)';
+                e.target.style.boxShadow = "0 6px 20px rgba(58, 134, 255, 0.6)";
+                e.target.style.transform = "translateY(-2px)";
               }}
               onMouseLeave={(e) => {
-                e.target.style.boxShadow = '0 4px 15px rgba(58, 134, 255, 0.4)';
-                e.target.style.transform = 'translateY(0)';
+                e.target.style.boxShadow = "0 4px 15px rgba(58, 134, 255, 0.4)";
+                e.target.style.transform = "translateY(0)";
               }}
             >
               Update Profile
@@ -724,8 +911,8 @@ const ProfileCard = ({ user: propUser }) => {
             <h5
               className="fw-bold mb-3"
               style={{
-                color: '#0A2463',
-                textShadow: '1px 1px 2px rgba(58, 134, 255, 0.2)',
+                color: "#0A2463",
+                textShadow: "1px 1px 2px rgba(58, 134, 255, 0.2)",
               }}
             >
               Personal Information
@@ -733,43 +920,61 @@ const ProfileCard = ({ user: propUser }) => {
 
             <div className="mb-4">
               <h6 className="text-muted mb-1">Full Name</h6>
-              <p className="fw-medium" style={{ color: '#0A2463', fontSize: '1.1rem' }}>
-                {user.name || 'Not provided'}
+              <p
+                className="fw-medium"
+                style={{ color: "#0A2463", fontSize: "1.1rem" }}
+              >
+                {user.basicInfo.name || "Not provided"}
               </p>
             </div>
 
             <div className="mb-4">
               <h6 className="text-muted mb-1">Email</h6>
-              <p className="fw-medium" style={{ color: '#0A2463', fontSize: '1.1rem' }}>
-                {user.email || 'Not provided'}
+              <p
+                className="fw-medium"
+                style={{ color: "#0A2463", fontSize: "1.1rem" }}
+              >
+                {user.basicInfo.email || "Not provided"}
               </p>
             </div>
 
             <div className="mb-4">
               <h6 className="text-muted mb-1">Country</h6>
-              <p className="fw-medium" style={{ color: '#0A2463', fontSize: '1.1rem' }}>
-                {user.country || 'Not provided'}
+              <p
+                className="fw-medium"
+                style={{ color: "#0A2463", fontSize: "1.1rem" }}
+              >
+                {user.basicInfo.country || "Not provided"}
               </p>
             </div>
 
             <div className="mb-4">
               <h6 className="text-muted mb-1">Phone Number</h6>
-              <p className="fw-medium" style={{ color: '#0A2463', fontSize: '1.1rem' }}>
-                {user.phone || 'Not provided'}
+              <p
+                className="fw-medium"
+                style={{ color: "#0A2463", fontSize: "1.1rem" }}
+              >
+                {user.basicInfo.phone || "Not provided"}
               </p>
             </div>
 
             <div className="mb-4">
               <h6 className="text-muted mb-1">PAN Number</h6>
-              <p className="fw-medium" style={{ color: '#0A2463', fontSize: '1.1rem' }}>
-                {user.panNumber || 'Not provided'}
+              <p
+                className="fw-medium"
+                style={{ color: "#0A2463", fontSize: "1.1rem" }}
+              >
+                {user.basicInfo.panNumber || "Not provided"}
               </p>
             </div>
 
             <div className="mb-4">
               <h6 className="text-muted mb-1">Aadhar Number</h6>
-              <p className="fw-medium" style={{ color: '#0A2463', fontSize: '1.1rem' }}>
-                {user.aadharNumber || 'Not provided'}
+              <p
+                className="fw-medium"
+                style={{ color: "#0A2463", fontSize: "1.1rem" }}
+              >
+                {user.basicInfo.aadharNumber || "Not provided"}
               </p>
             </div>
 
@@ -777,8 +982,8 @@ const ProfileCard = ({ user: propUser }) => {
             <h5
               className="fw-bold mb-3 mt-4"
               style={{
-                color: '#0A2463',
-                textShadow: '1px 1px 2px rgba(58, 134, 255, 0.2)',
+                color: "#0A2463",
+                textShadow: "1px 1px 2px rgba(58, 134, 255, 0.2)",
               }}
             >
               Bank Details
@@ -786,29 +991,41 @@ const ProfileCard = ({ user: propUser }) => {
 
             <div className="mb-3">
               <h6 className="text-muted mb-1">Account Holder Name</h6>
-              <p className="fw-medium" style={{ color: '#0A2463', fontSize: '1.1rem' }}>
-                {user.bankDetails.accountHolderName || 'Not provided'}
+              <p
+                className="fw-medium"
+                style={{ color: "#0A2463", fontSize: "1.1rem" }}
+              >
+                {user.bankDetails.accountHolderName || "Not provided"}
               </p>
             </div>
 
             <div className="mb-3">
               <h6 className="text-muted mb-1">Account Number</h6>
-              <p className="fw-medium" style={{ color: '#0A2463', fontSize: '1.1rem' }}>
-                {user.bankDetails.accountNumber || 'Not provided'}
+              <p
+                className="fw-medium"
+                style={{ color: "#0A2463", fontSize: "1.1rem" }}
+              >
+                {user.bankDetails.accountNumber || "Not provided"}
               </p>
             </div>
 
             <div className="mb-3">
               <h6 className="text-muted mb-1">Bank Name</h6>
-              <p className="fw-medium" style={{ color: '#0A2463', fontSize: '1.1rem' }}>
-                {user.bankDetails.bankName || 'Not provided'}
+              <p
+                className="fw-medium"
+                style={{ color: "#0A2463", fontSize: "1.1rem" }}
+              >
+                {user.bankDetails.bankName || "Not provided"}
               </p>
             </div>
 
             <div className="mb-4">
               <h6 className="text-muted mb-1">IFSC Code</h6>
-              <p className="fw-medium" style={{ color: '#0A2463', fontSize: '1.1rem' }}>
-                {user.bankDetails.ifscCode || 'Not provided'}
+              <p
+                className="fw-medium"
+                style={{ color: "#0A2463", fontSize: "1.1rem" }}
+              >
+                {user.bankDetails.ifscCode || "Not provided"}
               </p>
             </div>
 
@@ -817,12 +1034,12 @@ const ProfileCard = ({ user: propUser }) => {
               className="btn w-100 py-3 fw-bold mt-4"
               style={buttonStyle}
               onMouseEnter={(e) => {
-                e.target.style.boxShadow = '0 6px 20px rgba(58, 134, 255, 0.6)';
-                e.target.style.transform = 'translateY(-2px)';
+                e.target.style.boxShadow = "0 6px 20px rgba(58, 134, 255, 0.6)";
+                e.target.style.transform = "translateY(-2px)";
               }}
               onMouseLeave={(e) => {
-                e.target.style.boxShadow = '0 4px 15px rgba(58, 134, 255, 0.4)';
-                e.target.style.transform = 'translateY(0)';
+                e.target.style.boxShadow = "0 4px 15px rgba(58, 134, 255, 0.4)";
+                e.target.style.transform = "translateY(0)";
               }}
             >
               Edit Profile

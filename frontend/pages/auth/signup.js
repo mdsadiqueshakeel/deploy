@@ -1,34 +1,79 @@
 import { useState } from 'react';
-import { useRouter } from 'next/router'; // ✅ Import router
+import { useRouter } from 'next/router';
 import Link from 'next/link';
 import Head from 'next/head';
-import api from 'services/api'; // ✅ Import your API utility
+import api from '../../utils/api'
 
-export default function Signup() {
-  const router = useRouter(); // ✅ Initialize router
+export default function signup () {
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    password: "",
+    referralCodeLeft: "",
+    referralCodeRight: "",
+  });
+  const [referralError, setReferralError] = useState("");
+  const [error, setError] = useState("");
+  const router = useRouter();
 
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-
-  const handleSubmit = async (e) => {
-  e.preventDefault();
+const validateReferral = async (code) => {
   try {
-    if (!name || !email || !password) {
-      throw new Error('Please fill all required details');
+    const res = await fetch(`http://localhost:5000/api/referral/validate/${code}`);
+
+    if (!res.ok) {
+      const errorText = await res.text(); // helpful for debugging HTML
+      console.error("Server returned:", errorText);
+      throw new Error("Invalid referral code");
     }
 
-    const response = await api.register({ name, email, password });
-    
-    if (response.status === 201) {
-      router.push('/auth/login');
-    }
-  } catch (error) {
-    console.error('Registration Error:', error);
-    setError(error.toString());
+    const data = await res.json();
+    return data;
+  } catch (err) {
+    console.error("Referral validation failed:", err.message);
+    return null;
   }
 };
+
+const handleRegister = async (e) => {
+  e.preventDefault();
+  const { name, email, password, referralCodeLeft, referralCodeRight } = formData;
+
+  if (referralCodeLeft && referralCodeRight) {
+    setError("Please provide either Left or Right referral code, not both.");
+    return;
+  }
+
+  if (!referralCodeLeft && !referralCodeRight) {
+    setError("Please provide a referral code.");
+    return;
+  }
+
+  const activeReferralCode = referralCodeLeft || referralCodeRight;
+
+  const referralValidation = await validateReferral(activeReferralCode);
+  if (!referralValidation) {
+    setError("Invalid referral code.");
+    return;
+  }
+
+  try {
+    const response = await api.post("/api/auth/register", {
+      name,
+      email,
+      password,
+      referralCode: activeReferralCode,
+    });
+
+    router.push("/auth/login");
+  } catch (error) {
+    setError(error.response?.data?.error || "Registration failed");
+  }
+};
+
+
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
 
   return (
     <>
@@ -89,7 +134,7 @@ export default function Signup() {
             }}></span>
           </h2>
           
-          <form onSubmit={handleSubmit}>
+          <form onSubmit={handleRegister}>
             {error && (
               <div className="alert alert-danger" role="alert" style={{
                 borderRadius: '10px',
@@ -102,6 +147,7 @@ export default function Signup() {
             <div className="mb-3">
               <input 
                 type="text" 
+                name="name"
                 className="form-control py-3" 
                 placeholder="Name"
                 style={{ 
@@ -111,14 +157,15 @@ export default function Signup() {
                   backgroundColor: '#F5F5F5',
                   transition: 'all 0.3s'
                 }}
-                value={name}
-                onChange={e => setName(e.target.value)}
+                value={formData.name}
+                onChange={handleChange}
                 required
               />
             </div>
             <div className="mb-3">
               <input 
                 type="email" 
+                name="email"
                 className="form-control py-3" 
                 placeholder="Email"
                 style={{ 
@@ -128,14 +175,15 @@ export default function Signup() {
                   backgroundColor: '#F5F5F5',
                   transition: 'all 0.3s'
                 }}
-                value={email}
-                onChange={e => setEmail(e.target.value)}
+                value={formData.email}
+                onChange={handleChange}
                 required
               />
             </div>
-            <div className="mb-4">
+            <div className="mb-3">
               <input 
-                type="password" 
+                type="password"
+                name="password" 
                 className="form-control py-3" 
                 placeholder="Password"
                 style={{ 
@@ -145,9 +193,26 @@ export default function Signup() {
                   backgroundColor: '#F5F5F5',
                   transition: 'all 0.3s'
                 }}
-                value={password}
-                onChange={e => setPassword(e.target.value)}
+                value={formData.password}
+                onChange={handleChange}
                 required
+              />
+            </div>
+            <div className="mb-4">
+              <input 
+                type="text"
+                name="referralCodeRight"
+                className="form-control py-3" 
+                placeholder="Referral Code*"
+                style={{ 
+                  border: '2px solid #E0E0E0',
+                  borderRadius: '10px',
+                  color: '#0A2463',
+                  backgroundColor: '#F5F5F5',
+                  transition: 'all 0.3s'
+                }}
+                value={formData.referralCodeRight}
+                onChange={handleChange}
               />
             </div>
             <button 

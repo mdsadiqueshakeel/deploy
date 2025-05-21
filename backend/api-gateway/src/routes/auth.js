@@ -5,6 +5,8 @@ const axios = require("axios");
 const jwtAuth = require("../middlewares/jwtAuth");
 const USER_SERVICE_URL = process.env.USER_SERVICE_URL || "http://localhost:5001";
 
+
+
 // Register
 router.post("/register", async (req, res) => {
   try {
@@ -59,7 +61,8 @@ router.post("/reset-password", async (req, res) => {
 
 // Logout Route
 router.post("/logout", (req, res) => {
-  res.clearCookie("token", {
+  try{
+    res.clearCookie("token", {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production", // false in dev, true in prod
     sameSite: "lax",                               // "lax" is good for most apps
@@ -67,6 +70,9 @@ router.post("/logout", (req, res) => {
   });
 
   res.status(200).json({ message: "Logged out successfully" });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error' });
+  }
 });
 
 

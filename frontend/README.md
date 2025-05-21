@@ -1,17 +1,31 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/pages/api-reference/create-next-app).
+# Frontend - MLM System
+
+This is the frontend for the MLM System, built with [Next.js](https://nextjs.org) and bootstrapped using [`create-next-app`](https://nextjs.org/docs/pages/api-reference/create-next-app). It provides the user interface for interacting with the MLM platform.
+
+## Table of Contents
+
+- [Getting Started](#getting-started)
+- [Available Scripts](#available-scripts)
+- [Project Structure](#project-structure)
+- [Styling](#styling)
+- [API Routes](#api-routes)
+- [Fonts](#fonts)
+- [Learn More](#learn-more)
+- [Deployment](#deployment)
 
 ## Getting Started
 
-First, run the development server:
+To run the development server:
 
 ```bash
+npm install
 npm run dev
 # or
-yarn dev
+yarn install && yarn dev
 # or
-pnpm dev
+pnpm install && pnpm dev
 # or
-bun dev
+bun install && bun dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.

@@ -2,44 +2,39 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import Head from 'next/head';
-import api from 'services/api'; // Adjust the import path as necessary
+import api from "../../utils/api";
 
 export default function Login() {
+
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
   const router = useRouter();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
 
   // Initialize Bootstrap dropdown when component mounts
   if (typeof window !== 'undefined') {
     require('bootstrap/dist/js/bootstrap.bundle.min');
   }
 
+  const handleLogin = async (e) => {
+  e.preventDefault();
+  
+  try {
+    const response = await api.post("/api/auth/login", { email, password });
+    
+    // No need to handle token - it's in HTTP-only cookie
+    console.log("Login success:", response.data);
+    router.push("/dashboard");
+  } catch (error) {
+    setError(error.response?.data?.message || "Login failed");
+  }
+};
+
   const handleAdminLogin = () => {
     router.push('/admin');
   };
 
-const handleSubmit = async (e) => {
-  e.preventDefault(); // This must be first
-  
-  // Validation moved after preventDefault
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!emailRegex.test(email)) {
-    setError('Please enter a valid email address');
-    return;
-  }
 
-  try {
-    const response = await api.login({ email, password });
-    
-    // Store token and redirect
-    localStorage.setItem('token', response.data.token);
-    router.push('/dashboard');
-  } catch (error) {
-    console.error('Login Error:', error);
-    setError(error.toString());
-  }
-};
   return (
     <>
       <Head>
@@ -154,7 +149,7 @@ const handleSubmit = async (e) => {
             </ul>
           </div>
           
-          <form onSubmit={handleSubmit}>
+          <form onSubmit={handleLogin}>
             {error && (
               <div className="alert alert-danger" role="alert" style={{
                 borderRadius: '10px',
@@ -168,7 +163,7 @@ const handleSubmit = async (e) => {
               <input 
                 type="text" 
                 className="form-control py-3" 
-                placeholder="Username"
+                placeholder="Email"
                 style={{ 
                   border: '2px solid #E0E0E0',
                   borderRadius: '10px',
@@ -273,7 +268,7 @@ const handleSubmit = async (e) => {
                 e.target.style.transform = 'translateX(0)';
               }}
             >
-              Forget username/password? →
+              Forget password? →
             </Link>
           </div>
           

@@ -3,12 +3,10 @@ import Head from 'next/head';
 import Topbar from '@components/Topbar';
 import Sidebar from '@components/Sidebar';
 import ProfileCard from '@components/ProfileCard';
-import Products from '@pages/dashboard/products';
-import ProtectedRoute from '@components/ProtectedRoute';
+import Products from '@pages/dashboard/products'; // Correct import path
 
 // Placeholder components for other sections
 const DashboardOverview = () => (
-  
   <div className="p-4">
     <h2 className="mb-4" style={{ color: '#0A2463', fontWeight: '600' }}>
       Dashboard Overview
@@ -25,35 +23,35 @@ const Status = () => <div className="p-4"><h2 className="mb-4" style={{ color: '
 const RankRewards = () => <div className="p-4"><h2 className="mb-4" style={{ color: '#0A2463', fontWeight: '600' }}>Rank & Rewards</h2></div>;
 const Support = () => <div className="p-4"><h2 className="mb-4" style={{ color: '#0A2463', fontWeight: '600' }}>Support</h2></div>;
 
-export default function Dashboard() {
+export default function Dashboard({ initialUser }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [activeSection, setActiveSection] = useState('Dashboard');
   const [searchQuery, setSearchQuery] = useState('');
+  const [user, setUser] = useState(initialUser);
+  const [coins, setCoins] = useState(1000); // Initialize coins to 1000
 
-  // Initialize user state from localStorage
-  const [user, setUser] = useState(() => {
-    if (typeof window !== 'undefined') {
+  // Load user data from localStorage on client-side only
+  useEffect(() => {
+    try {
       const savedUser = localStorage.getItem('userProfileData');
-      return savedUser ? JSON.parse(savedUser) : {
-        name: 'sam',
-        email: 'samreels22@gmail.com',
-        avatar: null,
-        country: 'India',
-      };
+      if (savedUser) {
+        setUser(JSON.parse(savedUser));
+      }
+    } catch (error) {
+      console.error('Error loading user data from localStorage:', error);
     }
-    return {
-      name: 'sam',
-      email: 'samreels22@gmail.com',
-      avatar: null,
-      country: 'India',
-    };
-  });
+  }, []);
 
   const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
 
+  // Function to handle coin deduction
+  const handlePurchase = (cost) => {
+    setCoins(prevCoins => prevCoins - cost); // Deduct the exact cost of the product
+  };
+
   const sectionComponents = {
     Dashboard: <DashboardOverview />,
-    Products: <Products searchQuery={searchQuery} />,
+    Products: <Products searchQuery={searchQuery} coins={coins} onPurchase={handlePurchase} />, // Pass coins and handlePurchase
     Business: <Business />,
     Wallet: <Wallet />,
     Status: <Status />,
@@ -100,6 +98,7 @@ export default function Dashboard() {
             toggleSidebar={toggleSidebar}
             searchQuery={searchQuery}
             setSearchQuery={setSearchQuery}
+            coins={coins} // Pass coins to Topbar
           />
           <main className="p-4">
             {sectionComponents[activeSection] || <DashboardOverview />}
@@ -114,4 +113,20 @@ export default function Dashboard() {
       `}</style>
     </>
   );
+}
+
+export async function getServerSideProps(context) {
+  // Simulate fetching user data (replace with your actual API call)
+  const initialUser = {
+    name: 'sam',
+    email: 'samreels22@gmail.com',
+    avatar: null,
+    country: 'India',
+  };
+
+  return {
+    props: {
+      initialUser,
+    },
+  };
 }
