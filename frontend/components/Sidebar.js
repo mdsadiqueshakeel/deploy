@@ -1,6 +1,7 @@
 import { useRouter } from 'next/router';
 import { useState, useEffect } from 'react';
 import { fetchProfile } from 'utils/profileService';
+import { logout } from '../utils/auth';
 
 const Sidebar = ({isSidebarOpen, toggleSidebar, setActiveSection, activeSection }) => {
   const router = useRouter();
@@ -223,7 +224,15 @@ const Sidebar = ({isSidebarOpen, toggleSidebar, setActiveSection, activeSection 
         </ul>
         <hr style={{ borderColor: 'rgba(58, 134, 255, 0.3)' }} />
         <div className="mt-auto">
-          {/* Logout button can be added here if needed */}
+          <button
+            className="btn btn-danger w-100"
+            onClick={async () => {
+              await logout();
+              router.replace('/auth/login');
+            }}
+          >
+            <i className="bi bi-box-arrow-right me-2"></i> Logout
+          </button>
         </div>
       </div>
 

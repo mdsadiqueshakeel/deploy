@@ -4,6 +4,7 @@ import Topbar from '@components/Topbar';
 import Sidebar from '@components/Sidebar';
 import Products from './dashboard/products';
 import ProfileCard from '@components/ProfileCard';
+// import Referrals from './dashboard/referrals';
 
 // Placeholder components for other sections
 const DashboardOverview = () => (

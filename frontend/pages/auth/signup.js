@@ -4,7 +4,7 @@ import Link from 'next/link';
 import Head from 'next/head';
 import api from '../../utils/api'
 
-export default function signup () {
+export default function Signup () {
   const [formData, setFormData] = useState({
     name: "",
     email: "",

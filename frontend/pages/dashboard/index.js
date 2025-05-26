@@ -4,9 +4,12 @@ import Topbar from '@components/Topbar';
 import Sidebar from '@components/Sidebar';
 import ProfileCard from '@components/ProfileCard';
 import Products from '@pages/dashboard/products'; // Correct import path
+import BusinessVolumeForm from '@components/BusinessVolumeForm';
+import BusinessVolumeStats from '@components/BusinessVolumeStats';
+import BusinessPage from './business';
 
 // Placeholder components for other sections
-const DashboardOverview = () => (
+const DashboardOverview = ({ user, refresh, setRefresh }) => (
   <div className="p-4">
     <h2 className="mb-4" style={{ color: '#0A2463', fontWeight: '600' }}>
       Dashboard Overview
@@ -14,6 +17,13 @@ const DashboardOverview = () => (
     <p style={{ color: '#0A2463' }}>
       Welcome to your dashboard! Here you can manage your business, wallet, and more.
     </p>
+    {user && user._id && (
+      <>
+        <h4 className="mt-4 mb-2">Business Volume</h4>
+        <BusinessVolumeForm userId={user._id} onSuccess={() => setRefresh(r => r + 1)} />
+        <BusinessVolumeStats userId={user._id} refreshTrigger={refresh} />
+      </>
+    )}
   </div>
 );
 
@@ -29,6 +39,7 @@ export default function Dashboard({ initialUser }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [user, setUser] = useState(initialUser);
   const [coins, setCoins] = useState(1000); // Initialize coins to 1000
+  const [refresh, setRefresh] = useState(0);
 
   // Load user data from localStorage on client-side only
   useEffect(() => {
@@ -50,9 +61,9 @@ export default function Dashboard({ initialUser }) {
   };
 
   const sectionComponents = {
-    Dashboard: <DashboardOverview />,
+    Dashboard: <DashboardOverview user={user} refresh={refresh} setRefresh={setRefresh} />,
     Products: <Products searchQuery={searchQuery} coins={coins} onPurchase={handlePurchase} />, // Pass coins and handlePurchase
-    Business: <Business />,
+    Business: <BusinessPage />,
     Wallet: <Wallet />,
     Status: <Status />,
     'Rank & Rewards': <RankRewards />,
@@ -101,7 +112,7 @@ export default function Dashboard({ initialUser }) {
             coins={coins} // Pass coins to Topbar
           />
           <main className="p-4">
-            {sectionComponents[activeSection] || <DashboardOverview />}
+            {sectionComponents[activeSection] || <DashboardOverview user={user} refresh={refresh} setRefresh={setRefresh} />}
           </main>
         </div>
       </div>

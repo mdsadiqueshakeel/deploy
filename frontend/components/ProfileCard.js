@@ -23,6 +23,8 @@ const ProfileCard = ({ user: propUser }) => {
       panNumber: propUser?.panNumber || "",
       aadharNumber: propUser?.aadharNumber || "",
       avatar: propUser?.avatar || null,
+      referralCodeLeft: propUser?.referralCodeLeft || "",
+      referralCodeRight: propUser?.referralCodeRight || "",
     },
     bankDetails: {
       accountNumber: propUser?.bankDetails?.accountNumber || "",
@@ -68,6 +70,8 @@ const ProfileCard = ({ user: propUser }) => {
               panNumber: profileData.basicInfo?.panNumber || "",
               aadharNumber: profileData.basicInfo?.aadharNumber || "",
               avatar: profileData.basicInfo?.avatar || null,
+              referralCodeLeft: profileData.referralInfo?.referralCodeLeft || "",
+              referralCodeRight: profileData.referralInfo?.referralCodeRight || "",
             },
             bankDetails: {
               accountNumber: profileData.bankDetails?.accountNumber || "",
@@ -975,6 +979,26 @@ const ProfileCard = ({ user: propUser }) => {
                 style={{ color: "#0A2463", fontSize: "1.1rem" }}
               >
                 {user.basicInfo.aadharNumber || "Not provided"}
+              </p>
+            </div>
+
+            <div className="mb-4">
+              <h6 className="text-muted mb-1">Left Referral Code</h6>
+              <p
+                className="fw-medium"
+                style={{ color: "#0A2463", fontSize: "1.1rem" }}
+              >
+                {user.basicInfo.referralCodeLeft || "Not provided"}
+              </p>
+            </div>
+
+            <div className="mb-4">
+              <h6 className="text-muted mb-1">Right Referral Code</h6>
+              <p
+                className="fw-medium"
+                style={{ color: "#0A2463", fontSize: "1.1rem" }}
+              >
+                {user.basicInfo.referralCodeRight || "Not provided"}
               </p>
             </div>
 

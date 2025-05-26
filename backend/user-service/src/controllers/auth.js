@@ -218,6 +218,7 @@ exports.getProfile = async (req, res) => {
     // Structure the response
     const responseData = {
       basicInfo: {
+        _id: user._id,
         name: user.name,
         email: user.email,
         phone: user.phone,

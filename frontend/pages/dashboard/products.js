@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import styles from './Products.module.css';
+import Image from 'next/image';
 
 // Sample product data with Unsplash image URLs
 // Assign random coins to each product between 50 and 500
@@ -205,11 +206,13 @@ export default function Products({ searchQuery, coins, onPurchase }) { // Destru
                   boxShadow: '0 10px 25px rgba(58, 134, 255, 0.2)',
                 }}
               >
-                <img
+                <Image
                   src={product.image}
                   className={`card-img-top ${styles.productImage}`}
                   alt={product.name}
-                  style={{ borderRadius: '15px 15px 0 0', height: '200px', objectFit: 'cover' }}
+                  style={{ borderRadius: '15px 15px 0 0', height: '200px', width: 'auto', objectFit: 'cover' }}
+                  width={500}
+                  height={200}
                 />
                 <div className="card-body d-flex flex-column p-4">
                   <h5
@@ -288,7 +291,7 @@ export default function Products({ searchQuery, coins, onPurchase }) { // Destru
       ) : (
         <div className="text-center">
           <p style={{ color: '#0A2463', fontSize: '1.1rem' }}>
-            No products found matching "{searchQuery}".
+            No products found matching &quot;{searchQuery}&quot;.
           </p>
         </div>
       )}

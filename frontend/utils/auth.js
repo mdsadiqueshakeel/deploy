@@ -1,3 +1,5 @@
+import api from './api';
+
 // export const setToken = (token) => {
 //   localStorage.setItem('token', token);
 // };
@@ -19,8 +21,11 @@ export const checkAuth = async () => {
   }
 };
 
-// Usage in component
-const currentUser = await checkAuth();
-if (!currentUser) {
-  router.push('/login');
-}
+export const logout = async () => {
+  try {
+    await api.post('/api/auth/logout');
+    // Optionally, clear any client-side state here
+  } catch (error) {
+    // Handle error if needed
+  }
+};

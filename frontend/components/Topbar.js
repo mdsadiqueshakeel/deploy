@@ -1,11 +1,13 @@
 import { useEffect, useRef } from 'react';
 import { useRouter } from 'next/router';
+import { logout } from '../utils/auth';
 
 const Topbar = ({ toggleSidebar, searchQuery, setSearchQuery, coins }) => {
   const router = useRouter();
   const coinRef = useRef(null); // Ref for the coin display div
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    await logout();
     router.push('/auth/login');
   };
 
