@@ -6,12 +6,17 @@ const nodemailer = require("nodemailer");
 dotenv = require("dotenv").config();
 const { generateReferralCode } = require("../utils/referralUtils");
 
+// for reset and forget password
+const sendEmail = require("../utils/sendEmail");
+
 // USER REGISTRATION -------------------------------------------------------------------------------------------
 /**
  * Registers a new user in the system.
  *
  * This function handles the registration process by validating the input fields,
- * checking for existing users, validating the referral code, hashing the password,
+ * checking for existing users, validating t
+ * 
+ * he referral code, hashing the password,
  * and saving the new user to the database.
  *
  * @param {Object} req - The request object containing user registration data.
@@ -101,6 +106,47 @@ exports.login = async (req, res) => {
 };
 
 // USER FORGOT PASSWORD -------------------------------------------------------------------------------------------
+
+exports.forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+    console.log("Forgot password request for:", email);
+    
+    const user = await User.findOne({ email });
+    if (!user) {
+      console.log("User not found with email:", email);
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    // Generate reset token
+    const resetToken = crypto.randomBytes(20).toString('hex');
+    user.resetPasswordToken = resetToken;
+    user.resetPasswordExpires = Date.now() + 3600000; // 1 hour
+    
+    await user.save();
+    console.log("Reset token generated for user:", user._id);
+
+    // Send email
+    const resetUrl = `${process.env.CLIENT_URL}/reset-password?token=${resetToken}&id=${user._id}`;
+    const message = `
+      <p>You requested a password reset for your account.</p>
+      <p>Click this link to reset your password: <a href="${resetUrl}">${resetUrl}</a></p>
+      <p>This link will expire in 1 hour.</p>
+    `;
+
+    await sendEmail({
+      email: user.email,
+      subject: 'Password Reset Request',
+      message
+    });
+
+    console.log("Password reset email sent to:", user.email);
+    res.json({ message: "Password reset email sent" });
+  } catch (error) {
+    console.error("Error in forgotPassword:", error);
+    res.status(500).json({ error: "Server error", details: error.message });
+  }
+};
 /**
  * Handles the forgot password process.
  *
@@ -155,6 +201,28 @@ If you did not request this, please ignore this email.`,
 };
 
 // USER RESET PASSWORD -------------------------------------------------------------------------------------------
+
+// Reset Password
+exports.resetPassword = async (req, res) => {
+  const { token, id } = req.query;
+  const { password } = req.body;
+
+  const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
+  const user = await User.findOne({
+    _id: id,
+    resetPasswordToken: hashedToken,
+    resetPasswordExpires: { $gt: Date.now() },
+  });
+
+  if (!user) return res.status(400).json({ message: "Invalid or expired token" });
+
+  user.password = password;
+  user.resetPasswordToken = undefined;
+  user.resetPasswordExpires = undefined;
+  await user.save();
+
+  res.status(200).json({ message: "Password has been reset" });
+};
 /**
  * Handles the password reset process.
  *

@@ -5,8 +5,6 @@ const axios = require("axios");
 const jwtAuth = require("../middlewares/jwtAuth");
 const USER_SERVICE_URL = process.env.USER_SERVICE_URL || "http://localhost:5001";
 
-
-
 // Register
 router.post("/register", async (req, res) => {
   try {
@@ -32,22 +30,22 @@ router.post("/login", async (req, res) => {
       })
       .status(200)
       .json({ message: "Logged in successfully", token });
-
   } catch (err) {
     res.status(err.response?.status || 500).json(err.response?.data || { error: "Service error" });
   }
 });
 
 // Forgot Password
-router.post("/forgot-password", async (req, res) => {
+router.post("/auth/forgot-password", async (req, res) => {
   try {
-    const response = await axios.post(`${USER_SERVICE_URL}/api/auth/forgot-password`, req.body);
+    console.log("Forwarding forgot password request to:", `${USER_SERVICE_URL}/auth/forgot-password`);
+    const response = await axios.post(`${USER_SERVICE_URL}/auth/forgot-password`, req.body);
     res.status(response.status).json(response.data);
   } catch (err) {
+    console.error("Error in forgot password:", err.message);
     res.status(err.response?.status || 500).json(err.response?.data || { error: "Service error" });
   }
 });
-
 // Reset Password
 router.post("/reset-password", async (req, res) => {
   try {
@@ -58,24 +56,21 @@ router.post("/reset-password", async (req, res) => {
   }
 });
 
-
 // Logout Route
 router.post("/logout", (req, res) => {
-  try{
+  try {
     res.clearCookie("token", {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production", // false in dev, true in prod
-    sameSite: "lax",                               // "lax" is good for most apps
-    path: "/"                                      // important to match the path used when setting the cookie
-  });
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production", // false in dev, true in prod
+      sameSite: "lax", // "lax" is good for most apps
+      path: "/", // important to match the path used when setting the cookie
+    });
 
-  res.status(200).json({ message: "Logged out successfully" });
+    res.status(200).json({ message: "Logged out successfully" });
   } catch (error) {
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: "Server error" });
   }
 });
-
-
 
 // API Gateway
 // api-gateway/routes/auth.js
@@ -107,7 +102,6 @@ router.put("/change-password", async (req, res) => {
     res.status(err.response?.status || 500).json(err.response?.data || { error: "Service error" });
   }
 });
-
 
 router.put("/profile", jwtAuth, async (req, res) => {
   try {
