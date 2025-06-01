@@ -97,7 +97,7 @@ exports.login = async (req, res) => {
   });
 
   // Just return the token; API Gateway will set the cookie
-  res.json({ token });
+  res.json({ token, expiresIn: "1d" });
 };
 
 // USER FORGOT PASSWORD -------------------------------------------------------------------------------------------
