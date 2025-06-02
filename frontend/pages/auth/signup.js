@@ -94,14 +94,14 @@ const handleRegister = async (e) => {
             textShadow: '2px 2px 4px rgba(58, 134, 255, 0.3)',
             letterSpacing: '2px'
           }}>
-            BOT <span style={{ color: '#3A86FF' }}>ALPHA</span>
+            GROWTHAFFINITY <span style={{ color: '#3A86FF' }}></span>
           </h1>
           <p className="lead" style={{ 
             color: '#0A2463',
             fontWeight: '500',
             textShadow: '1px 1px 2px rgba(0, 245, 255, 0.2)'
           }}>
-            Join <span style={{ color: '#3A86FF' }}>Bot Alpha</span> MLM System
+            Join <span style={{ color: '#3A86FF' }}>GROWTHAFFINITY </span> MARKETING PVT LTD
           </p>
         </div>
 

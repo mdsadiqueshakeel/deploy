@@ -5,6 +5,12 @@ const axios = require("axios");
 const jwtAuth = require("../middlewares/jwtAuth");
 const USER_SERVICE_URL = process.env.USER_SERVICE_URL || "http://localhost:5001";
 
+// Add this for better error logging
+router.use((req, res, next) => {
+  console.log(`[API Gateway] ${req.method} ${req.originalUrl}`);
+  next();
+});
+
 // Register
 router.post("/register", async (req, res) => {
   try {
@@ -35,24 +41,40 @@ router.post("/login", async (req, res) => {
   }
 });
 
-// Forgot Password
-router.post("/auth/forgot-password", async (req, res) => {
+// Forgot Password - Fixed with enhanced logging
+router.post("/forgot-password", async (req, res) => {
+  console.log("API Gateway received /forgot-password request:", req.body);
   try {
-    console.log("Forwarding forgot password request to:", `${USER_SERVICE_URL}/auth/forgot-password`);
-    const response = await axios.post(`${USER_SERVICE_URL}/auth/forgot-password`, req.body);
+    const response = await axios.post(`${USER_SERVICE_URL}/api/auth/forgot-password`, req.body);
     res.status(response.status).json(response.data);
   } catch (err) {
-    console.error("Error in forgot password:", err.message);
+    console.error("API Gateway error:", {
+      status: err.response?.status,
+      data: err.response?.data,
+      message: err.message
+    });
     res.status(err.response?.status || 500).json(err.response?.data || { error: "Service error" });
   }
 });
-// Reset Password
+//Reset Password
+
 router.post("/reset-password", async (req, res) => {
+  console.log("API Gateway received reset-password request:", req.body);
   try {
-    const response = await axios.post(`${USER_SERVICE_URL}/api/auth/reset-password`, req.body);
+    const response = await axios.post(
+      `${USER_SERVICE_URL}/api/auth/reset-password`,
+      req.body
+    );
     res.status(response.status).json(response.data);
   } catch (err) {
-    res.status(err.response?.status || 500).json(err.response?.data || { error: "Service error" });
+    console.error("API Gateway reset-password error:", {
+      status: err.response?.status,
+      data: err.response?.data,
+      message: err.message
+    });
+    res.status(err.response?.status || 500).json(
+      err.response?.data || { error: "Service error" }
+    );
   }
 });
 

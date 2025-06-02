@@ -107,6 +107,62 @@ exports.login = async (req, res) => {
 
 // USER FORGOT PASSWORD -------------------------------------------------------------------------------------------
 
+// exports.forgotPassword = async (req, res) => {
+//   try {
+//     const { email } = req.body;
+//     console.log("Forgot password request for:", email);
+    
+//     const user = await User.findOne({ email });
+//     if (!user) {
+//       console.log("User not found with email:", email);
+//       return res.status(404).json({ error: "User not found" });
+//     }
+
+//     // Generate reset token
+//     const resetToken = crypto.randomBytes(20).toString('hex');
+//     user.resetPasswordToken = resetToken;
+//     user.resetPasswordExpires = Date.now() + 3600000; // 1 hour
+    
+//     await user.save();
+//     console.log("Reset token generated for user:", user._id);
+
+//     // Send email
+//     const resetUrl = `${process.env.CLIENT_URL}/reset-password?token=${resetToken}&id=${user._id}`;
+//     const message = `
+//       <p>You requested a password reset for your account.</p>
+//       <p>Click this link to reset your password: <a href="${resetUrl}">${resetUrl}</a></p>
+//       <p>This link will expire in 1 hour.</p>
+//     `;
+
+//     await sendEmail({
+//       email: user.email,
+//       subject: 'Password Reset Request',
+//       message
+//     });
+
+//     console.log("Password reset email sent to:", user.email);
+//     res.json({ message: "Password reset email sent" });
+//   } catch (error) {
+//     console.error("Error in forgotPassword:", error);
+//     res.status(500).json({ error: "Server error", details: error.message });
+//   }
+// };
+/**
+ * Handles the forgot password process.
+ *
+ * This function generates a reset token, saves it to the user's record,
+ * and sends an email with the reset link to the user.
+ *
+ * @param {Object} req - The request object containing user email.
+ * @param {Object} res - The response object used to send back the desired HTTP response.
+ *
+ * @returns {Promise<void>} - A promise that resolves when the forgot password process is complete.
+ *
+ * @throws {Error} - Throws an error if there is a server issue during the forgot password process.
+ */
+
+
+// Forgot Password - Fixed to use body instead of query
 exports.forgotPassword = async (req, res) => {
   try {
     const { email } = req.body;
@@ -127,7 +183,7 @@ exports.forgotPassword = async (req, res) => {
     console.log("Reset token generated for user:", user._id);
 
     // Send email
-    const resetUrl = `${process.env.CLIENT_URL}/reset-password?token=${resetToken}&id=${user._id}`;
+    const resetUrl = `${process.env.CLIENT_URL}/auth/reset-password?token=${resetToken}`;
     const message = `
       <p>You requested a password reset for your account.</p>
       <p>Click this link to reset your password: <a href="${resetUrl}">${resetUrl}</a></p>
@@ -147,82 +203,45 @@ exports.forgotPassword = async (req, res) => {
     res.status(500).json({ error: "Server error", details: error.message });
   }
 };
-/**
- * Handles the forgot password process.
- *
- * This function generates a reset token, saves it to the user's record,
- * and sends an email with the reset link to the user.
- *
- * @param {Object} req - The request object containing user email.
- * @param {Object} res - The response object used to send back the desired HTTP response.
- *
- * @returns {Promise<void>} - A promise that resolves when the forgot password process is complete.
- *
- * @throws {Error} - Throws an error if there is a server issue during the forgot password process.
- */
-exports.forgotPassword = async (req, res) => {
+
+
+//Reset Password
+
+exports.resetPassword = async (req, res) => {
   try {
-    const { email } = req.body;
-    const user = await User.findOne({ email });
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
-    // Generate reset token
-    const resetToken = crypto.randomBytes(20).toString("hex");
-    user.resetPasswordToken = resetToken;
-    user.resetPasswordExpires = Date.now() + 3600000; // 1 hour
-    await user.save();
-    // Send email
-
-    const transporter = nodemailer.createTransport({
-      host: process.env.EMAIL_HOST,
-      port: process.env.EMAIL_PORT,
-      secure: false, // use TLS
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
-      },
+    const { token, password } = req.body;
+    console.log("Reset password request with token:", token);
+    
+    // 1. Find user by valid reset token
+    const user = await User.findOne({
+      resetPasswordToken: token,
+      resetPasswordExpires: { $gt: Date.now() }
     });
-
-    const mailOptions = {
-      from: process.env.EMAIL_FROM,
-      to: user.email,
-      subject: "Password Reset",
-      text: `You are receiving this because you requested a password reset.\n
-Please click the following link to reset your password:\n
-http://localhost:5000/api/auth/reset/${resetToken}\n\n
-If you did not request this, please ignore this email.`,
-    };
-    await transporter.sendMail(mailOptions);
-    res.json({ message: "Password reset email sent" });
+    
+    if (!user) {
+      console.log("Invalid or expired token:", token);
+      return res.status(400).json({ message: "Invalid or expired token" });
+    }
+    
+    // 2. Update password and clear token
+    user.password = password;
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpires = undefined;
+    
+    // 3. Save changes
+    await user.save();
+    
+    console.log("Password reset successful for user:", user.email);
+    res.json({ message: "Password reset successful" });
   } catch (error) {
-    res.status(500).json({ message: "Server error", error: error.message });
+    console.error("Reset password error:", error);
+    res.status(500).json({ 
+      message: "Server error", 
+      error: error.message 
+    });
   }
 };
 
-// USER RESET PASSWORD -------------------------------------------------------------------------------------------
-
-// Reset Password
-exports.resetPassword = async (req, res) => {
-  const { token, id } = req.query;
-  const { password } = req.body;
-
-  const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
-  const user = await User.findOne({
-    _id: id,
-    resetPasswordToken: hashedToken,
-    resetPasswordExpires: { $gt: Date.now() },
-  });
-
-  if (!user) return res.status(400).json({ message: "Invalid or expired token" });
-
-  user.password = password;
-  user.resetPasswordToken = undefined;
-  user.resetPasswordExpires = undefined;
-  await user.save();
-
-  res.status(200).json({ message: "Password has been reset" });
-};
 /**
  * Handles the password reset process.
  *
