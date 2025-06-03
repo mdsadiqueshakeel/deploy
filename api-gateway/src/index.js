@@ -5,6 +5,7 @@ const cookieParser = require("cookie-parser");
 
 const referralRoutes = require("./routes/referral");
 const authRoutes = require("./routes/auth");
+const adminRoutes = require("./routes/admin");
 
 const app = express();
 
@@ -22,6 +23,7 @@ app.use(cookieParser());
 
 app.use("/api/auth", authRoutes);
 app.use("/api/referral", referralRoutes);
+app.use("/api/admin", adminRoutes);
 
 app.use((err, req, res, next) => {
   console.error("ERROR:", err.message);

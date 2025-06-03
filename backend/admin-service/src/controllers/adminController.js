@@ -1,0 +1,103 @@
+const Admin = require("../models/adminModel");
+const jwt = require("jsonwebtoken");
+const bcrypt = require("bcrypt");
+const axios = require("axios");
+
+const USER_SERVICE_URL = process.env.USER_SERVICE_URL || "http://localhost:5001";
+
+// Login Admin
+exports.login = async (req, res) => {
+  const { email, password } = req.body;
+
+    if (!email || !password) {
+    return res.status(400).json({ message: "All fields are required" });
+  }
+  
+  const admin = await Admin.findOne({ email });
+  if (!admin) return res.status(404).json({ message: "Admin not found" });
+
+  const match = await bcrypt.compare(password, admin.password);
+  if (!match) return res.status(401).json({ message: "Incorrect password" });
+
+  const token = jwt.sign({ adminId: admin._id, isAdmin: true }, process.env.JWT_SECRET, { expiresIn: "1d" });
+  res.json({ token });
+};
+
+// Change Password
+// src/controllers/adminController.js
+
+exports.changePassword = async (req, res) => {
+  const { currentPassword, newPassword, confirmPassword } = req.body;
+
+  if (!currentPassword || !newPassword || !confirmPassword) {
+    return res.status(400).json({ message: "All fields are required" });
+  }
+
+  if (newPassword !== confirmPassword) {
+    return res.status(400).json({ message: "New passwords do not match" });
+  }
+
+  const admin = await Admin.findById(req.admin.adminId);
+  if (!admin) return res.status(404).json({ message: "Admin not found" });
+
+  const isMatch = await bcrypt.compare(currentPassword, admin.password);
+  if (!isMatch) return res.status(401).json({ message: "Incorrect current password" });
+
+  const isSame = await bcrypt.compare(newPassword, admin.password);
+  if (isSame) return res.status(400).json({ message: "New password cannot be same as current" });
+
+  admin.password = newPassword; // will be hashed in pre-save
+  await admin.save();
+
+  res.json({ message: "Password updated successfully" });
+};
+
+
+// src/controllers/adminController.js
+
+exports.getProfile = async (req, res) => {
+  try {
+    const admin = await Admin.findById(req.admin.adminId).select("-password");
+
+    if (!admin) {
+      return res.status(404).json({ message: "Admin not found" });
+    }
+
+    res.json({
+      _id: admin._id,
+      email: admin.email,
+      createdAt: admin.createdAt,
+    });
+  } catch (err) {
+    res.status(500).json({ message: "Server error", error: err.message });
+  }
+};
+
+
+
+// Get All Users (List View)
+exports.getAllUsers = async (req, res) => {
+  try {
+    const { data } = await axios.get(`${USER_SERVICE_URL}/api/admin/users`);
+    const list = data.map(user => ({
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      phone: user.phone,
+    }));
+    res.json(list);
+  } catch (err) {
+    res.status(500).json({ message: "Failed to fetch users", detail: err.message });
+  }
+};
+
+// Get Single User Full Info
+exports.getSingleUser = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { data } = await axios.get(`${USER_SERVICE_URL}/api/admin/user/${id}`);
+    res.json(data);
+  } catch (err) {
+    res.status(500).json({ message: "Failed to fetch user", detail: err.message });
+  }
+};

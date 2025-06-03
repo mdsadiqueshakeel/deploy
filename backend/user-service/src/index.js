@@ -25,6 +25,7 @@ mongoose.connect(process.env.MONGO_URI)
   .catch((err) => console.error("Mongo error:", err));
 
 app.use("/api/auth", require("./routes/auth"));
+app.use("/api/admin", require("./routes/adminRoutes"));
 app.use("/api/referral", referralRoutes);
 
 const PORT = process.env.PORT || 5001;

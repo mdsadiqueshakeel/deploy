@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const axios = require("axios");
 
+
 const jwtAuth = require("../middlewares/jwtAuth");
 const USER_SERVICE_URL = process.env.USER_SERVICE_URL || "http://localhost:5001";
 
