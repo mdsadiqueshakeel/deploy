@@ -1,7 +1,8 @@
 const express = require("express");
 const router = express.Router();
-const { validateReferralCode } = require("../controllers/referral");
+const auth = require("../controllers/auth");
+const wrapAsync = require("../utils/wrapAsync");
 
-router.get("/validate/:referralCode", validateReferralCode);
+router.get("/validate/:code", wrapAsync(auth.validateReferral));
 
 module.exports = router;

@@ -94,6 +94,19 @@ router.post("/logout", (req, res) => {
   }
 });
 
+router.get("/referral/validate/:code", async (req, res) => {
+  try {
+    const response = await axios.get(
+      `${USER_SERVICE_URL}/api/referral/validate/${req.params.code}`
+    );
+    res.status(response.status).json(response.data);
+  } catch (err) {
+    res.status(err.response?.status || 500).json(
+      err.response?.data || { error: "Service error" }
+    );
+  }
+});
+
 // API Gateway
 // api-gateway/routes/auth.js
 router.get("/me", jwtAuth, async (req, res) => {

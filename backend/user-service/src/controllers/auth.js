@@ -26,6 +26,30 @@ const sendEmail = require("../utils/sendEmail");
  *
  * @throws {Error} - Throws an error if there is a server issue during the registration process.
  */
+
+
+// referral 
+exports.validateReferral = async (req, res) => {
+  try {
+    const { code } = req.params;
+    const user = await User.findOne({
+      $or: [
+        { referralCodeLeft: code },
+        { referralCodeRight: code }
+      ]
+    });
+
+    if (!user) {
+      return res.status(404).json({ valid: false, message: "Invalid referral code" });
+    }
+
+    res.json({ valid: true, user: { name: user.name, email: user.email } });
+  } catch (error) {
+    res.status(500).json({ valid: false, message: "Server error" });
+  }
+};
+
+// This function registers a new user with referral code validation
 exports.register = async (req, res) => {
   try {
     const { name, email, password, referralCode } = req.body;

@@ -18,16 +18,13 @@ export default function Signup () {
 
 const validateReferral = async (code) => {
   try {
-    const res = await fetch(`http://localhost:5000/api/referral/validate/${code}`);
-
-    if (!res.ok) {
-      const errorText = await res.text(); // helpful for debugging HTML
-      console.error("Server returned:", errorText);
+    const res = await api.get(`/api/referral/validate/${code}`);
+    
+    if (res.status !== 200) {
       throw new Error("Invalid referral code");
     }
-
-    const data = await res.json();
-    return data;
+    
+    return res.data;
   } catch (err) {
     console.error("Referral validation failed:", err.message);
     return null;
