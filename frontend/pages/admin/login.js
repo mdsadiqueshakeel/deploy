@@ -1,43 +1,45 @@
-import { useState } from 'react';
+import Head from 'next/head';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import Head from 'next/head';
-import api from "../../utils/api";
+import { useEffect, useState } from 'react';
+import api from '../../utils/api';
 
-export default function Login() {
-
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+export default function AdminLogin() {
   const router = useRouter();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
 
-  // Initialize Bootstrap dropdown when component mounts
-  if (typeof window !== 'undefined') {
-    require('bootstrap/dist/js/bootstrap.bundle.min');
-  }
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      require('bootstrap/dist/js/bootstrap.bundle.min');
+    }
+  }, []);
 
-  const handleLogin = async (e) => {
-  e.preventDefault();
-  
-  try {
-    const response = await api.post("/api/auth/login", { email, password });
-    
-    // No need to handle token - it's in HTTP-only cookie
-    console.log("Login success:", response.data);
-    router.push("/dashboard");
-  } catch (error) {
-    setError(error.response?.data?.message || "Login failed");
-  }
-};
-
-  const handleAdminLogin = () => {
-    router.push('/admin/login');
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+    try {
+      const response = await api.post('/api/admin/login', { email, password });
+      if (response.data.token) {
+        localStorage.setItem('adminToken', response.data.token);
+        router.push('/admin/dashboard');
+      } else {
+        setError(response.data.message || 'Login failed');
+      }
+    } catch (error) {
+      setError(error.response?.data?.message || 'Login failed. Please try again.');
+    }
   };
 
+  const handleUserLogin = () => {
+    router.push('/auth/login');
+  };
 
   return (
     <>
       <Head>
+        <title>Admin Login</title>
         <link 
           href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" 
           rel="stylesheet"
@@ -46,7 +48,7 @@ export default function Login() {
       
       <div className="min-vh-100 d-flex flex-column justify-content-center align-items-center" style={{ 
         backgroundColor: '#FFFFFF',
-        backgroundImage: 'radial-gradient(circle at 10% 20%, rgba(58, 134, 255, 0.1) 0%, rgba(10, 36, 99, 0.1) 90%)'
+        backgroundImage: 'radial-gradient(circle at 90% 20%, rgba(58, 134, 255, 0.1) 0%, rgba(10, 36, 99, 0.1) 90%)'
       }}>
         <div className="text-center mb-4">
           <h1 className="fw-bold display-4" style={{ 
@@ -61,7 +63,7 @@ export default function Login() {
             fontWeight: '500',
             textShadow: '1px 1px 2px rgba(0, 245, 255, 0.2)'
           }}>
-            Welcome to <span style={{ color: '#3A86FF' }}>GROWTHAFFINITY </span> MARKETING PVT LTD
+            Admin Portal - Restricted Access
           </p>
         </div>
 
@@ -72,35 +74,37 @@ export default function Login() {
           border: 'none',
           borderRadius: '15px',
           boxShadow: '0 10px 25px rgba(58, 134, 255, 0.2)',
-          transition: 'transform 0.3s, box-shadow 0.3s',
-          ':hover': {
-            transform: 'translateY(-5px)',
-            boxShadow: '0 15px 30px rgba(58, 134, 255, 0.3)'
-          }
+          transition: 'transform 0.3s, box-shadow 0.3s'
         }}>
           <div className="dropdown mb-3">
             <button 
               className="btn dropdown-toggle w-100 py-3" 
               style={{ 
-                background: 'linear-gradient(135deg, #0A2463 0%, #3A86FF 100%)',
+                background: 'linear-gradient(135deg, #3A86FF 0%, #0A2463 100%)',
                 color: 'white',
                 border: 'none',
                 borderRadius: '10px',
                 fontWeight: '600',
                 letterSpacing: '1px',
-                boxShadow: '0 4px 15px rgba(10, 36, 99, 0.4)',
+                boxShadow: '0 4px 15px rgba(58, 134, 255, 0.4)',
                 transition: 'all 0.3s ease'
               }}
               type="button" 
-              id="loginTypeDropdown"
+              id="adminLoginDropdown"
               data-bs-toggle="dropdown"
               aria-expanded="false"
-              onMouseEnter={(e) => e.target.style.boxShadow = '0 6px 20px rgba(10, 36, 99, 0.6)'}
-              onMouseLeave={(e) => e.target.style.boxShadow = '0 4px 15px rgba(10, 36, 99, 0.4)'}
+              onMouseEnter={(e) => {
+                e.target.style.boxShadow = '0 6px 20px rgba(58, 134, 255, 0.6)';
+                e.target.style.background = 'linear-gradient(135deg, #0A2463 0%, #3A86FF 100%)';
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.boxShadow = '0 4px 15px rgba(58, 134, 255, 0.4)';
+                e.target.style.background = 'linear-gradient(135deg, #3A86FF 0%, #0A2463 100%)';
+              }}
             >
-              User Login
+              Admin Login
             </button>
-            <ul className="dropdown-menu w-100" aria-labelledby="loginTypeDropdown" style={{
+            <ul className="dropdown-menu w-100" aria-labelledby="adminLoginDropdown" style={{
               border: 'none',
               borderRadius: '10px',
               boxShadow: '0 10px 25px rgba(58, 134, 255, 0.2)'
@@ -108,6 +112,7 @@ export default function Login() {
               <li>
                 <button 
                   className="dropdown-item py-2" 
+                  onClick={handleUserLogin}
                   style={{ 
                     color: '#0A2463',
                     fontWeight: '500',
@@ -128,7 +133,6 @@ export default function Login() {
               <li>
                 <button 
                   className="dropdown-item py-2" 
-                  onClick={handleAdminLogin}
                   style={{ 
                     color: '#0A2463',
                     fontWeight: '500',
@@ -149,7 +153,7 @@ export default function Login() {
             </ul>
           </div>
           
-          <form onSubmit={handleLogin}>
+          <form onSubmit={handleSubmit}>
             {error && (
               <div className="alert alert-danger" role="alert" style={{
                 borderRadius: '10px',
@@ -163,7 +167,7 @@ export default function Login() {
               <input 
                 type="text" 
                 className="form-control py-3" 
-                placeholder="Email"
+                placeholder="Admin Email"
                 style={{ 
                   border: '2px solid #E0E0E0',
                   borderRadius: '10px',
@@ -173,14 +177,6 @@ export default function Login() {
                 }}
                 value={email}
                 onChange={e => setEmail(e.target.value)}
-                onFocus={(e) => {
-                  e.target.style.borderColor = '#3A86FF';
-                  e.target.style.boxShadow = '0 0 0 0.25rem rgba(58, 134, 255, 0.25)';
-                }}
-                onBlur={(e) => {
-                  e.target.style.borderColor = '#E0E0E0';
-                  e.target.style.boxShadow = 'none';
-                }}
                 required
               />
             </div>
@@ -188,7 +184,7 @@ export default function Login() {
               <input 
                 type="password" 
                 className="form-control py-3" 
-                placeholder="Password"
+                placeholder="Admin Password"
                 style={{ 
                   border: '2px solid #E0E0E0',
                   borderRadius: '10px',
@@ -198,20 +194,12 @@ export default function Login() {
                 }}
                 value={password}
                 onChange={e => setPassword(e.target.value)}
-                onFocus={(e) => {
-                  e.target.style.borderColor = '#3A86FF';
-                  e.target.style.boxShadow = '0 0 0 0.25rem rgba(58, 134, 255, 0.25)';
-                }}
-                onBlur={(e) => {
-                  e.target.style.borderColor = '#E0E0E0';
-                  e.target.style.boxShadow = 'none';
-                }}
                 required
               />
             </div>
             <button 
               type="submit" 
-              className="btn w-100 py-3"
+              className="btn w-100 py-3 mb-3"
               style={{ 
                 background: 'linear-gradient(135deg, #3A86FF 0%, #0A2463 100%)',
                 color: 'white',
@@ -221,80 +209,23 @@ export default function Login() {
                 letterSpacing: '1px',
                 boxShadow: '0 4px 15px rgba(58, 134, 255, 0.4)',
                 transition: 'all 0.3s ease',
-                position: 'relative',
-                overflow: 'hidden'
-              }}
-              onMouseEnter={(e) => {
-                e.target.style.boxShadow = '0 6px 20px rgba(58, 134, 255, 0.6)';
-                e.target.style.transform = 'translateY(-2px)';
-              }}
-              onMouseLeave={(e) => {
-                e.target.style.boxShadow = '0 4px 15px rgba(58, 134, 255, 0.4)';
-                e.target.style.transform = 'translateY(0)';
               }}
             >
-              <span style={{ position: 'relative', zIndex: '2' }}>LOGIN</span>
-              <span style={{
-                position: 'absolute',
-                top: '-50%',
-                left: '-50%',
-                width: '200%',
-                height: '200%',
-                background: 'linear-gradient(135deg, rgba(0, 245, 255, 0.3) 0%, transparent 100%)',
-                transform: 'rotate(45deg)',
-                transition: 'all 0.5s ease',
-                opacity: '0'
-              }} 
-              className="btn-shine"
-              />
+              ADMIN LOGIN
             </button>
           </form>
           
-          <div className="text-center mt-4">
+          <div className="text-center mt-3">
             <Link 
-              href="/auth/forgot-password" 
+              href="/admin/forgot-credentials" 
               className="text-decoration-none small fw-medium"
               style={{ 
                 color: '#0A2463',
                 transition: 'all 0.2s',
                 display: 'inline-block'
               }}
-              onMouseEnter={(e) => {
-                e.target.style.color = '#00F5FF';
-                e.target.style.transform = 'translateX(5px)';
-              }}
-              onMouseLeave={(e) => {
-                e.target.style.color = '#0A2463';
-                e.target.style.transform = 'translateX(0)';
-              }}
             >
-              Forget password? →
-            </Link>
-          </div>
-          
-          <div className="text-center mt-4 pt-3" style={{ borderTop: '1px dashed rgba(10, 36, 99, 0.2)' }}>
-            <Link 
-              href="/auth/signup" 
-              className="text-decoration-none fw-bold"
-              style={{ 
-                color: '#0A2463',
-                transition: 'all 0.2s',
-                display: 'inline-flex',
-                alignItems: 'center'
-              }}
-              onMouseEnter={(e) => {
-                e.target.style.color = '#3A86FF';
-                e.target.style.transform = 'scale(1.05)';
-              }}
-              onMouseLeave={(e) => {
-                e.target.style.color = '#0A2463';
-                e.target.style.transform = 'scale(1)';
-              }}
-            >
-              Create Your Account
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" className="bi bi-arrow-right ms-2" viewBox="0 0 16 16">
-                <path fillRule="evenodd" d="M1 8a.5.5 0 0 1 .5-.5h11.793l-3.147-3.146a.5.5 0 0 1 .708-.708l4 4a.5.5 0 0 1 0 .708l-4 4a.5.5 0 0 1-.708-.708L13.293 8.5H1.5A.5.5 0 0 1 1 8z"/>
-              </svg>
+              Forget admin credentials? →
             </Link>
           </div>
         </div>

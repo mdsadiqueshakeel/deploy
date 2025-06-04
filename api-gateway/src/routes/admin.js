@@ -6,6 +6,34 @@ const adminAuth = require("../middlewares/adminAuth");
 const ADMIN_SERVICE_URL = process.env.ADMIN_SERVICE_URL || "http://localhost:5002";
 const USER_SERVICE_URL = process.env.USER_SERVICE_URL || "http://localhost:5001";
 
+//sameer
+
+// Debug log added here
+router.get("/verify", adminAuth, async (req, res) => {
+  try {
+    // ADD DEBUG LOGS
+    console.log('[Gateway] Received token:', req.headers.authorization);
+    console.log('[Gateway] Forwarding to:', ADMIN_SERVICE_URL);
+    
+    const headers = {
+      Authorization: req.headers.authorization,
+      'x-admin-token': req.headers.authorization?.split(' ')[1] || ''
+    };
+
+    const response = await axios.get(`${ADMIN_SERVICE_URL}/api/admin/verify`, {
+      headers
+    });
+    
+    res.status(response.status).json(response.data);
+  } catch (err) {
+    console.error('[Gateway] Verify error:', err.message);
+    res.status(err.response?.status || 500).json(
+      err.response?.data || { message: "Service error" }
+    );
+  }
+});
+
+
 // Logger for debug
 router.use((req, res, next) => {
   console.log(`[API Gateway - Admin] ${req.method} ${req.originalUrl}`);

@@ -1,26 +1,30 @@
 const Admin = require("../models/adminModel");
 const jwt = require("jsonwebtoken");
-const bcrypt = require("bcrypt");
+const bcrypt = require("bcryptjs");
 const axios = require("axios");
 
 const USER_SERVICE_URL = process.env.USER_SERVICE_URL || "http://localhost:5001";
 
 // Login Admin
 exports.login = async (req, res) => {
-  const { email, password } = req.body;
+  try {
+    const { email, password } = req.body;
 
     if (!email || !password) {
-    return res.status(400).json({ message: "All fields are required" });
+      return res.status(400).json({ message: "All fields are required" });
+    }
+
+    const admin = await Admin.findOne({ email });
+    if (!admin) return res.status(404).json({ message: "Admin not found" });
+
+    const match = await bcrypt.compare(password, admin.password);
+    if (!match) return res.status(401).json({ message: "Incorrect password" });
+
+    const token = jwt.sign({ adminId: admin._id, isAdmin: true }, process.env.JWT_SECRET, { expiresIn: "1d" });
+    res.json({ token });
+  } catch (err) {
+    res.status(500).json({ message: "Server error", detail: err.message });
   }
-  
-  const admin = await Admin.findOne({ email });
-  if (!admin) return res.status(404).json({ message: "Admin not found" });
-
-  const match = await bcrypt.compare(password, admin.password);
-  if (!match) return res.status(401).json({ message: "Incorrect password" });
-
-  const token = jwt.sign({ adminId: admin._id, isAdmin: true }, process.env.JWT_SECRET, { expiresIn: "1d" });
-  res.json({ token });
 };
 
 // Change Password
@@ -57,6 +61,7 @@ exports.changePassword = async (req, res) => {
 
 exports.getProfile = async (req, res) => {
   try {
+      console.log('[Admin Service] getProfile - adminId:', req.admin.adminId);
     const admin = await Admin.findById(req.admin.adminId).select("-password");
 
     if (!admin) {
@@ -99,5 +104,31 @@ exports.getSingleUser = async (req, res) => {
     res.json(data);
   } catch (err) {
     res.status(500).json({ message: "Failed to fetch user", detail: err.message });
+  }
+};
+
+// Get Dashboard Stats
+exports.getDashboardStats = async (req, res) => {
+  try {
+    // Fetch all users from user-service
+    const { data: users } = await axios.get(`${USER_SERVICE_URL}/api/admin/users`, {
+      headers: { Authorization: req.headers.authorization }
+    });
+
+    // Calculate stats
+    const totalUsers = users.length;
+    const activeUsers = users.filter(u => u.isActive).length;
+    // For demo, you can set transactions and revenue to 0 or fetch from another service if available
+    const transactions = 0;
+    const revenue = 0;
+
+    res.json({
+      totalUsers,
+      activeUsers,
+      transactions,
+      revenue
+    });
+  } catch (err) {
+    res.status(500).json({ message: "Failed to fetch dashboard stats", detail: err.message });
   }
 };
