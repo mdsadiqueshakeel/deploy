@@ -83,16 +83,24 @@ exports.getProfile = async (req, res) => {
 // Get All Users (List View)
 exports.getAllUsers = async (req, res) => {
   try {
-    const { data } = await axios.get(`${USER_SERVICE_URL}/api/admin/users`);
-    const list = data.map(user => ({
-      _id: user._id,
-      name: user.name,
-      email: user.email,
-      phone: user.phone,
+    console.log('Admin Service - Attempting to fetch users');
+    
+    const { data } = await axios.get(`${USER_SERVICE_URL}/api/admin/users`, {
+      headers: { Authorization: req.headers.authorization }
+    });
+
+    // Ensure dates are properly formatted
+    const formattedUsers = data.map(user => ({
+      ...user,
+      createdAt: user.createdAt ? new Date(user.createdAt).toISOString() : null
     }));
-    res.json(list);
+
+    console.log('Sample user date:', formattedUsers[0]?.createdAt); // Debug log
+    res.json(formattedUsers);
+
   } catch (err) {
-    res.status(500).json({ message: "Failed to fetch users", detail: err.message });
+    console.error('Admin Service - Error:', err);
+    res.status(500).json({ message: "Failed to fetch users", error: err.message });
   }
 };
 

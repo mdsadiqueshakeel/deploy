@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 const axios = require("axios");
 
-const adminAuth = require("../middlewares/adminAuth");
+const adminAuth = require('../middlewares/adminAuth');
 const ADMIN_SERVICE_URL = process.env.ADMIN_SERVICE_URL || "http://localhost:5002";
 const USER_SERVICE_URL = process.env.USER_SERVICE_URL || "http://localhost:5001";
 
@@ -95,14 +95,35 @@ router.get("/me", adminAuth, async (req, res) => {
 // 📋 Get All Users (admin dashboard)
 router.get("/users", adminAuth, async (req, res) => {
   try {
+    console.log('API Gateway - Forwarding user request to admin service');
+    
+    if (!ADMIN_SERVICE_URL) {
+      console.error('ADMIN_SERVICE_URL is not defined');
+      return res.status(500).json({ message: "Admin service URL not configured" });
+    }
+
     const response = await axios.get(`${ADMIN_SERVICE_URL}/api/admin/users`, {
-      headers: {
-        Authorization: req.headers.authorization,
-      },
+      headers: { 
+        Authorization: req.headers.authorization
+      }
+    }).catch(error => {
+      console.error('Error calling admin service:', error.message);
+      if (error.response) {
+        console.error('Admin service response:', error.response.data);
+      }
+      throw error;
     });
+
+    console.log('API Gateway - Successfully received admin service response');
     res.status(response.status).json(response.data);
   } catch (err) {
-    res.status(err.response?.status || 500).json(err.response?.data || { error: "Service error" });
+    console.error('API Gateway - Error handling user request:', err);
+    res.status(err.response?.status || 500).json(
+      err.response?.data || { 
+        message: "Service error",
+        detail: err.message
+      }
+    );
   }
 });
 

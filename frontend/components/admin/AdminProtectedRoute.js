@@ -1,7 +1,6 @@
-import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/router';
 import api from '../../services/api';
-
 
 const AdminProtectedRoute = (WrappedComponent) => {
   return (props) => {
@@ -12,7 +11,6 @@ const AdminProtectedRoute = (WrappedComponent) => {
     useEffect(() => {
       const checkAuth = async () => {
         try {
-          // Check if we're in the browser environment
           if (typeof window !== 'undefined') {
             const adminToken = localStorage.getItem('adminToken');
             
@@ -21,14 +19,14 @@ const AdminProtectedRoute = (WrappedComponent) => {
               return;
             }
 
-            // Verify token with backend
-            await api.get('/admin/verify', {
-  headers: { Authorization: `Bearer ${adminToken}` }
-});
+            // Changed from /admin/verify to /api/admin/verify
+            await api.get('/api/admin/verify', {
+              headers: { Authorization: `Bearer ${adminToken}` }
+            });
             setIsAuthenticated(true);
           }
         } catch (error) {
-          console.error('Admin authentication error:', error);
+          console.error('Auth error:', error);
           localStorage.removeItem('adminToken');
           router.push('/admin/login');
         } finally {
@@ -51,41 +49,6 @@ const AdminProtectedRoute = (WrappedComponent) => {
 
     return isAuthenticated ? <WrappedComponent {...props} /> : null;
   };
-};
-
-// Add this inside the checkAuth function
-const checkAuth = async () => {
-  try {
-    if (typeof window !== "undefined") {
-      const adminToken = localStorage.getItem("adminToken");
-      console.log('[Frontend] AdminToken from localStorage:', adminToken);
-      
-      if (!adminToken) {
-        console.log('[Frontend] No token - redirecting to login');
-        router.push("/admin/login");
-        return;
-      }
-
-      // Add token to request headers
-      api.defaults.headers.common["Authorization"] = `Bearer ${adminToken}`;
-      
-      try {
-        console.log('[Frontend] Verifying token with backend');
-        await api.get("/admin/verify", {
-          headers: { Authorization: `Bearer ${adminToken}` }
-        });
-        setIsAuthenticated(true);
-      } catch (error) {
-        console.error('[Frontend] Verification error:', error);
-        // ... rest of error handling ...
-      }
-    }
-  } catch (error) {
-    console.error('[Frontend] Auth check error:', error);
-    // ... rest of error handling ...
-  } finally {
-    setLoading(false);
-  }
 };
 
 export default AdminProtectedRoute;

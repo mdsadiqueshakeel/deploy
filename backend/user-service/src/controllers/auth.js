@@ -465,3 +465,30 @@ exports.changePassword = async (req, res) => {
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
+
+//admin get all users --sameer
+exports.getAllUsersForAdmin = async (req, res) => {
+  try {
+    const users = await User.find()
+      .select('name email phone createdAt isActive balance rank')
+      .sort({ createdAt: -1 })
+      .lean();
+
+    const formattedUsers = users.map(user => ({
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      phone: user.phone,
+     createdAt: user.createdAt ? user.createdAt.toISOString() : null,
+      isActive: user.isActive || false,
+      balance: user.balance || 0,
+      rank: user.rank || 'Member'
+    }));
+
+   console.log('Admin Service - Sample user date:', data[0]?.createdAt);
+    res.json(data);
+  } catch (error) {
+    console.error('Error in getAllUsersForAdmin:', error);
+    res.status(500).json({ error: 'Failed to fetch users' });
+  }
+};
