@@ -14,7 +14,7 @@ services:
     ports:
       - "4000:4000"
     environment:
-      - MONGO_URI=mongodb+srv://mlmdevelopment001:NconnectionN@affilateproject.oilsuaa.mongodb.net/?retryWrites=true&w=majority&appName=AffilateProject
+      - MONGO_URI=mongodb+srv://mlmproject1010:mlmproject1010@cluster0.qppzjdi.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0
     depends_on:
       - mongo
       - user-service
@@ -42,6 +42,13 @@ services:
     depends_on:
       - mongo
 
+  admin-service:
+    build: ./backend/admin-service
+    environment:
+      - MONGO_URI=mongodb+srv://mlmdevelopment001:NconnectionN@affilateproject.oilsuaa.mongodb.net/?retryWrites=true&w=majority&appName=AffilateProject
+    depends_on:
+      - mongo
+
   frontend:
     build: ./frontend
     ports:
@@ -50,4 +57,4 @@ services:
       - api-gateway
 
 volumes:
-  mongo-data: 
+  mongo-data:

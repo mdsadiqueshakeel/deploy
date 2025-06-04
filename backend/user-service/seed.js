@@ -1,41 +1,48 @@
-require("dotenv").config({ path: "./.env" }); // Make sure this path is correct
-
 const mongoose = require("mongoose");
-const bcrypt = require("bcrypt");
-const User = require("./src/models/User"); // Adjust if needed
+const dotenv = require("dotenv");
+const User = require("./src/models/User");
+const { generateReferralCode } = require("./src/utils/referralUtils");
 
-const MONGO_URI = process.env.MONGO_URI;
+dotenv.config({ path: './.env' });
 
-async function seed() {
+const seedUser = async () => {
   try {
-    if (!MONGO_URI) throw new Error("MONGO_URI is missing from .env");
+    await mongoose.connect(process.env.MONGO_URI, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+    });
+    console.log('MongoDB Connected...');
 
-    await mongoose.connect(MONGO_URI);
-    console.log("✅ Connected to MongoDB Atlas");
-
-    const exists = await User.findOne({ email: "admin@sponsor.com" });
-    if (exists) {
-      console.log("Seed user already exists.");
-      return process.exit(0);
+    // Check if a root user already exists to prevent duplicates
+    const existingRootUser = await User.findOne({ isRootSponsor: true });
+    if (existingRootUser) {
+      console.log('Root user already exists. Skipping seeding.');
+      mongoose.connection.close();
+      return;
     }
 
-    const user = new User({
-      name: "Sadique",
-      email: "tempsadique@gmail.com",
-      password: await bcrypt.hash("sadique", 10),
-      referralCode: "TEMP1234",
-      referralCodeLeft: "LEFTTEMP",
-      referralCodeRight: "RIGHTTEMP",
-      isAdmin: true,
+    const password = 'password123'; // You might want to hash this or make it dynamic
+
+    const newUser = new User({
+      name: 'Ranjan',
+      email: 'ranjan@ac.in',
+      password: password, // Mongoose pre-save hook will hash this
+      referralCodeLeft: generateReferralCode(),
+      referralCodeRight: generateReferralCode(),
+      isRootSponsor: true,
     });
 
-    await user.save();
-    console.log("✅ Seed user created.");
-    process.exit(0);
-  } catch (err) {
-    console.error("❌ Error:", err.message);
+    await newUser.save();
+    console.log('Ranjan user seeded successfully!');
+    console.log('Left Referral Code:', newUser.referralCodeLeft);
+    console.log('Right Referral Code:', newUser.referralCodeRight);
+
+    mongoose.connection.close();
+    console.log('MongoDB Disconnected.');
+  } catch (error) {
+    console.error('Error seeding user:', error);
     process.exit(1);
   }
-}
+};
 
-seed();
+seedUser();

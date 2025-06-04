@@ -1,203 +1,291 @@
-# MLM-System (Affiliate Project) — Backend & Frontend Overview
+# MLM System (Multi-Level Marketing)
 
-This document summarizes the features and technical highlights of the MLM-System project, designed for affiliate and multi-level marketing operations. The system is built with a modern stack: **Node.js, Express, MongoDB, Next.js, and Docker**. It is modular, scalable, and ready for production deployment.
+A complete MLM system with binary tree structure, built using Next.js, Express.js microservices, and MongoDB.
 
----
+## 🌟 Overview
 
-## 🚀 Features Delivered
+This MLM system provides a platform for managing multi-level marketing operations with features like user management, binary tree referrals, business volume tracking, and comprehensive admin controls.
 
-### User Management & Authentication
-- **User Registration & Login** (with email & password)
-- **JWT-based Authentication** (secure, HTTP-only cookies)
-- **Forgot/Reset Password** (email-based, secure token flow)
-- **Profile Management**: Users can update their personal and bank details, including avatar upload and removal.
-- **Change Password**: Users can securely change their password from their profile.
-- **Admin User Support**: Admin flag in user schema for future admin panel.
-
-### MLM Binary Tree Logic
-- **Referral System**: Each user has a unique referral code.
-- **Binary Tree Structure**: Users are placed in a binary tree (left/right child) for MLM logic.
-- **Sponsor/Parent Tracking**: Each user tracks their sponsor and parent in the tree.
-
-### API Gateway (Microservices Architecture)
-- **Central API Gateway**: All frontend requests go through a single gateway.
-- **Service Proxying**: Auth, user, and admin requests are routed to the appropriate backend service.
-- **CORS & Security**: Configured for secure cross-origin requests.
-
-### Admin Services (via API Gateway)
-All admin APIs are accessible via the API Gateway at `/api/admin/...`.  
-**Frontend developers:** Use these endpoints for admin dashboard and management features.  
-**Authentication:** Admin routes require a valid admin JWT (set as `adminToken` cookie on login).
-
-#### **Available Admin Routes via API Gateway**
-| Method | Endpoint                  | Description                          | Auth Required |
-|--------|---------------------------|--------------------------------------|--------------|
-| POST   | `/api/admin/login`        | Admin login, returns JWT cookie      | No           |
-| POST   | `/api/admin/logout`       | Admin logout, clears cookie          | Yes          |
-| GET    | `/api/admin/me`           | Get admin profile info               | Yes          |
-| PUT    | `/api/admin/change-password` | Change admin password              | Yes          |
-| GET    | `/api/admin/users`        | List all users (for admin)           | Yes          |
-| GET    | `/api/admin/user/:id`     | Get full user details by user ID     | Yes          |
-
-> **Note:** All admin endpoints require the `adminToken` cookie or `Authorization: Bearer <token>` header.  
-> The API Gateway handles authentication and proxies requests to the correct backend service.
+## 🏗 Architecture
 
 ### Frontend (Next.js)
-- **Modern UI**: Built with Next.js, responsive and fast.
-- **Profile Card**: Users can view and edit their profile, including avatar and bank details.
-- **Sidebar**: Displays user info (name, email, avatar) and updates instantly after profile changes.
-- **Change Password**: Integrated into the profile card, with instant feedback.
-- **Authentication State**: Persistent login using secure cookies.
-- **Error Handling & Loading States**: User-friendly feedback throughout the app.
-- **Admin Panel Ready**: Easily integrate admin routes for dashboards, user management, and logs.
+- Port: 3000
+- Features:
+  - User Dashboard
+  - Admin Panel
+  - Referral Management
+  - Binary Tree Visualization
+  - Real-time Business Volume Tracking
 
-### DevOps & Deployment
-- **Dockerized**: All services (API Gateway, User Service, Admin Service, Frontend) are containerized for easy deployment.
-- **Docker Compose**: One command to run the entire stack locally or in production.
-- **Environment Variables**: Secure, flexible configuration for all environments.
+### Backend Microservices
 
----
+1. **API Gateway**
+   - Port: 5000
+   - Entry point for all API requests
+   - Handles routing and authentication
+   - CORS enabled for frontend communication
 
-## 🗄️ Database Schema (User)
+2. **User Service**
+   - Port: 5001
+   - Manages user authentication
+   - Handles referral logic
+   - Binary tree management
 
-| Field                | Type      | Description                                  |
-|----------------------|-----------|----------------------------------------------|
-| name                 | String    | User's name                                  |
-| email                | String    | User's email (unique)                        |
-| password             | String    | Hashed password                              |
-| referralCode         | String    | Unique code for referring others             |
-| parentId             | ObjectId  | Parent in the binary tree                    |
-| referralCodeLeft     | String    | Code for left child                          |
-| referralCodeRight    | String    | Code for right child                         |
-| phone                | Number    | User's phone number                          |
-| country              | String    | Country (default: India)                     |
-| panNumber            | String    | PAN number                                   |
-| aadharNumber         | Number    | Aadhar number                                |
-| avatar               | String    | Avatar URL or base64                         |
-| bankDetails          | Object    | Bank info (accountNumber, ifscCode, bankName, accountHolderName) |
-| isRootSponsor        | Boolean   | Is this the root sponsor?                    |
-| leftUser             | ObjectId  | Left child in binary tree                    |
-| rightUser            | ObjectId  | Right child in binary tree                   |
-| isAdmin              | Boolean   | Admin flag                                   |
-| resetPasswordToken   | String    | For password reset                           |
-| resetPasswordExpires | Date      | Expiry for reset token                       |
-| createdAt/updatedAt  | Date      | Timestamps                                   |
+3. **Admin Service**
+   - Port: 5002
+   - Admin authentication
+   - User management
+   - System statistics
 
----
+## 🚀 Getting Started
 
-## 🔗 System Architecture
+### Prerequisites
+- Node.js >= 18
+- MongoDB
+- npm or yarn
 
-- **Frontend** (Next.js) → **API Gateway** (`/api/auth/...`, `/api/admin/...`, `/api/referral/...`)
-- **API Gateway** proxies requests to **User Service** and **Admin Service**
-- **User/Admin Services** connect to **MongoDB**
-- **All services** are containerized and orchestrated with Docker Compose
+### Installation
 
----
-
-## 🧑‍💻 Frontend Integration
-
-### **User APIs** (via API Gateway)
-- `POST /api/auth/register` — Register user
-- `POST /api/auth/login` — Login
-- `GET /api/auth/me` — Get current user
-- `PUT /api/auth/profile` — Update profile
-- `PUT /api/auth/change-password` — Change password
-- `POST /api/auth/forgot-password` — Forgot password
-- `POST /api/auth/reset-password` — Reset password
-- `POST /api/auth/logout` — Logout
-
-### **Admin APIs** (via API Gateway)
-- `POST /api/admin/login` — Admin login (returns `adminToken` cookie)
-- `POST /api/admin/logout` — Admin logout
-- `GET /api/admin/me` — Get admin profile
-- `PUT /api/admin/change-password` — Change admin password
-- `GET /api/admin/users` — List all users (admin view)
-- `GET /api/admin/user/:id` — Get full user details by user ID
-
-**How to use in frontend:**
-- Use the `/api/admin/...` endpoints for all admin dashboard features.
-- On admin login, store the `adminToken` cookie (handled automatically if using `withCredentials: true` in axios/fetch).
-- For protected admin routes, always send credentials/cookies.
-- All responses and errors are standardized JSON.
-
----
-
-## 🛠️ How to Run
-
-### Local Development
-
+1. **Clone the repository**
 ```bash
-# Backend
-cd backend/api-gateway && npm install && npm run dev
-cd ../user-service && npm install && npm run dev
-cd ../admin-service && npm install && npm run dev
+git clone <repository-url>
+cd MLM-System
+```
 
+2. **Set up environment variables**
+```bash
+# Copy environment files
+cp .env.example api-gateway/.env
+cp .env.example backend/user-service/.env
+cp .env.example backend/admin-service/.env
+```
+
+3. **Install dependencies**
+```bash
 # Frontend
-cd ../../frontend && npm install && npm run dev
+cd frontend
+npm install
+
+# API Gateway
+cd ../api-gateway
+npm install
+
+# User Service
+cd ../backend/user-service
+npm install
+
+# Admin Service
+cd ../backend/admin-service
+npm install
 ```
 
-### With Docker
-
+4. **Start the services**
 ```bash
-docker-compose up --build
-```
-- API Gateway: [http://localhost:5000](http://localhost:5000)
-- User Service: [http://localhost:5001](http://localhost:5001)
-- Admin Service: [http://localhost:5002](http://localhost:5002)
-- Frontend: [http://localhost:3000](http://localhost:3000)
+# Frontend (Terminal 1)
+cd frontend
+npm run dev
 
----
+# API Gateway (Terminal 2)
+cd api-gateway
+npm run dev
 
-## 📦 Project Structure
+# User Service (Terminal 3)
+cd backend/user-service
+npm run dev
 
-```
-backend/
-  api-gateway/
-    src/routes/admin.js         # Admin API Gateway routes
-    src/middlewares/adminAuth.js
-  user-service/
-    src/routes/adminRoutes.js   # User admin routes (for user data)
-    src/controllers/adminUserController.js
-  admin-service/
-    src/routes/adminRoutes.js   # Admin service routes
-    src/controllers/adminController.js
-  shared/
-frontend/
-  components/
-  pages/
-  utils/
-  styles/
+# Admin Service (Terminal 4)
+cd backend/admin-service
+npm run dev
 ```
 
----
+## 🔌 Service URLs
 
-## 📂 Key Files
+- Frontend: http://localhost:3000
+- API Gateway: http://localhost:5000
+- User Service: http://localhost:5001
+- Admin Service: http://localhost:5002
 
-- **Backend**
-  - [`backend/api-gateway/src/routes/admin.js`](backend/api-gateway/src/routes/admin.js)
-  - [`backend/api-gateway/src/middlewares/adminAuth.js`](backend/api-gateway/src/middlewares/adminAuth.js)
-  - [`backend/user-service/src/routes/adminRoutes.js`](backend/user-service/src/routes/adminRoutes.js)
-  - [`backend/user-service/src/controllers/adminUserController.js`](backend/user-service/src/controllers/adminUserController.js)
-  - [`backend/admin-service/src/routes/adminRoutes.js`](backend/admin-service/src/routes/adminRoutes.js)
-  - [`backend/admin-service/src/controllers/adminController.js`](backend/admin-service/src/controllers/adminController.js)
-- **Frontend**
-  - [`frontend/utils/adminService.js`](frontend/utils/adminService.js) *(for admin API calls)*
-  - [`frontend/utils/api.js`](frontend/utils/api.js)
+## 📝 Features
 
----
+### User Features
+- Registration and Authentication
+- Binary Tree Position
+- Referral Link Generation
+- Business Volume Tracking
+- Income Dashboard
+- Profile Management
+- Bank Details Management
 
-## 🎯 Highlights
+### Admin Features
+- Comprehensive User Management
+- System Statistics Dashboard
+- Business Volume Override
+- User Status Management
+- Transaction History
+- Report Generation
 
-- **Admin API Integration**: All admin routes are available via the API Gateway for easy frontend integration.
-- **Instant Sidebar Update**: When a user updates their profile, the sidebar reflects changes instantly—no page refresh needed.
-- **Secure & Modern**: JWT, bcrypt, and secure cookies for authentication.
-- **Scalable**: Microservices-ready, Dockerized, and easy to extend.
-- **User-Friendly**: Clean UI, clear error messages, and smooth user experience.
+## 🔒 Environment Variables
 
----
+```env
+# API Gateway
+PORT=5000
+USER_SERVICE_URL=http://localhost:5001
+ADMIN_SERVICE_URL=http://localhost:5002
 
-## 📄 License
+# User Service
+PORT=5001
+MONGO_URI=your_mongodb_uri
+JWT_SECRET=your_jwt_secret
+EMAIL_HOST=smtp.gmail.com
+EMAIL_PORT=587
+EMAIL_USER=your_email
+EMAIL_PASS=your_app_password
 
-Internal use only. Not for public distribution.
+# Admin Service
+PORT=5002
+MONGO_URI=your_mongodb_uri
+JWT_SECRET=your_jwt_secret
+USER_SERVICE_URL=http://localhost:5001
+```
 
----
+## 🗄️ Database Schema
+
+### User Schema
+- name: String
+- email: String (unique)
+- password: String (hashed)
+- phone: Number
+- referralCode: String
+- parentId: ObjectId
+- bankDetails: Object
+  - accountNumber: Number
+  - ifscCode: String
+  - bankName: String
+  - accountHolderName: String
+- isActive: Boolean
+- createdAt: Date
+- updatedAt: Date
+
+## 🔄 API Routes
+
+### Auth Routes
+- POST /api/auth/register
+- POST /api/auth/login
+- GET /api/auth/me
+- PUT /api/auth/profile
+- POST /api/auth/logout
+
+### Admin Routes
+- POST /api/admin/login
+- GET /api/admin/users
+- GET /api/admin/user/:id
+- PUT /api/admin/user/:id
+- GET /api/admin/dashboard
+
+### User Routes
+- GET /api/user/profile
+- PUT /api/user/profile
+- GET /api/user/referrals
+- GET /api/user/business-volume
+
+## 📁 Project Structure
+
+```
+MLM-System/
+├── frontend/                   # Next.js frontend application
+│   ├── components/            # Reusable components
+│   │   ├── admin/            # Admin-specific components
+│   │   │   ├── AdminLayout.js
+│   │   │   └── AdminProtectedRoute.js
+│   │   └── user/             # User-specific components
+│   ├── pages/                # Next.js pages
+│   │   ├── admin/           # Admin routes
+│   │   │   ├── dashboard.js
+│   │   │   ├── login.js
+│   │   │   └── users/
+│   │   │       ├── index.js
+│   │   │       └── [userId].js
+│   │   ├── user/            # User routes
+│   │   │   ├── dashboard.js
+│   │   │   └── profile.js
+│   │   ├── _app.js
+│   │   └── index.js
+│   ├── public/              # Static files
+│   ├── services/            # API services
+│   │   └── api.js
+│   └── styles/              # CSS styles
+│
+├── api-gateway/             # API Gateway service
+│   ├── src/
+│   │   ├── routes/
+│   │   │   ├── adminRoutes.js
+│   │   │   └── userRoutes.js
+│   │   ├── middleware/
+│   │   │   └── auth.js
+│   │   └── server.js
+│   └── package.json
+│
+├── backend/
+│   ├── user-service/        # User microservice
+│   │   ├── src/
+│   │   │   ├── controllers/
+│   │   │   │   ├── auth.js
+│   │   │   │   └── user.js
+│   │   │   ├── models/
+│   │   │   │   └── User.js
+│   │   │   ├── routes/
+│   │   │   │   └── userRoutes.js
+│   │   │   └── server.js
+│   │   └── package.json
+│   │
+│   └── admin-service/       # Admin microservice
+│       ├── src/
+│       │   ├── controllers/
+│       │   │   └── adminController.js
+│       │   ├── models/
+│       │   │   └── Admin.js
+│       │   ├── routes/
+│       │   │   └── adminRoutes.js
+│       │   └── server.js
+│       └── package.json
+│
+├── .gitignore
+├── README.md
+└── package.json
+```
+
+## 🔧 Key Files Description
+
+### Frontend
+- `components/admin/AdminLayout.js`: Main layout for admin dashboard
+- `components/admin/AdminProtectedRoute.js`: Authentication wrapper for admin routes
+- `pages/admin/dashboard.js`: Admin dashboard with user management
+- `pages/admin/users/[userId].js`: Individual user details page
+- `services/api.js`: Axios configuration for API calls
+
+### API Gateway
+- `routes/adminRoutes.js`: Admin API route definitions
+- `routes/userRoutes.js`: User API route definitions
+- `middleware/auth.js`: Authentication middleware
+
+### User Service
+- `controllers/auth.js`: User authentication logic
+- `controllers/user.js`: User management functions
+- `models/User.js`: MongoDB user schema
+
+### Admin Service
+- `controllers/adminController.js`: Admin functionality
+- `models/Admin.js`: MongoDB admin schema
+- `routes/adminRoutes.js`: Admin route handlers
+
+## 👥 Contributing
+
+1. Fork the repository
+2. Create your feature branch
+3. Commit your changes
+4. Push to the branch
+5. Open a Pull Request
+
+## 📜 License
+
+This project is proprietary and confidential. Unauthorized copying or distribution is prohibited.
