@@ -20,9 +20,24 @@ exports.login = async (req, res) => {
     const match = await bcrypt.compare(password, admin.password);
     if (!match) return res.status(401).json({ message: "Incorrect password" });
 
-    const token = jwt.sign({ adminId: admin._id, isAdmin: true }, process.env.JWT_SECRET, { expiresIn: "1d" });
+    const token = jwt.sign(
+      { adminId: admin._id, isAdmin: true },
+      process.env.JWT_SECRET,
+      { expiresIn: "1d" }
+    );
+
+    const decoded = jwt.decode(token); // Debug: decode to verify timestamps
+    console.log('[Admin Service] Generated token:', token);
+    console.log('[Admin Service] Token timestamps:', {
+      iat: decoded.iat,
+      exp: decoded.exp,
+      iatDate: new Date(decoded.iat * 1000).toISOString(),
+      expDate: new Date(decoded.exp * 1000).toISOString(),
+    });
+
     res.json({ token });
   } catch (err) {
+    console.error('[Admin Service] Login error:', err.message);
     res.status(500).json({ message: "Server error", detail: err.message });
   }
 };

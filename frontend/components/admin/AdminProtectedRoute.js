@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/router';
+import { useRouter } from 'next/router'; // Add this import
 import api from '../../services/api';
 
 const AdminProtectedRoute = (WrappedComponent) => {
@@ -7,35 +7,22 @@ const AdminProtectedRoute = (WrappedComponent) => {
     const router = useRouter();
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [loading, setLoading] = useState(true);
+    
+useEffect(() => {
+  const checkAuth = async () => {
+    try {
+      await api.get('/api/admin/verify'); // Cookie is sent automatically
+      setIsAuthenticated(true);
+    } catch (error) {
+      console.error('Auth error:', error);
+      router.push('/admin/login');
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    useEffect(() => {
-      const checkAuth = async () => {
-        try {
-          if (typeof window !== 'undefined') {
-            const adminToken = localStorage.getItem('adminToken');
-            
-            if (!adminToken) {
-              router.push('/admin/login');
-              return;
-            }
-
-            // Changed from /admin/verify to /api/admin/verify
-            await api.get('/api/admin/verify', {
-              headers: { Authorization: `Bearer ${adminToken}` }
-            });
-            setIsAuthenticated(true);
-          }
-        } catch (error) {
-          console.error('Auth error:', error);
-          localStorage.removeItem('adminToken');
-          router.push('/admin/login');
-        } finally {
-          setLoading(false);
-        }
-      };
-
-      checkAuth();
-    }, [router]);
+  checkAuth();
+}, [router]);
 
     if (loading) {
       return (

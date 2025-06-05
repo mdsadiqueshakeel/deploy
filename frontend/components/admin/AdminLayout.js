@@ -2,6 +2,7 @@ import Head from 'next/head';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useState, useEffect } from 'react';
+import API from '../../services/api';
 
 export default function AdminLayout({ children, title }) {
   const router = useRouter();
@@ -30,11 +31,14 @@ export default function AdminLayout({ children, title }) {
     return () => window.removeEventListener('resize', checkIfMobile);
   }, []);
 
-  const handleLogout = () => {
-    localStorage.removeItem('adminToken');
+const handleLogout = async () => {
+  try {
+    await API.post('/api/admin/logout', {}, { withCredentials: true });
     router.push('/admin/login');
-  };
-
+  } catch (err) {
+    router.push('/admin/login'); // Redirect even if the request fails
+  }
+};
   const toggleSidebar = () => {
     setSidebarOpen(!sidebarOpen);
   };

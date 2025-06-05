@@ -16,21 +16,17 @@ export default function AdminLogin() {
     }
   }, []);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError('');
-    try {
-      const response = await api.post('/api/admin/login', { email, password });
-      if (response.data.token) {
-        localStorage.setItem('adminToken', response.data.token);
-        router.push('/admin/dashboard');
-      } else {
-        setError(response.data.message || 'Login failed');
-      }
-    } catch (error) {
-      setError(error.response?.data?.message || 'Login failed. Please try again.');
-    }
-  };
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  setError('');
+  try {
+    const response = await api.post('/api/admin/login', { email, password });
+    localStorage.setItem('adminToken', response.data.token); // Store token in localStorage
+    router.push('/admin/dashboard');
+  } catch (error) {
+    setError(error.response?.data?.message || 'Login failed. Please try again.');
+  }
+};
 
   const handleUserLogin = () => {
     router.push('/auth/login');
