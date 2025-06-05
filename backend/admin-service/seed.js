@@ -4,10 +4,10 @@ const Admin = require("./src/models/adminModel");
 
 const seed = async () => {
   await mongoose.connect(process.env.MONGO_URI);
-  const exists = await Admin.findOne({ email: "admin@ac.in" });
+  const exists = await Admin.findOne({ email: "qurksuman@gmail.com" });
   if (exists) return console.log("Admin already exists");
 
-  const admin = new Admin({ name: "Admin", email: "admin@ac.in", password: "Admin@123" });
+  const admin = new Admin({ name: "Ranjan Kumar", email: "qurksuman@gmail.com", password: "Admin@Suman" });
   await admin.save();
   console.log("Admin created!");
   process.exit();

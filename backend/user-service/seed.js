@@ -21,11 +21,11 @@ const seedUser = async () => {
       return;
     }
 
-    const password = 'password123'; // You might want to hash this or make it dynamic
+    const password = 'Suman@123'; // You might want to hash this or make it dynamic
 
     const newUser = new User({
-      name: 'Ranjan',
-      email: 'ranjan@ac.in',
+      name: 'Ranjan Kumar',
+      email: 'qurksuman@gmail.com',
       password: password, // Mongoose pre-save hook will hash this
       referralCodeLeft: generateReferralCode(),
       referralCodeRight: generateReferralCode(),
@@ -33,7 +33,7 @@ const seedUser = async () => {
     });
 
     await newUser.save();
-    console.log('Ranjan user seeded successfully!');
+    console.log('Ranjan Kumar user seeded successfully!');
     console.log('Left Referral Code:', newUser.referralCodeLeft);
     console.log('Right Referral Code:', newUser.referralCodeRight);
 

@@ -52,6 +52,11 @@ const userSchema = new mongoose.Schema(
       accountHolderName: { type: String, default: null },
     },
 
+    rank:{
+      type: String,
+      default: "Member", // Default rank is Member
+    },
+
     isRootSponsor: { type: Boolean, default: false }, 
 
     leftUser: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
