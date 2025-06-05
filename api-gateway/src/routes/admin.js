@@ -7,26 +7,22 @@ const ADMIN_SERVICE_URL = process.env.ADMIN_SERVICE_URL || "http://localhost:500
 const USER_SERVICE_URL = process.env.USER_SERVICE_URL || "http://localhost:5001";
 
 //sameer
-
-// Debug log added here
 router.get("/verify", adminAuth, async (req, res) => {
   try {
-    // ADD DEBUG LOGS
-    console.log('[Gateway] Received token:', req.headers.authorization);
-    console.log('[Gateway] Forwarding to:', ADMIN_SERVICE_URL);
-    
-    const headers = {
-      Authorization: req.headers.authorization,
-      'x-admin-token': req.headers.authorization?.split(' ')[1] || ''
-    };
+    if (!req.cookies.adminToken) {
+      return res.status(401).json({ message: "No token available to forward" });
+    }
 
     const response = await axios.get(`${ADMIN_SERVICE_URL}/api/admin/verify`, {
-      headers
+      headers: {
+        Authorization: `Bearer ${req.cookies.adminToken}`,
+        'x-admin-token': req.cookies.adminToken
+      },
+      withCredentials: true
     });
-    
+
     res.status(response.status).json(response.data);
   } catch (err) {
-    console.error('[Gateway] Verify error:', err.message);
     res.status(err.response?.status || 500).json(
       err.response?.data || { message: "Service error" }
     );
@@ -51,10 +47,12 @@ router.post("/login", async (req, res) => {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
         sameSite: "lax",
+        path: "/",
+        domain: "localhost",
         maxAge: 24 * 60 * 60 * 1000,
       })
       .status(200)
-      .json({ message: "Admin logged in", token });
+      .json({ message: "Admin logged in successfully", token: token });
   } catch (err) {
     res.status(err.response?.status || 500).json(err.response?.data || { error: "Service error" });
   }
@@ -95,10 +93,7 @@ router.get("/me", adminAuth, async (req, res) => {
 // 📋 Get All Users (admin dashboard)
 router.get("/users", adminAuth, async (req, res) => {
   try {
-    console.log('API Gateway - Forwarding user request to admin service');
-    
     if (!ADMIN_SERVICE_URL) {
-      console.error('ADMIN_SERVICE_URL is not defined');
       return res.status(500).json({ message: "Admin service URL not configured" });
     }
 
@@ -106,18 +101,10 @@ router.get("/users", adminAuth, async (req, res) => {
       headers: { 
         Authorization: req.headers.authorization
       }
-    }).catch(error => {
-      console.error('Error calling admin service:', error.message);
-      if (error.response) {
-        console.error('Admin service response:', error.response.data);
-      }
-      throw error;
     });
 
-    console.log('API Gateway - Successfully received admin service response');
     res.status(response.status).json(response.data);
   } catch (err) {
-    console.error('API Gateway - Error handling user request:', err);
     res.status(err.response?.status || 500).json(
       err.response?.data || { 
         message: "Service error",
@@ -141,12 +128,6 @@ router.get("/user/:id", adminAuth, async (req, res) => {
 
     res.status(response.status).json(response.data);
   } catch (err) {
-    console.error("🔥 ERROR calling user-service:", {
-      status: err.response?.status,
-      data: err.response?.data,
-      message: err.message
-    });
-
     res.status(err.response?.status || 500).json(
       err.response?.data || { message: "Service error", detail: err.message }
     );
@@ -161,6 +142,7 @@ router.post("/logout", (req, res) => {
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
       path: "/",
+      domain: "localhost", // Ensure it matches the domain used in login
     });
 
     res.status(200).json({ message: "Admin logged out successfully" });
@@ -168,6 +150,5 @@ router.post("/logout", (req, res) => {
     res.status(500).json({ message: "Logout error", error: err.message });
   }
 });
-
 
 module.exports = router;
