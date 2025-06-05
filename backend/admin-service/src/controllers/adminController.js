@@ -26,14 +26,7 @@ exports.login = async (req, res) => {
       { expiresIn: "1d" }
     );
 
-    const decoded = jwt.decode(token); // Debug: decode to verify timestamps
-    console.log('[Admin Service] Generated token:', token);
-    console.log('[Admin Service] Token timestamps:', {
-      iat: decoded.iat,
-      exp: decoded.exp,
-      iatDate: new Date(decoded.iat * 1000).toISOString(),
-      expDate: new Date(decoded.exp * 1000).toISOString(),
-    });
+
 
     res.json({ token });
   } catch (err) {
@@ -76,7 +69,6 @@ exports.changePassword = async (req, res) => {
 
 exports.getProfile = async (req, res) => {
   try {
-      console.log('[Admin Service] getProfile - adminId:', req.admin.adminId);
     const admin = await Admin.findById(req.admin.adminId).select("-password");
 
     if (!admin) {
@@ -98,7 +90,6 @@ exports.getProfile = async (req, res) => {
 // Get All Users (List View)
 exports.getAllUsers = async (req, res) => {
   try {
-    console.log('Admin Service - Attempting to fetch users');
     
     const { data } = await axios.get(`${USER_SERVICE_URL}/api/admin/users`, {
       headers: { Authorization: req.headers.authorization }
@@ -110,7 +101,6 @@ exports.getAllUsers = async (req, res) => {
       createdAt: user.createdAt ? new Date(user.createdAt).toISOString() : null
     }));
 
-    console.log('Sample user date:', formattedUsers[0]?.createdAt); // Debug log
     res.json(formattedUsers);
 
   } catch (err) {
