@@ -152,7 +152,7 @@ const Sidebar = ({isSidebarOpen, toggleSidebar, setActiveSection, activeSection 
               }}
             >
               {user.avatar ? (
-                <img
+                <Image
                   src={user.avatar}
                   alt="User Avatar"
                   style={{

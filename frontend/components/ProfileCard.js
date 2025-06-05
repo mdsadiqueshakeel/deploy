@@ -300,7 +300,7 @@ const ProfileCard = ({ user: propUser }) => {
               }}
             >
               {user.avatar ? (
-                <img
+                <Image
                   src={user.avatar}
                   alt="User Avatar"
                   style={{

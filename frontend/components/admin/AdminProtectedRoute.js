@@ -1,41 +1,43 @@
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/router'; // Add this import
-import api from '../../services/api';
+// components/admin/AdminProtectedRoute.js
+import { useEffect, useState } from "react";
+import { useRouter } from "next/router";
+import api from "../../services/api";
 
-const AdminProtectedRoute = (WrappedComponent) => {
-  return (props) => {
-    const router = useRouter();
-    const [isAuthenticated, setIsAuthenticated] = useState(false);
-    const [loading, setLoading] = useState(true);
-    
-useEffect(() => {
-  const checkAuth = async () => {
-    try {
-      await api.get('/api/admin/verify'); // Cookie is sent automatically
-      setIsAuthenticated(true);
-    } catch (error) {
-      console.error('Auth error:', error);
-      router.push('/admin/login');
-    } finally {
-      setLoading(false);
-    }
-  };
+const AdminProtectedRoute = ({ children }) => {
+  const router = useRouter();
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-  checkAuth();
-}, [router]);
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        await api.get("/api/admin/verify"); // Cookie is sent automatically
+        setIsAuthenticated(true);
+      } catch (error) {
+        console.error("Auth error:", error);
+        router.push("/admin/login");
+      } finally {
+        setLoading(false);
+      }
+    };
 
-    if (loading) {
-      return (
-        <div className="d-flex justify-content-center align-items-center" style={{ height: '100vh' }}>
-          <div className="spinner-border text-primary" role="status">
-            <span className="visually-hidden">Loading...</span>
-          </div>
+    checkAuth();
+  }, [router]);
+
+  if (loading) {
+    return (
+      <div
+        className="d-flex justify-content-center align-items-center"
+        style={{ height: "100vh" }}
+      >
+        <div className="spinner-border text-primary" role="status">
+          <span className="visually-hidden">Loading...</span>
         </div>
-      );
-    }
+      </div>
+    );
+  }
 
-    return isAuthenticated ? <WrappedComponent {...props} /> : null;
-  };
+  return isAuthenticated ? children : null;
 };
 
 export default AdminProtectedRoute;

@@ -1,13 +1,24 @@
 import axios from 'axios';
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+
 const instance = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL, // Now properly defined
+  baseURL: API_URL,
   withCredentials: true,
+  headers: {
+    'Content-Type': 'application/json',
+  },
 });
 
-// Add request interceptor for logging
+// Add request interceptor for auth token
 instance.interceptors.request.use(request => {
-  console.log('Starting Request', request.url);
+  // Get token from localStorage if we're in the browser
+  if (typeof window !== 'undefined') {
+    const token = localStorage.getItem('token');
+    if (token) {
+      request.headers.Authorization = `Bearer ${token}`;
+    }
+  }
   return request;
 });
 

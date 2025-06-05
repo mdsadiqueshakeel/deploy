@@ -1,0 +1,69 @@
+version: '3.8'
+
+services:
+  api-gateway:
+    build: ./api-gateway
+    container_name: mlm-api-gateway
+    ports:
+      - "5000:5000"
+    environment:
+      - NODE_ENV=production
+      - API_GATEWAY_PORT=5000
+      - USER_SERVICE_URL=http://user-service:5001
+      - ADMIN_SERVICE_URL=http://admin-service:5002
+      - JWT_SECRET=SuperSecretKey
+    depends_on:
+      - user-service
+      - admin-service
+    restart: always
+
+  user-service:
+    build: ./backend/user-service
+    container_name: mlm-user-service
+    ports:
+      - "5001:5001"
+    environment:
+      - NODE_ENV=production
+      - PORT=5001
+      - MONGO_URI=mongodb+srv://AffilateProduction:Ranjan123@affilateproduction.thjqoek.mongodb.net/MLM_DB?retryWrites=true&w=majority&appName=AffilateProduction
+      - JWT_SECRET=SuperSecretKey
+    depends_on:
+      - mongo
+    restart: always
+
+  admin-service:
+    build: ./backend/admin-service
+    container_name: mlm-admin-service
+    ports:
+      - "5002:5002"
+    environment:
+      - NODE_ENV=production
+      - PORT=5002
+      - MONGO_URI=mongodb+srv://AffilateProduction:Ranjan123@affilateproduction.thjqoek.mongodb.net/MLM_DB?retryWrites=true&w=majority&appName=AffilateProduction
+      - JWT_SECRET=SuperSecretKey
+    depends_on:
+      - mongo
+    restart: always
+
+  frontend:
+    build: ./frontend
+    container_name: mlm-frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+    depends_on:
+      - api-gateway
+    restart: always
+
+  mongo:
+    image: mongo:latest
+    container_name: mlm-mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+    restart: always
+
+volumes:
+  mongo-data:
