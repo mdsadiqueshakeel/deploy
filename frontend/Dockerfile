@@ -19,6 +19,9 @@ FROM node:22-alpine
 
 WORKDIR /app
 
+# Install cross-env globally
+RUN npm install -g cross-env
+
 COPY --from=builder /app/package*.json ./
 COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/public ./public

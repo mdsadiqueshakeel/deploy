@@ -33,7 +33,11 @@
 // const PORT = process.env.API_GATEWAY_PORT || 5000;
 // app.listen(PORT, () => console.log(`API Gateway running on port ${PORT}`));
 
-require("dotenv").config();
+const dotenv = require("dotenv");
+dotenv.config({
+  path: `.env.${process.env.NODE_ENV || 'development'}`
+});
+
 const express = require("express");
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
