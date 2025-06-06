@@ -50,7 +50,10 @@ router.post("/login", async (req, res) => {
         maxAge: 7 * 24 * 60 * 60 * 1000, // Optional: 7 days
       })
       .status(200)
-      .json({ message: "Admin logged in successfully" }); // No need to send token in body again
+      .json({ 
+        message: "Admin logged in successfully",
+        token: token // Include token in response for localStorage
+      });
   } catch (err) {
     res
       .status(err.response?.status || 500)

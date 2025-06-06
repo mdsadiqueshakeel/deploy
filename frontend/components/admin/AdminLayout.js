@@ -33,10 +33,15 @@ export default function AdminLayout({ children, title }) {
 
 const handleLogout = async () => {
   try {
+    // Call the API to clear the server-side cookie
     await API.post('/api/admin/logout', {}, { withCredentials: true });
+    // Remove the token from localStorage
+    localStorage.removeItem('adminToken');
     router.push('/admin/login');
   } catch (err) {
-    router.push('/admin/login'); // Redirect even if the request fails
+    // Remove the token from localStorage even if the API call fails
+    localStorage.removeItem('adminToken');
+    router.push('/admin/login');
   }
 };
   const toggleSidebar = () => {

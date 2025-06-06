@@ -1,9 +1,5 @@
 
 
-// export default API;
-
-
-
 import axios from 'axios';
 
 const API = axios.create({
@@ -14,16 +10,13 @@ const API = axios.create({
   },
 });
 
-export default API;
-
-
 // Add request interceptor to include admin token
-// API.interceptors.request.use(config => {
-//   const adminToken = localStorage.getItem('adminToken');
-//   if (adminToken) {
-//     config.headers.Authorization = `Bearer ${adminToken}`;
-//   }
-//   return config;
-// });
+API.interceptors.request.use(config => {
+  const adminToken = localStorage.getItem('adminToken');
+  if (adminToken) {
+    config.headers.Authorization = `Bearer ${adminToken}`;
+  }
+  return config;
+});
 
-// export default API;
+export default API;
