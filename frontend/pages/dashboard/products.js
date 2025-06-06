@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import styles from './Products.module.css';
 import Image from 'next/image';
+import DashboardLayout from '../../components/DashboardLayout';
 
 // Sample product data with Unsplash image URLs
 // Assign random coins to each product between 50 and 500
@@ -147,7 +148,7 @@ const products = [
   },
 ];
 
-export default function Products({ searchQuery, coins, onPurchase }) { // Destructure onPurchase
+function Products({ searchQuery, coins, onPurchase }) { // Destructure onPurchase
   const [purchaseError, setPurchaseError] = useState('');
 
   useEffect(() => {
@@ -172,10 +173,10 @@ export default function Products({ searchQuery, coins, onPurchase }) { // Destru
 
   // Filter products based on search query
   const filteredProducts = products.filter((product) =>
-    product.name.toLowerCase().includes(searchQuery.toLowerCase())
+    product.name.toLowerCase().includes((searchQuery || '').toLowerCase())
   );
 
-  return (
+  const ProductsContent = () => (
     <div className="container-fluid py-4">
       <h1
         className="mb-5 fw-bold"
@@ -297,4 +298,34 @@ export default function Products({ searchQuery, coins, onPurchase }) { // Destru
       )}
     </div>
   );
+
+  // For direct access via URL
+  const ProductsPage = () => {
+    const [localCoins, setLocalCoins] = useState(1000);
+    const [localSearchQuery, setLocalSearchQuery] = useState('');
+    
+    const handleLocalPurchase = (cost) => {
+      setLocalCoins(prev => prev - cost);
+    };
+    
+    return (
+      <DashboardLayout title="Products">
+        <Products 
+          searchQuery={localSearchQuery} 
+          coins={localCoins} 
+          onPurchase={handleLocalPurchase} 
+        />
+      </DashboardLayout>
+    );
+  };
+
+  // If this component is being rendered directly (not as a child of Dashboard)
+  if (typeof window !== 'undefined' && !searchQuery && !onPurchase) {
+    return <ProductsPage />;
+  }
+
+  // If this component is being rendered as a child of Dashboard
+  return <ProductsContent />;
 }
+
+export default Products;

@@ -1,252 +1,334 @@
-import { useRouter } from 'next/router';
-import { useState, useEffect } from 'react';
-import { fetchProfile } from 'utils/profileService';
-import { logout } from '../utils/auth';
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import Image from "next/image";
+import { useRouter } from "next/router";
+import { fetchProfile } from "../utils/profileService";
+import api from "../utils/api";
 
-const Sidebar = ({isSidebarOpen, toggleSidebar, setActiveSection, activeSection }) => {
+const Sidebar = ({ isOpen, toggleSidebar }) => {
   const router = useRouter();
-  const [user, setUser] = useState({
-    name: '',
-    email: '',
-    avatar: null
-  });
+  const [activeItem, setActiveItem] = useState("");
+  const [userProfile, setUserProfile] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  // Define navigation items
   const navItems = [
-    { label: 'Dashboard', path: '/dashboard', icon: 'bi-speedometer2' },
-    { label: 'Products', path: '/dashboard/products', icon: 'bi-box-seam' },
-    { label: 'Business', path: '/dashboard/business', icon: 'bi-briefcase' },
-    { label: 'Wallet', path: '/dashboard/wallet', icon: 'bi-wallet2' },
-    { label: 'Status', path: '/dashboard/status', icon: 'bi-graph-up' },
-    { label: 'Rank & Rewards', path: '/dashboard/rank', icon: 'bi-trophy' },
-    { label: 'Support', path: '/dashboard/support', icon: 'bi-headset' },
+    {
+      title: "Dashboard",
+      icon: "bi-speedometer2",
+      path: "/dashboard",
+      roles: ["user", "admin"],
+    },
+    {
+      title: "My Network",
+      icon: "bi-diagram-3",
+      path: "/network",
+      roles: ["user"],
+    },
+    {
+      title: "Income",
+      icon: "bi-cash-stack",
+      path: "/income",
+      roles: ["user"],
+    },
+    {
+      title: "Wallet",
+      icon: "bi-wallet2",
+      path: "/wallet",
+      roles: ["user"],
+    },
+    {
+      title: "Packages",
+      icon: "bi-box",
+      path: "/packages",
+      roles: ["user"],
+    },
+    {
+      title: "Support",
+      icon: "bi-headset",
+      path: "/support",
+      roles: ["user", "admin"],
+    },
+    {
+      title: "Admin Dashboard",
+      icon: "bi-shield-lock",
+      path: "/admin/dashboard",
+      roles: ["admin"],
+    },
+    {
+      title: "User Management",
+      icon: "bi-people",
+      path: "/admin/users",
+      roles: ["admin"],
+    },
+    {
+      title: "Package Management",
+      icon: "bi-box-seam",
+      path: "/admin/packages",
+      roles: ["admin"],
+    },
+    {
+      title: "Withdrawal Requests",
+      icon: "bi-cash-coin",
+      path: "/admin/withdrawals",
+      roles: ["admin"],
+    },
+    {
+      title: "Support Tickets",
+      icon: "bi-ticket-detailed",
+      path: "/admin/support",
+      roles: ["admin"],
+    },
   ];
 
-  const handleNavItemClick = (item) => {
-    if (router.pathname !== '/dashboard' && item.path.startsWith('/dashboard')) {
-      router.push(item.path);
-    } else if (setActiveSection) {
-      setActiveSection(item.label);
-    }
-    if (window.innerWidth <= 992) {
-      toggleSidebar();
-    }
-  };
-
-  const handleProfileClick = () => {
-    if (router.pathname !== '/dashboard') {
-      router.push('/dashboard');
-    }
-    if (setActiveSection) {
-      setActiveSection('Profile');
-    }
-    if (window.innerWidth <= 992) {
-      toggleSidebar();
-    }
-  };
-
-  // Fetch user profile data
+  // Load user profile
   useEffect(() => {
     const loadProfile = async () => {
       try {
-        const profileData = await fetchProfile();
-        if (profileData) {
-          setUser({
-            name: profileData.basicInfo?.name || '',
-            email: profileData.basicInfo?.email || '',
-            avatar: profileData.basicInfo?.avatar || null
-          });
-        }
+        const profile = await fetchProfile();
+        setUserProfile(profile);
+        console.log("Profile loaded successfully:", profile);
       } catch (error) {
-        console.error('Failed to load profile:', error);
+        console.error("Error loading profile:", error.response?.data || error.message);
+        // Don't set userProfile to null if it failed to load - keep any existing data
       } finally {
         setLoading(false);
       }
     };
 
-    // Listen for profile updates
-    const handleProfileUpdated = () => loadProfile();
-    window.addEventListener('profile-updated', handleProfileUpdated);
-
-    // Set active section based on current route
-    const currentItem = navItems.find((item) => item.path === router.pathname);
-    if (currentItem && setActiveSection) {
-      setActiveSection(currentItem.label);    
-    }
-
     loadProfile();
 
-    return () => {
-      window.removeEventListener('profile-updated', handleProfileUpdated);
-    };
-  }, [router.pathname, setActiveSection, fetchProfile]);
+    // Set active item based on current path
+    const path = router.pathname;
+    const matchedItem = navItems.find((item) => path.startsWith(item.path));
+    if (matchedItem) {
+      setActiveItem(matchedItem.path);
+    }
+  }, [router.pathname, navItems]);
+
+  // Filter navigation items based on user role
+  const filteredNavItems = navItems.filter((item) => {
+    // If profile is loading, show nothing yet
+    if (loading) return false;
+    
+    // If no profile but path is dashboard, show dashboard items for all users
+    if (!userProfile && item.path === "/dashboard") return true;
+    
+    // If no profile, show only items that don't require specific roles
+    if (!userProfile) return item.roles.includes("guest");
+    
+    // Normal filtering based on user role
+    return item.roles.includes(userProfile.role);
+  });
+
+  // Handle navigation item click
+  const handleNavClick = (path) => {
+    setActiveItem(path);
+    if (window.innerWidth < 992) {
+      toggleSidebar();
+    }
+  };
+
+  // Handle logout
+  const handleLogout = async () => {
+    try {
+      // Call the logout API endpoint
+      await api.post('/api/auth/logout');
+      // Redirect to login page
+      router.push("/login");
+    } catch (error) {
+      console.error("Logout error:", error);
+    }
+  };
 
   return (
-    <>
-      {/* Overlay for mobile */}
-      {isSidebarOpen && (
-        <div
-          className="d-lg-none"
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.5)',
-            zIndex: 1040,
-          }}
-          onClick={toggleSidebar}
-        />
-      )}
-
-      {/* Sidebar */}
-      <div
-        className={`d-flex flex-column flex-shrink-0 p-3 sidebar ${isSidebarOpen ? 'sidebar-open' : ''}`}
-        style={{
-          width: '280px',
-          backgroundColor: '#0A2463',
-          color: 'white',
-          height: '100vh',
-          position: 'fixed',
-          zIndex: 1050,
-          transition: 'transform 0.3s ease-in-out',
-        }}
-      >
-        <div className="d-flex align-items-center mb-3 mb-md-0 me-md-auto text-white text-decoration-none">
-          <span className="fs-4 fw-bold" style={{ color: '#00F5FF' }}>
-            BOT ALPHA
-          </span>
-        </div>
-        <hr style={{ borderColor: 'rgba(58, 134, 255, 0.3)' }} />
-
-        {/* User Profile Container */}
-        {!loading && (
+    <div
+      className={`sidebar ${isOpen ? "open" : ""}`}
+      style={{
+        width: isOpen ? "280px" : "0",
+        position: "fixed",
+        height: "100vh",
+        backgroundColor: "#0A2463",
+        color: "white",
+        transition: "all 0.3s ease",
+        zIndex: 1000,
+        overflowX: "hidden",
+        boxShadow: isOpen ? "0 0 20px rgba(0, 0, 0, 0.3)" : "none",
+      }}
+    >
+      <div className="sidebar-header p-4 d-flex align-items-center justify-content-between">
+        <div className="d-flex align-items-center">
           <div
-            className="p-3 mb-4 rounded d-flex align-items-center"
+            className="logo-container me-2"
             style={{
-              backgroundColor: 'rgba(58, 134, 255, 0.2)',
-              cursor: 'pointer',
-              transition: 'all 0.3s',
-              border: '1px solid rgba(58, 134, 255, 0.3)',
-            }}
-            onClick={handleProfileClick}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = 'rgba(58, 134, 255, 0.3)';
-              e.currentTarget.style.boxShadow = '0 0 10px rgba(58, 134, 255, 0.2)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = 'rgba(58, 134, 255, 0.2)';
-              e.currentTarget.style.boxShadow = 'none';
+              width: "40px",
+              height: "40px",
+              borderRadius: "8px",
+              backgroundColor: "#3A86FF",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontSize: "20px",
+              fontWeight: "bold",
             }}
           >
+            M
+          </div>
+          <h5 className="mb-0 fw-bold" style={{ color: "#ffffff" }}>
+            MLM System
+          </h5>
+        </div>
+        <button
+          className="btn-close btn-close-white d-lg-none"
+          onClick={toggleSidebar}
+          aria-label="Close sidebar"
+        ></button>
+      </div>
+
+      <div className="user-profile p-4 border-top border-bottom border-secondary">
+        {loading ? (
+          <div className="text-center">
+            <div className="spinner-border spinner-border-sm text-light" role="status">
+              <span className="visually-hidden">Loading...</span>
+            </div>
+            <p className="mt-2 mb-0 small">Loading profile...</p>
+          </div>
+        ) : userProfile ? (
+          <div className="d-flex align-items-center">
             <div
-              className="rounded-circle d-flex align-items-center justify-content-center overflow-hidden me-3"
+              className="avatar me-3"
               style={{
-                width: '48px',
-                height: '48px',
-                backgroundColor: '#3A86FF',
-                color: 'white',
-                fontSize: '20px',
-                flexShrink: 0,
+                width: "50px",
+                height: "50px",
+                borderRadius: "50%",
+                backgroundColor: "#3A86FF",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: "18px",
+                fontWeight: "bold",
+                overflow: "hidden",
               }}
             >
-              {user.avatar ? (
+              {userProfile.avatar ? (
                 <Image
-                  src={user.avatar}
-                  alt="User Avatar"
-                  style={{
-                    width: '100%',
-                    height: '100%',
-                    objectFit: 'cover',
-                  }}
+                  src={userProfile.avatar}
+                  alt={userProfile.name}
+                  width={50}
+                  height={50}
+                  style={{ objectFit: "cover", width: "100%", height: "100%" }}
                 />
               ) : (
-                user.name?.charAt(0)?.toUpperCase() || 'U'
+                userProfile.name?.charAt(0) || "U"
               )}
             </div>
             <div>
-              <strong style={{ display: 'block', fontSize: '1.1rem' }}>
-                {user.name  || 'User'}
-              </strong>
-              <small style={{ color: '#E0E0E0', fontSize: '0.85rem' }}>
-                {user.email || 'user@example.com'}
-              </small>
-            </div>
-
-          </div>
-        )}
-
-        {loading && (
-          <div className="p-3 mb-4 rounded d-flex align-items-center">
-            <div className="spinner-border text-light" role="status">
-              <span className="visually-hidden">Loading...</span>
-            </div>
-            <div className="ms-3">
-              <div className="placeholder-glow">
-                <span className="placeholder col-6 bg-light"></span>
-                <span className="placeholder col-8 bg-secondary mt-1"></span>
-              </div>
+              <h6 className="mb-0 fw-bold">{userProfile.name}</h6>
+              <small className="text-light opacity-75">{userProfile.role}</small>
             </div>
           </div>
+        ) : (
+          <div className="text-center">
+            <div 
+              className="avatar mx-auto mb-3"
+              style={{
+                width: "50px",
+                height: "50px",
+                borderRadius: "50%",
+                backgroundColor: "#6c757d",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: "18px",
+                fontWeight: "bold",
+              }}
+            >
+              <i className="bi bi-person"></i>
+            </div>
+            <p className="mb-1">Welcome, Guest</p>
+            <small className="d-block text-light opacity-75">
+              <Link href="/login" passHref>
+                <span style={{ cursor: "pointer", textDecoration: "underline" }}>
+                  Login to continue
+                </span>
+              </Link>
+            </small>
+          </div>
         )}
+      </div>
 
-        <ul className="nav nav-pills flex-column mb-auto">
-          {navItems.map((item) => (
-            <li key={item.label} className="nav-item mb-2">
-              <button
-                className={`nav-link text-white ${activeSection === item.label ? 'active' : ''}`}
-                style={{
-                  backgroundColor: activeSection === item.label ? '#3A86FF' : 'transparent',
-                  borderRadius: '5px',
-                  transition: 'all 0.3s',
-                  border: 'none',
-                  width: '100%',
-                  textAlign: 'left',
-                }}
-                onClick={() => handleNavItemClick(item)}
-                onMouseEnter={(e) => {
-                  if (activeSection !== item.label) {
-                    e.currentTarget.style.backgroundColor = 'rgba(58, 134, 255, 0.2)';
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (activeSection !== item.label) {
-                    e.currentTarget.style.backgroundColor = 'transparent';
-                  }
-                }}
-              >
-                <i className={`bi ${item.icon} me-2`}></i>
-                {item.label}
-              </button>
+      <div className="sidebar-menu p-3">
+        <ul className="nav flex-column">
+          {filteredNavItems.map((item) => (
+            <li className="nav-item mb-2" key={item.path}>
+              <Link href={item.path} passHref>
+                <div
+                  className={`nav-link d-flex align-items-center ${
+                    activeItem === item.path ? "active" : ""
+                  }`}
+                  onClick={() => handleNavClick(item.path)}
+                  style={{
+                    color: activeItem === item.path ? "#ffffff" : "#B0C4DE",
+                    backgroundColor:
+                      activeItem === item.path ? "#3A86FF" : "transparent",
+                    borderRadius: "8px",
+                    padding: "10px 15px",
+                    cursor: "pointer",
+                    transition: "all 0.2s ease",
+                  }}
+                >
+                  <i
+                    className={`bi ${item.icon} me-3`}
+                    style={{ fontSize: "1.1rem" }}
+                  ></i>
+                  <span>{item.title}</span>
+                </div>
+              </Link>
             </li>
           ))}
+
+          <li className="nav-item mt-4">
+            <div
+              className="nav-link d-flex align-items-center"
+              onClick={handleLogout}
+              style={{
+                color: "#B0C4DE",
+                borderRadius: "8px",
+                padding: "10px 15px",
+                cursor: "pointer",
+                transition: "all 0.2s ease",
+              }}
+            >
+              <i
+                className="bi bi-box-arrow-right me-3"
+                style={{ fontSize: "1.1rem" }}
+              ></i>
+              <span>Logout</span>
+            </div>
+          </li>
         </ul>
-        <hr style={{ borderColor: 'rgba(58, 134, 255, 0.3)' }} />
-        <div className="mt-auto">
-          <button
-            className="btn btn-danger w-100"
-            onClick={async () => {
-              await logout();
-              router.replace('/auth/login');
-            }}
-          >
-            <i className="bi bi-box-arrow-right me-2"></i> Logout
-          </button>
-        </div>
       </div>
 
       <style jsx>{`
-        @media (max-width: 992px) {
+        .sidebar .nav-link:hover {
+          background-color: rgba(58, 134, 255, 0.2);
+          color: white;
+        }
+        .sidebar .nav-link.active {
+          font-weight: 600;
+          box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+        @media (max-width: 991.98px) {
           .sidebar {
-            transform: translateX(-100%);
+            width: 0;
+            padding: 0;
           }
-          .sidebar.sidebar-open {
-            transform: translateX(0);
+          .sidebar.open {
+            width: 280px;
           }
         }
       `}</style>
-    </>
+    </div>
   );
 };
 

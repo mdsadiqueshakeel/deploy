@@ -31,21 +31,37 @@
 
 import axios from 'axios';
 
+// Use environment variable for API URL with fallback
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+
 const API = axios.create({
-  baseURL: 'http://localhost:5000',
+  baseURL: API_URL,
   headers: {
     'Content-Type': 'application/json',
   },
-  withCredentials: true,
+  withCredentials: true, // Critical for sending cookies with cross-origin requests
 });
 
 // Add request interceptor to include admin token
 API.interceptors.request.use(config => {
-  const adminToken = localStorage.getItem('adminToken');
-  if (adminToken) {
-    config.headers.Authorization = `Bearer ${adminToken}`;
+  // For debugging in development
+  if (process.env.NODE_ENV !== 'production') {
+    console.log('API Request:', {
+      url: config.url,
+      withCredentials: config.withCredentials,
+      headers: config.headers
+    });
   }
   return config;
 });
+
+// Add response interceptor for error handling
+API.interceptors.response.use(
+  response => response,
+  error => {
+    console.error('API Error:', error.response?.data || error.message);
+    return Promise.reject(error);
+  }
+);
 
 export default API;

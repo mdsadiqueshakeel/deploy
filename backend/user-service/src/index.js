@@ -10,12 +10,17 @@ const app = express();
 // Get allowed origins from environment or use default
 const allowedOrigins = process.env.ALLOWED_ORIGINS 
   ? process.env.ALLOWED_ORIGINS.split(',') 
-  : ['http://localhost:3000', 'http://localhost:5000', 'https://mlm-system.up.railway.app'];
+  : ['http://localhost:3000', 'http://localhost:5000', 'http://localhost:5001', 'http://localhost:5002', 'https://mlm-system.up.railway.app'];
 
 app.use(cors({
   origin: function(origin, callback) {
     // Allow requests with no origin (like mobile apps, curl, etc)
     if (!origin) return callback(null, true);
+    
+    // In development, log the origin for debugging
+    if (process.env.NODE_ENV !== 'production') {
+      console.log(`[User Service] Request from origin: ${origin}`);
+    }
     
     if (allowedOrigins.indexOf(origin) === -1) {
       const msg = `The CORS policy for this site does not allow access from the specified Origin: ${origin}`;
@@ -25,7 +30,8 @@ app.use(cors({
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'x-admin-token'],
+  exposedHeaders: ['Set-Cookie'],
 }));
 
 app.use(express.json());

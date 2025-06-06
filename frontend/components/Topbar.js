@@ -26,12 +26,13 @@ const Topbar = ({ toggleSidebar, searchQuery, setSearchQuery, coins }) => {
   useEffect(() => {
     if (coinRef.current) {
       coinRef.current.classList.add('coin-update-animation');
+      const currentRef = coinRef.current; // Store ref value in a variable
       const handler = () => {
-        coinRef.current.classList.remove('coin-update-animation');
+        currentRef.classList.remove('coin-update-animation');
       };
-      coinRef.current.addEventListener('animationend', handler);
+      currentRef.addEventListener('animationend', handler);
       return () => {
-        coinRef.current?.removeEventListener('animationend', handler);
+        currentRef?.removeEventListener('animationend', handler);
       };
     }
   }, [coins]); // Re-run effect when coins change

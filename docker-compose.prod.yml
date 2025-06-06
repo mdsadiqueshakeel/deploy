@@ -9,15 +9,12 @@ services:
     ports:
       - "5000:5000"
     environment:
-      - NODE_ENV=development
+      - NODE_ENV=production
       - API_GATEWAY_PORT=5000
       - USER_SERVICE_URL=http://user-service:5001
       - ADMIN_SERVICE_URL=http://admin-service:5002
       - JWT_SECRET=SuperSecretKey
       - ALLOWED_ORIGINS=http://localhost:3000,http://frontend:3000,http://api-gateway:5000,http://user-service:5001,http://admin-service:5002
-    volumes:
-      - ./api-gateway:/app
-      - /app/node_modules
     depends_on:
       - user-service
       - admin-service
@@ -31,7 +28,7 @@ services:
     ports:
       - "5001:5001"
     environment:
-      - NODE_ENV=development
+      - NODE_ENV=production
       - PORT=5001
       - MONGO_URI=mongodb+srv://AffilateProduction:Ranjan123@affilateproduction.thjqoek.mongodb.net/MLM_DB?retryWrites=true&w=majority&appName=AffilateProduction
       - JWT_SECRET=SuperSecretKey
@@ -43,9 +40,6 @@ services:
       - EMAIL_PASS=klteycriqmucjban
       - EMAIL_FROM=mlmdevelopment001@gmail.com
       - CLIENT_URL=http://localhost:3000
-    volumes:
-      - ./backend/user-service:/app
-      - /app/node_modules
     restart: always
 
   admin-service:
@@ -56,15 +50,12 @@ services:
     ports:
       - "5002:5002"
     environment:
-      - NODE_ENV=development
+      - NODE_ENV=production
       - PORT=5002
       - MONGO_URI=mongodb+srv://AffilateProduction:Ranjan123@affilateproduction.thjqoek.mongodb.net/MLM_DB?retryWrites=true&w=majority&appName=AffilateProduction
       - JWT_SECRET=SuperSecretKey
       - ALLOWED_ORIGINS=http://localhost:3000,http://frontend:3000,http://api-gateway:5000,http://user-service:5001,http://admin-service:5002
       - USER_SERVICE_URL=http://user-service:5001
-    volumes:
-      - ./backend/admin-service:/app
-      - /app/node_modules
     depends_on:
       - user-service
     restart: always
@@ -77,15 +68,8 @@ services:
     ports:
       - "3000:3000"
     environment:
-      - NODE_ENV=development
-      - NEXT_PUBLIC_API_URL=http://localhost:5000
-    volumes:
-      - ./frontend:/app
-      - /app/node_modules
-      - /app/.next
+      - NODE_ENV=production
+      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
     depends_on:
       - api-gateway
     restart: always
-
-volumes:
-  mongo-data:

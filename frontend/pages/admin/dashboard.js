@@ -61,9 +61,9 @@ function AdminDashboard() {
 
   // Debounced search handler
   const debouncedSearch = useCallback(
-    debounce((term) => {
+    (term) => {
       setSearchTerm(term);
-    }, 300),
+    },
     []
   );
 

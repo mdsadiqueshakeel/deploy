@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef } from "react";
+import Image from "next/image";
 // import api from "../../utils/api";
 import { useRouter } from "next/router";
 
@@ -308,6 +309,8 @@ const ProfileCard = ({ user: propUser }) => {
                     height: "100%",
                     objectFit: "cover",
                   }}
+                  width={120}
+                  height={120}
                 />
               ) : (
                 user.basicInfo.name?.charAt(0) || "U"
@@ -348,760 +351,576 @@ const ProfileCard = ({ user: propUser }) => {
                 backgroundColor: "transparent",
               }}
               onClick={handleAvatarButtonClick}
-              onMouseEnter={(e) => {
-                e.target.style.backgroundColor = "#3A86FF";
-                e.target.style.color = "white";
-              }}
-              onMouseLeave={(e) => {
-                e.target.style.backgroundColor = "transparent";
-                e.target.style.color = "#3A86FF";
-              }}
+              disabled={loading}
             >
               Change Avatar
             </button>
-
             {user.avatar && (
               <button
                 className="btn btn-sm px-4 py-2"
                 style={{
-                  border: "2px solid #dc3545",
-                  color: "#dc3545",
+                  border: "2px solid #FF3A6C",
+                  color: "#FF3A6C",
                   borderRadius: "8px",
                   fontWeight: "500",
                   transition: "all 0.3s",
                   backgroundColor: "transparent",
                 }}
                 onClick={handleDeleteAvatar}
-                onMouseEnter={(e) => {
-                  e.target.style.backgroundColor = "#dc3545";
-                  e.target.style.color = "white";
-                }}
-                onMouseLeave={(e) => {
-                  e.target.style.backgroundColor = "transparent";
-                  e.target.style.color = "#dc3545";
-                }}
+                disabled={loading}
               >
-                Delete Avatar
+                Remove
               </button>
             )}
           </div>
         </div>
 
-        {error && (
-          <div className="alert alert-danger mb-4" role="alert">
-            {error}
-          </div>
-        )}
+        {/* Profile Form */}
+        <form onSubmit={handleSubmit}>
+          {/* Basic Information Section */}
+          <div className="mb-4">
+            <div className="d-flex justify-content-between align-items-center mb-3">
+              <h5
+                className="mb-0"
+                style={{
+                  color: "#0A2463",
+                  fontWeight: "600",
+                }}
+              >
+                Basic Information
+              </h5>
+              {!isEditing ? (
+                <button
+                  type="button"
+                  className="btn btn-sm px-4 py-2"
+                  style={{
+                    ...buttonStyle,
+                    backgroundColor: "#3A86FF",
+                  }}
+                  onClick={handleEdit}
+                  disabled={loading}
+                >
+                  Edit Profile
+                </button>
+              ) : (
+                <div className="d-flex gap-2">
+                  <button
+                    type="button"
+                    className="btn btn-sm px-4 py-2"
+                    style={{
+                      border: "2px solid #E0E0E0",
+                      color: "#757575",
+                      borderRadius: "8px",
+                      fontWeight: "500",
+                      transition: "all 0.3s",
+                      backgroundColor: "transparent",
+                    }}
+                    onClick={() => setIsEditing(false)}
+                    disabled={loading}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="btn btn-sm px-4 py-2"
+                    style={buttonStyle}
+                    disabled={loading}
+                  >
+                    {loading ? (
+                      <span
+                        className="spinner-border spinner-border-sm me-2"
+                        role="status"
+                        aria-hidden="true"
+                      ></span>
+                    ) : null}
+                    Save Changes
+                  </button>
+                </div>
+              )}
+            </div>
 
-        {loading && (
-          <div className="text-center mb-4">
-            <div className="spinner-border text-primary" role="status">
-              <span className="visually-hidden">Loading...</span>
+            <hr style={{ borderColor: "#E0E0E0" }} />
+
+            {error && (
+              <div className="alert alert-danger" role="alert">
+                {error}
+              </div>
+            )}
+
+            <div className="row g-3">
+              <div className="col-md-6">
+                <label
+                  htmlFor="name"
+                  className="form-label"
+                  style={{ color: "#0A2463", fontWeight: "500" }}
+                >
+                  Full Name
+                </label>
+                <input
+                  type="text"
+                  className="form-control"
+                  id="name"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleChange}
+                  disabled={!isEditing || loading}
+                  style={inputStyle}
+                  required
+                />
+              </div>
+              <div className="col-md-6">
+                <label
+                  htmlFor="email"
+                  className="form-label"
+                  style={{ color: "#0A2463", fontWeight: "500" }}
+                >
+                  Email
+                </label>
+                <input
+                  type="email"
+                  className="form-control"
+                  id="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  disabled={true} // Email should not be editable
+                  style={{
+                    ...inputStyle,
+                    backgroundColor: "#EEEEEE",
+                    cursor: "not-allowed",
+                  }}
+                  required
+                />
+              </div>
+              <div className="col-md-6">
+                <label
+                  htmlFor="phone"
+                  className="form-label"
+                  style={{ color: "#0A2463", fontWeight: "500" }}
+                >
+                  Phone Number
+                </label>
+                <input
+                  type="tel"
+                  className="form-control"
+                  id="phone"
+                  name="phone"
+                  value={formData.phone}
+                  onChange={handleChange}
+                  disabled={!isEditing || loading}
+                  style={inputStyle}
+                  required
+                />
+              </div>
+              <div className="col-md-6">
+                <label
+                  htmlFor="country"
+                  className="form-label"
+                  style={{ color: "#0A2463", fontWeight: "500" }}
+                >
+                  Country
+                </label>
+                <select
+                  className="form-select"
+                  id="country"
+                  name="country"
+                  value={formData.country}
+                  onChange={handleChange}
+                  disabled={!isEditing || loading}
+                  style={inputStyle}
+                  required
+                >
+                  <option value="India">India</option>
+                  <option value="United States">United States</option>
+                  <option value="United Kingdom">United Kingdom</option>
+                  <option value="Canada">Canada</option>
+                  <option value="Australia">Australia</option>
+                  <option value="Germany">Germany</option>
+                  <option value="France">France</option>
+                  <option value="Japan">Japan</option>
+                  <option value="China">China</option>
+                  <option value="Brazil">Brazil</option>
+                  <option value="South Africa">South Africa</option>
+                </select>
+              </div>
+              <div className="col-md-6">
+                <label
+                  htmlFor="panNumber"
+                  className="form-label"
+                  style={{ color: "#0A2463", fontWeight: "500" }}
+                >
+                  PAN Number
+                </label>
+                <input
+                  type="text"
+                  className="form-control"
+                  id="panNumber"
+                  name="panNumber"
+                  value={formData.panNumber}
+                  onChange={handleChange}
+                  disabled={!isEditing || loading}
+                  style={inputStyle}
+                />
+              </div>
+              <div className="col-md-6">
+                <label
+                  htmlFor="aadharNumber"
+                  className="form-label"
+                  style={{ color: "#0A2463", fontWeight: "500" }}
+                >
+                  Aadhar Number
+                </label>
+                <input
+                  type="text"
+                  className="form-control"
+                  id="aadharNumber"
+                  name="aadharNumber"
+                  value={formData.aadharNumber}
+                  onChange={handleChange}
+                  disabled={!isEditing || loading}
+                  style={inputStyle}
+                />
+              </div>
             </div>
           </div>
-        )}
 
-        {/* Personal Information Section */}
-        <h4
-          className="fw-bold mb-4"
-          style={{
-            color: "#0A2463",
-            textShadow: "1px 1px 2px rgba(58, 134, 255, 0.2)",
-          }}
-        >
-          Profile Information
-        </h4>
-
-        {isEditing ? (
-          <form onSubmit={handleSubmit}>
-            {/* Personal Information */}
+          {/* Bank Details Section */}
+          <div className="mb-4">
             <h5
-              className="fw-bold mb-3"
+              className="mb-3"
               style={{
                 color: "#0A2463",
-                textShadow: "1px 1px 2px rgba(58, 134, 255, 0.2)",
-              }}
-            >
-              Personal Information
-            </h5>
-
-            <div className="mb-4">
-              <label
-                className="form-label fw-medium"
-                style={{ color: "#0A2463" }}
-              >
-                Full Name
-              </label>
-              <input
-                type="text"
-                className="form-control py-3"
-                name="name"
-                value={formData.name}
-                onChange={handleChange}
-                style={inputStyle}
-                onFocus={(e) => {
-                  e.target.style.borderColor = "#3A86FF";
-                  e.target.style.boxShadow =
-                    "0 0 0 0.25rem rgba(58, 134, 255, 0.25)";
-                }}
-                onBlur={(e) => {
-                  e.target.style.borderColor = "#E0E0E0";
-                  e.target.style.boxShadow = "none";
-                }}
-                required
-              />
-            </div>
-
-            <div className="mb-4">
-              <label
-                className="form-label fw-medium"
-                style={{ color: "#0A2463" }}
-              >
-                Email
-              </label>
-              <input
-                type="email"
-                className="form-control py-3"
-                name="email"
-                value={formData.email}
-                onChange={handleChange}
-                style={inputStyle}
-                onFocus={(e) => {
-                  e.target.style.borderColor = "#3A86FF";
-                  e.target.style.boxShadow =
-                    "0 0 0 0.25rem rgba(58, 134, 255, 0.25)";
-                }}
-                onBlur={(e) => {
-                  e.target.style.borderColor = "#E0E0E0";
-                  e.target.style.boxShadow = "none";
-                }}
-                required
-              />
-            </div>
-
-            <div className="mb-4">
-              <label
-                className="form-label fw-medium"
-                style={{ color: "#0A2463" }}
-              >
-                Country
-              </label>
-              <input
-                type="text"
-                className="form-control py-3"
-                name="country"
-                value={formData.country}
-                onChange={handleChange}
-                style={inputStyle}
-                onFocus={(e) => {
-                  e.target.style.borderColor = "#3A86FF";
-                  e.target.style.boxShadow =
-                    "0 0 0 0.25rem rgba(58, 134, 255, 0.25)";
-                }}
-                onBlur={(e) => {
-                  e.target.style.borderColor = "#E0E0E0";
-                  e.target.style.boxShadow = "none";
-                }}
-              />
-            </div>
-
-            <div className="mb-4">
-              <label
-                className="form-label fw-medium"
-                style={{ color: "#0A2463" }}
-              >
-                Phone Number
-              </label>
-              <input
-                type="tel"
-                className="form-control py-3"
-                name="phone"
-                value={formData.phone}
-                onChange={handleChange}
-                style={inputStyle}
-                onFocus={(e) => {
-                  e.target.style.borderColor = "#3A86FF";
-                  e.target.style.boxShadow =
-                    "0 0 0 0.25rem rgba(58, 134, 255, 0.25)";
-                }}
-                onBlur={(e) => {
-                  e.target.style.borderColor = "#E0E0E0";
-                  e.target.style.boxShadow = "none";
-                }}
-              />
-            </div>
-
-            <div className="mb-4">
-              <label
-                className="form-label fw-medium"
-                style={{ color: "#0A2463" }}
-              >
-                PAN Number
-              </label>
-              <input
-                type="text"
-                className="form-control py-3"
-                name="panNumber"
-                value={formData.panNumber}
-                onChange={handleChange}
-                style={inputStyle}
-                placeholder="ABCDE1234F"
-                pattern="[A-Z]{5}[0-9]{4}[A-Z]{1}"
-                title="Enter valid PAN (e.g., ABCDE1234F)"
-                onFocus={(e) => {
-                  e.target.style.borderColor = "#3A86FF";
-                  e.target.style.boxShadow =
-                    "0 0 0 0.25rem rgba(58, 134, 255, 0.25)";
-                }}
-                onBlur={(e) => {
-                  e.target.style.borderColor = "#E0E0E0";
-                  e.target.style.boxShadow = "none";
-                }}
-              />
-            </div>
-
-            <div className="mb-4">
-              <label
-                className="form-label fw-medium"
-                style={{ color: "#0A2463" }}
-              >
-                Aadhar Number
-              </label>
-              <input
-                type="text"
-                className="form-control py-3"
-                name="aadharNumber"
-                value={formData.aadharNumber}
-                onChange={handleChange}
-                style={inputStyle}
-                placeholder="1234 5678 9012"
-                pattern="[0-9]{12}"
-                title="12-digit Aadhar number"
-                onFocus={(e) => {
-                  e.target.style.borderColor = "#3A86FF";
-                  e.target.style.boxShadow =
-                    "0 0 0 0.25rem rgba(58, 134, 255, 0.25)";
-                }}
-                onBlur={(e) => {
-                  e.target.style.borderColor = "#E0E0E0";
-                  e.target.style.boxShadow = "none";
-                }}
-              />
-            </div>
-
-            {/* Bank Details Section */}
-            <h5
-              className="fw-bold mb-3 mt-4"
-              style={{
-                color: "#0A2463",
-                textShadow: "1px 1px 2px rgba(58, 134, 255, 0.2)",
+                fontWeight: "600",
               }}
             >
               Bank Details
             </h5>
-
-            <div className="mb-3">
-              <label
-                className="form-label fw-medium"
-                style={{ color: "#0A2463" }}
-              >
-                Account Holder Name
-              </label>
-              <input
-                type="text"
-                className="form-control py-3"
-                name="bankDetails.accountHolderName"
-                value={formData.bankDetails.accountHolderName}
-                onChange={handleChange}
-                style={inputStyle}
-                onFocus={(e) => {
-                  e.target.style.borderColor = "#3A86FF";
-                  e.target.style.boxShadow =
-                    "0 0 0 0.25rem rgba(58, 134, 255, 0.25)";
-                }}
-                onBlur={(e) => {
-                  e.target.style.borderColor = "#E0E0E0";
-                  e.target.style.boxShadow = "none";
-                }}
-              />
+            <hr style={{ borderColor: "#E0E0E0" }} />
+            <div className="row g-3">
+              <div className="col-md-6">
+                <label
+                  htmlFor="bankDetails.accountNumber"
+                  className="form-label"
+                  style={{ color: "#0A2463", fontWeight: "500" }}
+                >
+                  Account Number
+                </label>
+                <input
+                  type="text"
+                  className="form-control"
+                  id="bankDetails.accountNumber"
+                  name="bankDetails.accountNumber"
+                  value={formData.bankDetails.accountNumber}
+                  onChange={handleChange}
+                  disabled={!isEditing || loading}
+                  style={inputStyle}
+                />
+              </div>
+              <div className="col-md-6">
+                <label
+                  htmlFor="bankDetails.ifscCode"
+                  className="form-label"
+                  style={{ color: "#0A2463", fontWeight: "500" }}
+                >
+                  IFSC Code
+                </label>
+                <input
+                  type="text"
+                  className="form-control"
+                  id="bankDetails.ifscCode"
+                  name="bankDetails.ifscCode"
+                  value={formData.bankDetails.ifscCode}
+                  onChange={handleChange}
+                  disabled={!isEditing || loading}
+                  style={inputStyle}
+                />
+              </div>
+              <div className="col-md-6">
+                <label
+                  htmlFor="bankDetails.bankName"
+                  className="form-label"
+                  style={{ color: "#0A2463", fontWeight: "500" }}
+                >
+                  Bank Name
+                </label>
+                <input
+                  type="text"
+                  className="form-control"
+                  id="bankDetails.bankName"
+                  name="bankDetails.bankName"
+                  value={formData.bankDetails.bankName}
+                  onChange={handleChange}
+                  disabled={!isEditing || loading}
+                  style={inputStyle}
+                />
+              </div>
+              <div className="col-md-6">
+                <label
+                  htmlFor="bankDetails.accountHolderName"
+                  className="form-label"
+                  style={{ color: "#0A2463", fontWeight: "500" }}
+                >
+                  Account Holder Name
+                </label>
+                <input
+                  type="text"
+                  className="form-control"
+                  id="bankDetails.accountHolderName"
+                  name="bankDetails.accountHolderName"
+                  value={formData.bankDetails.accountHolderName}
+                  onChange={handleChange}
+                  disabled={!isEditing || loading}
+                  style={inputStyle}
+                />
+              </div>
             </div>
-
-            <div className="mb-3">
-              <label
-                className="form-label fw-medium"
-                style={{ color: "#0A2463" }}
-              >
-                Account Number
-              </label>
-              <input
-                type="text"
-                className="form-control py-3"
-                name="bankDetails.accountNumber"
-                value={formData.bankDetails.accountNumber}
-                onChange={handleChange}
-                style={inputStyle}
-                onFocus={(e) => {
-                  e.target.style.borderColor = "#3A86FF";
-                  e.target.style.boxShadow =
-                    "0 0 0 0.25rem rgba(58, 134, 255, 0.25)";
-                }}
-                onBlur={(e) => {
-                  e.target.style.borderColor = "#E0E0E0";
-                  e.target.style.boxShadow = "none";
-                }}
-              />
-            </div>
-
-            <div className="mb-3">
-              <label
-                className="form-label fw-medium"
-                style={{ color: "#0A2463" }}
-              >
-                Bank Name
-              </label>
-              <input
-                type="text"
-                className="form-control py-3"
-                name="bankDetails.bankName"
-                value={formData.bankDetails.bankName}
-                onChange={handleChange}
-                style={inputStyle}
-                onFocus={(e) => {
-                  e.target.style.borderColor = "#3A86FF";
-                  e.target.style.boxShadow =
-                    "0 0 0 0.25rem rgba(58, 134, 255, 0.25)";
-                }}
-                onBlur={(e) => {
-                  e.target.style.borderColor = "#E0E0E0";
-                  e.target.style.boxShadow = "none";
-                }}
-              />
-            </div>
-
-            <div className="mb-4">
-              <label
-                className="form-label fw-medium"
-                style={{ color: "#0A2463" }}
-              >
-                IFSC Code
-              </label>
-              <input
-                type="text"
-                className="form-control py-3"
-                name="bankDetails.ifscCode"
-                value={formData.bankDetails.ifscCode}
-                onChange={handleChange}
-                style={inputStyle}
-                placeholder="ABCD0123456"
-                pattern="^[A-Z]{4}0[A-Z0-9]{6}$"
-                title="Enter valid IFSC code (e.g., ABCD0123456)"
-                onFocus={(e) => {
-                  e.target.style.borderColor = "#3A86FF";
-                  e.target.style.boxShadow =
-                    "0 0 0 0.25rem rgba(58, 134, 255, 0.25)";
-                }}
-                onBlur={(e) => {
-                  e.target.style.borderColor = "#E0E0E0";
-                  e.target.style.boxShadow = "none";
-                }}
-              />
-            </div>
-
-            {/* Password Section */}
-            <hr
-              className="my-4"
-              style={{ borderColor: "rgba(10, 36, 99, 0.2)" }}
-            />
-            <h5
-              className="fw-bold mb-4"
-              style={{
-                color: "#0A2463",
-                textShadow: "1px 1px 2px rgba(58, 134, 255, 0.2)",
-              }}
-            >
-              Change Password
-            </h5>
-
-            <div className="mb-4">
-              <label
-                className="form-label fw-medium"
-                style={{ color: "#0A2463" }}
-              >
-                Current Password
-              </label>
-              <input
-                type="password"
-                className="form-control py-3"
-                name="currentPassword"
-                value={formData.currentPassword}
-                onChange={handleChange}
-                style={inputStyle}
-                onFocus={(e) => {
-                  e.target.style.borderColor = "#3A86FF";
-                  e.target.style.boxShadow =
-                    "0 0 0 0.25rem rgba(58, 134, 255, 0.25)";
-                }}
-                onBlur={(e) => {
-                  e.target.style.borderColor = "#E0E0E0";
-                  e.target.style.boxShadow = "none";
-                }}
-              />
-            </div>
-
-            <div className="mb-4">
-              <label
-                className="form-label fw-medium"
-                style={{ color: "#0A2463" }}
-              >
-                New Password
-              </label>
-              <input
-                type="password"
-                className="form-control py-3"
-                name="newPassword"
-                value={formData.newPassword}
-                onChange={handleChange}
-                style={inputStyle}
-                onFocus={(e) => {
-                  e.target.style.borderColor = "#3A86FF";
-                  e.target.style.boxShadow =
-                    "0 0 0 0.25rem rgba(58, 134, 255, 0.25)";
-                }}
-                onBlur={(e) => {
-                  e.target.style.borderColor = "#E0E0E0";
-                  e.target.style.boxShadow = "none";
-                }}
-              />
-            </div>
-
-            <div className="mb-4">
-              <label
-                className="form-label fw-medium"
-                style={{ color: "#0A2463" }}
-              >
-                Confirm New Password
-              </label>
-              <input
-                type="password"
-                className="form-control py-3"
-                name="confirmPassword"
-                value={formData.confirmPassword}
-                onChange={handleChange}
-                style={inputStyle}
-                onFocus={(e) => {
-                  e.target.style.borderColor = "#3A86FF";
-                  e.target.style.boxShadow =
-                    "0 0 0 0.25rem rgba(58, 134, 255, 0.25)";
-                }}
-                onBlur={(e) => {
-                  e.target.style.borderColor = "#E0E0E0";
-                  e.target.style.boxShadow = "none";
-                }}
-              />
-            </div>
-
-            {/* Transaction Password Section */}
-            <hr
-              className="my-4"
-              style={{ borderColor: "rgba(10, 36, 99, 0.2)" }}
-            />
-            <h5
-              className="fw-bold mb-4"
-              style={{
-                color: "#0A2463",
-                textShadow: "1px 1px 2px rgba(58, 134, 255, 0.2)",
-              }}
-            >
-              Change Transaction Password
-            </h5>
-
-            <div className="mb-4">
-              <label
-                className="form-label fw-medium"
-                style={{ color: "#0A2463" }}
-              >
-                Current Transaction Password
-              </label>
-              <input
-                type="password"
-                className="form-control py-3"
-                name="currentTransactionPassword"
-                value={formData.currentTransactionPassword}
-                onChange={handleChange}
-                style={inputStyle}
-                onFocus={(e) => {
-                  e.target.style.borderColor = "#3A86FF";
-                  e.target.style.boxShadow =
-                    "0 0 0 0.25rem rgba(58, 134, 255, 0.25)";
-                }}
-                onBlur={(e) => {
-                  e.target.style.borderColor = "#E0E0E0";
-                  e.target.style.boxShadow = "none";
-                }}
-              />
-            </div>
-
-            <div className="mb-4">
-              <label
-                className="form-label fw-medium"
-                style={{ color: "#0A2463" }}
-              >
-                New Transaction Password
-              </label>
-              <input
-                type="password"
-                className="form-control py-3"
-                name="newTransactionPassword"
-                value={formData.newTransactionPassword}
-                onChange={handleChange}
-                style={inputStyle}
-                onFocus={(e) => {
-                  e.target.style.borderColor = "#3A86FF";
-                  e.target.style.boxShadow =
-                    "0 0 0 0.25rem rgba(58, 134, 255, 0.25)";
-                }}
-                onBlur={(e) => {
-                  e.target.style.borderColor = "#E0E0E0";
-                  e.target.style.boxShadow = "none";
-                }}
-              />
-            </div>
-
-            <div className="mb-4">
-              <label
-                className="form-label fw-medium"
-                style={{ color: "#0A2463" }}
-              >
-                Confirm New Transaction Password
-              </label>
-              <input
-                type="password"
-                className="form-control py-3"
-                name="confirmTransactionPassword"
-                value={formData.confirmTransactionPassword}
-                onChange={handleChange}
-                style={inputStyle}
-                onFocus={(e) => {
-                  e.target.style.borderColor = "#3A86FF";
-                  e.target.style.boxShadow =
-                    "0 0 0 0.25rem rgba(58, 134, 255, 0.25)";
-                }}
-                onBlur={(e) => {
-                  e.target.style.borderColor = "#E0E0E0";
-                  e.target.style.boxShadow = "none";
-                }}
-              />
-            </div>
-
-            <button
-              type="submit"
-              className="btn w-100 py-3 fw-bold"
-              style={buttonStyle}
-              onMouseEnter={(e) => {
-                e.target.style.boxShadow = "0 6px 20px rgba(58, 134, 255, 0.6)";
-                e.target.style.transform = "translateY(-2px)";
-              }}
-              onMouseLeave={(e) => {
-                e.target.style.boxShadow = "0 4px 15px rgba(58, 134, 255, 0.4)";
-                e.target.style.transform = "translateY(0)";
-              }}
-            >
-              Update Profile
-            </button>
-          </form>
-        ) : (
-          <div className="profile-view">
-            {/* Personal Information View */}
-            <h5
-              className="fw-bold mb-3"
-              style={{
-                color: "#0A2463",
-                textShadow: "1px 1px 2px rgba(58, 134, 255, 0.2)",
-              }}
-            >
-              Personal Information
-            </h5>
-
-            <div className="mb-4">
-              <h6 className="text-muted mb-1">Full Name</h6>
-              <p
-                className="fw-medium"
-                style={{ color: "#0A2463", fontSize: "1.1rem" }}
-              >
-                {user.basicInfo.name || "Not provided"}
-              </p>
-            </div>
-
-            <div className="mb-4">
-              <h6 className="text-muted mb-1">Email</h6>
-              <p
-                className="fw-medium"
-                style={{ color: "#0A2463", fontSize: "1.1rem" }}
-              >
-                {user.basicInfo.email || "Not provided"}
-              </p>
-            </div>
-
-            <div className="mb-4">
-              <h6 className="text-muted mb-1">Country</h6>
-              <p
-                className="fw-medium"
-                style={{ color: "#0A2463", fontSize: "1.1rem" }}
-              >
-                {user.basicInfo.country || "Not provided"}
-              </p>
-            </div>
-
-            <div className="mb-4">
-              <h6 className="text-muted mb-1">Phone Number</h6>
-              <p
-                className="fw-medium"
-                style={{ color: "#0A2463", fontSize: "1.1rem" }}
-              >
-                {user.basicInfo.phone || "Not provided"}
-              </p>
-            </div>
-
-            <div className="mb-4">
-              <h6 className="text-muted mb-1">PAN Number</h6>
-              <p
-                className="fw-medium"
-                style={{ color: "#0A2463", fontSize: "1.1rem" }}
-              >
-                {user.basicInfo.panNumber || "Not provided"}
-              </p>
-            </div>
-
-            <div className="mb-4">
-              <h6 className="text-muted mb-1">Aadhar Number</h6>
-              <p
-                className="fw-medium"
-                style={{ color: "#0A2463", fontSize: "1.1rem" }}
-              >
-                {user.basicInfo.aadharNumber || "Not provided"}
-              </p>
-            </div>
-
-            <div className="mb-4">
-              <h6 className="text-muted mb-1">Left Referral Code</h6>
-              <p
-                className="fw-medium"
-                style={{ color: "#0A2463", fontSize: "1.1rem" }}
-              >
-                {user.basicInfo.referralCodeLeft || "Not provided"}
-              </p>
-            </div>
-
-            <div className="mb-4">
-              <h6 className="text-muted mb-1">Right Referral Code</h6>
-              <p
-                className="fw-medium"
-                style={{ color: "#0A2463", fontSize: "1.1rem" }}
-              >
-                {user.basicInfo.referralCodeRight || "Not provided"}
-              </p>
-            </div>
-
-            {/* Bank Details View */}
-            <h5
-              className="fw-bold mb-3 mt-4"
-              style={{
-                color: "#0A2463",
-                textShadow: "1px 1px 2px rgba(58, 134, 255, 0.2)",
-              }}
-            >
-              Bank Details
-            </h5>
-
-            <div className="mb-3">
-              <h6 className="text-muted mb-1">Account Holder Name</h6>
-              <p
-                className="fw-medium"
-                style={{ color: "#0A2463", fontSize: "1.1rem" }}
-              >
-                {user.bankDetails.accountHolderName || "Not provided"}
-              </p>
-            </div>
-
-            <div className="mb-3">
-              <h6 className="text-muted mb-1">Account Number</h6>
-              <p
-                className="fw-medium"
-                style={{ color: "#0A2463", fontSize: "1.1rem" }}
-              >
-                {user.bankDetails.accountNumber || "Not provided"}
-              </p>
-            </div>
-
-            <div className="mb-3">
-              <h6 className="text-muted mb-1">Bank Name</h6>
-              <p
-                className="fw-medium"
-                style={{ color: "#0A2463", fontSize: "1.1rem" }}
-              >
-                {user.bankDetails.bankName || "Not provided"}
-              </p>
-            </div>
-
-            <div className="mb-4">
-              <h6 className="text-muted mb-1">IFSC Code</h6>
-              <p
-                className="fw-medium"
-                style={{ color: "#0A2463", fontSize: "1.1rem" }}
-              >
-                {user.bankDetails.ifscCode || "Not provided"}
-              </p>
-            </div>
-
-            <button
-              onClick={handleEdit}
-              className="btn w-100 py-3 fw-bold mt-4"
-              style={buttonStyle}
-              onMouseEnter={(e) => {
-                e.target.style.boxShadow = "0 6px 20px rgba(58, 134, 255, 0.6)";
-                e.target.style.transform = "translateY(-2px)";
-              }}
-              onMouseLeave={(e) => {
-                e.target.style.boxShadow = "0 4px 15px rgba(58, 134, 255, 0.4)";
-                e.target.style.transform = "translateY(0)";
-              }}
-            >
-              Edit Profile
-            </button>
           </div>
-        )}
+
+          {/* Password Change Section - Only visible in edit mode */}
+          {isEditing && (
+            <div className="mb-4">
+              <h5
+                className="mb-3"
+                style={{
+                  color: "#0A2463",
+                  fontWeight: "600",
+                }}
+              >
+                Change Password
+              </h5>
+              <hr style={{ borderColor: "#E0E0E0" }} />
+              <div className="row g-3">
+                <div className="col-md-4">
+                  <label
+                    htmlFor="currentPassword"
+                    className="form-label"
+                    style={{ color: "#0A2463", fontWeight: "500" }}
+                  >
+                    Current Password
+                  </label>
+                  <input
+                    type="password"
+                    className="form-control"
+                    id="currentPassword"
+                    name="currentPassword"
+                    value={formData.currentPassword}
+                    onChange={handleChange}
+                    disabled={loading}
+                    style={inputStyle}
+                  />
+                </div>
+                <div className="col-md-4">
+                  <label
+                    htmlFor="newPassword"
+                    className="form-label"
+                    style={{ color: "#0A2463", fontWeight: "500" }}
+                  >
+                    New Password
+                  </label>
+                  <input
+                    type="password"
+                    className="form-control"
+                    id="newPassword"
+                    name="newPassword"
+                    value={formData.newPassword}
+                    onChange={handleChange}
+                    disabled={loading}
+                    style={inputStyle}
+                  />
+                </div>
+                <div className="col-md-4">
+                  <label
+                    htmlFor="confirmPassword"
+                    className="form-label"
+                    style={{ color: "#0A2463", fontWeight: "500" }}
+                  >
+                    Confirm New Password
+                  </label>
+                  <input
+                    type="password"
+                    className="form-control"
+                    id="confirmPassword"
+                    name="confirmPassword"
+                    value={formData.confirmPassword}
+                    onChange={handleChange}
+                    disabled={loading}
+                    style={inputStyle}
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Transaction Password Change Section - Only visible in edit mode */}
+          {isEditing && (
+            <div className="mb-4">
+              <h5
+                className="mb-3"
+                style={{
+                  color: "#0A2463",
+                  fontWeight: "600",
+                }}
+              >
+                Change Transaction Password
+              </h5>
+              <hr style={{ borderColor: "#E0E0E0" }} />
+              <div className="row g-3">
+                <div className="col-md-4">
+                  <label
+                    htmlFor="currentTransactionPassword"
+                    className="form-label"
+                    style={{ color: "#0A2463", fontWeight: "500" }}
+                  >
+                    Current Transaction Password
+                  </label>
+                  <input
+                    type="password"
+                    className="form-control"
+                    id="currentTransactionPassword"
+                    name="currentTransactionPassword"
+                    value={formData.currentTransactionPassword}
+                    onChange={handleChange}
+                    disabled={loading}
+                    style={inputStyle}
+                  />
+                </div>
+                <div className="col-md-4">
+                  <label
+                    htmlFor="newTransactionPassword"
+                    className="form-label"
+                    style={{ color: "#0A2463", fontWeight: "500" }}
+                  >
+                    New Transaction Password
+                  </label>
+                  <input
+                    type="password"
+                    className="form-control"
+                    id="newTransactionPassword"
+                    name="newTransactionPassword"
+                    value={formData.newTransactionPassword}
+                    onChange={handleChange}
+                    disabled={loading}
+                    style={inputStyle}
+                  />
+                </div>
+                <div className="col-md-4">
+                  <label
+                    htmlFor="confirmTransactionPassword"
+                    className="form-label"
+                    style={{ color: "#0A2463", fontWeight: "500" }}
+                  >
+                    Confirm New Transaction Password
+                  </label>
+                  <input
+                    type="password"
+                    className="form-control"
+                    id="confirmTransactionPassword"
+                    name="confirmTransactionPassword"
+                    value={formData.confirmTransactionPassword}
+                    onChange={handleChange}
+                    disabled={loading}
+                    style={inputStyle}
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Referral Codes Section */}
+          <div className="mb-4">
+            <h5
+              className="mb-3"
+              style={{
+                color: "#0A2463",
+                fontWeight: "600",
+              }}
+            >
+              Referral Codes
+            </h5>
+            <hr style={{ borderColor: "#E0E0E0" }} />
+            <div className="row g-3">
+              <div className="col-md-6">
+                <label
+                  htmlFor="referralCodeLeft"
+                  className="form-label"
+                  style={{ color: "#0A2463", fontWeight: "500" }}
+                >
+                  Left Referral Code
+                </label>
+                <div className="input-group">
+                  <input
+                    type="text"
+                    className="form-control"
+                    id="referralCodeLeft"
+                    value={user.basicInfo.referralCodeLeft}
+                    readOnly
+                    style={{
+                      ...inputStyle,
+                      backgroundColor: "#EEEEEE",
+                      cursor: "not-allowed",
+                    }}
+                  />
+                  <button
+                    className="btn"
+                    type="button"
+                    style={{
+                      ...buttonStyle,
+                      backgroundColor: "#3A86FF",
+                    }}
+                    onClick={() => {
+                      navigator.clipboard.writeText(
+                        user.basicInfo.referralCodeLeft
+                      );
+                      alert("Referral code copied to clipboard!");
+                    }}
+                  >
+                    <i className="bi bi-clipboard"></i> Copy
+                  </button>
+                </div>
+              </div>
+              <div className="col-md-6">
+                <label
+                  htmlFor="referralCodeRight"
+                  className="form-label"
+                  style={{ color: "#0A2463", fontWeight: "500" }}
+                >
+                  Right Referral Code
+                </label>
+                <div className="input-group">
+                  <input
+                    type="text"
+                    className="form-control"
+                    id="referralCodeRight"
+                    value={user.basicInfo.referralCodeRight}
+                    readOnly
+                    style={{
+                      ...inputStyle,
+                      backgroundColor: "#EEEEEE",
+                      cursor: "not-allowed",
+                    }}
+                  />
+                  <button
+                    className="btn"
+                    type="button"
+                    style={{
+                      ...buttonStyle,
+                      backgroundColor: "#3A86FF",
+                    }}
+                    onClick={() => {
+                      navigator.clipboard.writeText(
+                        user.basicInfo.referralCodeRight
+                      );
+                      alert("Referral code copied to clipboard!");
+                    }}
+                  >
+                    <i className="bi bi-clipboard"></i> Copy
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </form>
       </div>
-
-      <style jsx global>{`
-        @media (max-width: 992px) {
-          .card-body {
-            padding: 1.5rem !important;
-          }
-          .form-control {
-            font-size: 0.9rem !important;
-            padding: 0.5rem 0.75rem !important;
-          }
-          .btn {
-            font-size: 0.9rem !important;
-          }
-        }
-        @media (max-width: 576px) {
-          .card-body {
-            padding: 1rem !important;
-          }
-          .form-control {
-            font-size: 0.85rem !important;
-          }
-          .btn {
-            font-size: 0.85rem !important;
-            padding: 0.4rem 0.75rem !important;
-          }
-          h4,
-          h5 {
-            font-size: 1.1rem !important;
-          }
-        }
-      `}</style>
     </div>
   );
 };

@@ -91,6 +91,7 @@ exports.getProfile = async (req, res) => {
 exports.getAllUsers = async (req, res) => {
   try {
     
+
     const { data } = await axios.get(`${USER_SERVICE_URL}/api/admin/users`, {
       headers: { Authorization: req.headers.authorization }
     });

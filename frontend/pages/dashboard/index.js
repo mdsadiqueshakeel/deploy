@@ -7,6 +7,7 @@ import Products from '@pages/dashboard/products'; // Correct import path
 import BusinessVolumeForm from '@components/BusinessVolumeForm';
 import BusinessVolumeStats from '@components/BusinessVolumeStats';
 import BusinessPage from './business';
+import { fetchProfile } from '@utils/profileService';
 
 // Placeholder components for other sections
 const DashboardOverview = ({ user, refresh, setRefresh }) => (
@@ -40,18 +41,24 @@ export default function Dashboard({ initialUser }) {
   const [user, setUser] = useState(initialUser);
   const [coins, setCoins] = useState(1000); // Initialize coins to 1000
   const [refresh, setRefresh] = useState(0);
+  const [loading, setLoading] = useState(true);
 
-  // Load user data from localStorage on client-side only
+  // Load user data from API instead of localStorage
   useEffect(() => {
-    try {
-      const savedUser = localStorage.getItem('userProfileData');
-      if (savedUser) {
-        setUser(JSON.parse(savedUser));
+    const loadUserProfile = async () => {
+      try {
+        setLoading(true);
+        const profileData = await fetchProfile();
+        setUser(profileData);
+      } catch (error) {
+        console.error('Error loading user profile:', error);
+      } finally {
+        setLoading(false);
       }
-    } catch (error) {
-      console.error('Error loading user data from localStorage:', error);
-    }
-  }, []);
+    };
+    
+    loadUserProfile();
+  }, [refresh]);
 
   const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
 
@@ -79,6 +86,15 @@ export default function Dashboard({ initialUser }) {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  // Show loading state while fetching user data
+  if (loading && !user) {
+    return <div className="d-flex justify-content-center align-items-center" style={{ height: '100vh' }}>
+      <div className="spinner-border text-primary" role="status">
+        <span className="visually-hidden">Loading...</span>
+      </div>
+    </div>;
+  }
+
   return (
     <>
       <Head>
@@ -98,30 +114,24 @@ export default function Dashboard({ initialUser }) {
         />
 
         <div className="flex-grow-1" style={{
-          marginLeft: isSidebarOpen && window.innerWidth <= 992 ? '0' : '280px',
-          transition: 'margin-left 0.3s ease-in-out',
-          backgroundColor: '#FFFFFF',
-          backgroundImage: 'radial-gradient(circle at 10% 20%, rgba(58, 134, 255, 0.1) 0%, rgba(10, 36, 99, 0.1) 90%)',
+          marginLeft: isSidebarOpen ? '280px' : '0',
+          transition: 'margin-left 0.3s ease',
           minHeight: '100vh',
-          paddingTop: '60px',
+          backgroundColor: '#F5F5F5',
         }}>
           <Topbar
             toggleSidebar={toggleSidebar}
+            activeSection={activeSection}
             searchQuery={searchQuery}
             setSearchQuery={setSearchQuery}
-            coins={coins} // Pass coins to Topbar
+            coins={coins}
           />
-          <main className="p-4">
-            {sectionComponents[activeSection] || <DashboardOverview user={user} refresh={refresh} setRefresh={setRefresh} />}
-          </main>
+
+          <div className="container-fluid py-4">
+            {sectionComponents[activeSection]}
+          </div>
         </div>
       </div>
-
-      <style jsx>{`
-        @media (max-width: 992px) {
-          .flex-grow-1 { margin-left: 0 !important; }
-        }
-      `}</style>
     </>
   );
 }

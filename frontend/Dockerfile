@@ -9,6 +9,9 @@ RUN npm install
 
 COPY . .
 
+# Create public directory if it doesn't exist
+RUN mkdir -p public
+
 RUN npm run build
 
 # Production stage

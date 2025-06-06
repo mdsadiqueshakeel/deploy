@@ -21,7 +21,8 @@ const handleSubmit = async (e) => {
   setError('');
   try {
     const response = await api.post('/api/admin/login', { email, password });
-    localStorage.setItem('adminToken', response.data.token); // Store token in localStorage
+    // No need to store token in localStorage as it's set as an HTTP-only cookie by the server
+    // The cookie will be automatically sent with subsequent requests
     router.push('/admin/dashboard');
   } catch (error) {
     setError(error.response?.data?.message || 'Login failed. Please try again.');
