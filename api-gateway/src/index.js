@@ -50,8 +50,7 @@ const app = express();
 
 // ✅ UPDATED CORS SETTINGS
 const allowedOrigins = [
-  'http://localhost:3000',
-  'https://mlm-frontend-production.up.railway.app',
+  process.env.CLIENT_URL || "http://localhost:3000",
 ];
 
 app.use(
