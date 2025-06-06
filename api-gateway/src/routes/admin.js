@@ -7,27 +7,29 @@ const ADMIN_SERVICE_URL = process.env.ADMIN_SERVICE_URL || "http://localhost:500
 const USER_SERVICE_URL = process.env.USER_SERVICE_URL || "http://localhost:5001";
 
 //sameer
-router.get("/verify", adminAuth, async (req, res) => {
+router.get("/verify", async (req, res) => {
   try {
-    if (!req.cookies.adminToken) {
+    const token = req.cookies.adminToken;
+    if (!token) {
       return res.status(401).json({ message: "No token available to forward" });
     }
 
     const response = await axios.get(`${ADMIN_SERVICE_URL}/api/admin/verify`, {
       headers: {
-        Authorization: `Bearer ${req.cookies.adminToken}`,
-        'x-admin-token': req.cookies.adminToken
+        Authorization: `Bearer ${token}`,
       },
       withCredentials: true
     });
 
     res.status(response.status).json(response.data);
   } catch (err) {
+    console.error("VERIFY ERROR:", err?.response?.data || err.message);
     res.status(err.response?.status || 500).json(
       err.response?.data || { message: "Service error" }
     );
   }
 });
+
 
 
 // Logger for debug

@@ -3,7 +3,18 @@ const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 const axios = require("axios");
 
-const USER_SERVICE_URL = process.env.USER_SERVICE_URL || "http://localhost:5001";
+const USER_SERVICE_URL = process.env.USER_SERVICE_URL;
+
+exports.verifyAdmin = async (req, res) => {
+  const admin = await Admin.findById(req.admin.adminId).select("-password");
+  if (!admin) return res.status(404).json({ message: "Admin not found" });
+
+  res.json({
+    _id: admin._id,
+    email: admin.email,
+    createdAt: admin.createdAt,
+  });
+};
 
 // Login Admin
 exports.login = async (req, res) => {

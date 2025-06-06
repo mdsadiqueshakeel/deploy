@@ -7,21 +7,22 @@ const AdminProtectedRoute = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        await api.get('/api/admin/verify'); // ✅ auto-sends cookies
-        setIsAuthenticated(true);
-      } catch (error) {
-        console.error('Auth error:', error);
-        router.push('/admin/login');
-      } finally {
-        setLoading(false);
-      }
-    };
+useEffect(() => {
+  const checkAuth = async () => {
+    try {
+      await api.get('/api/admin/verify'); // ✅ sends cookie automatically
+      setIsAuthenticated(true);
+    } catch (error) {
+      console.error('Auth error:', error);
+      router.push('/admin/login');
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    checkAuth();
-  }, [router]);
+  checkAuth();
+}, [router]);
+
 
   if (loading) {
     return (

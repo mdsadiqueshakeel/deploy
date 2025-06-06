@@ -77,6 +77,11 @@ app.use("/api/auth", authRoutes);
 app.use("/api/referral", referralRoutes);
 app.use("/api/admin", adminRoutes);
 
+app.get("/ping", (req, res) => {
+  console.log("PING HIT!");
+  res.status(200).send("API Gateway is working 💥");
+});
+
 // Global error handler
 app.use((err, req, res, next) => {
   console.error("ERROR:", err.message);

@@ -10,8 +10,6 @@ router.get("/users", adminAuth, wrapAsync(controller.getAllUsers));
 router.get("/user/:id", adminAuth, wrapAsync(controller.getSingleUser));
 router.get("/me", adminAuth, wrapAsync(controller.getProfile));
 router.get("/dashboard", adminAuth, wrapAsync(controller.getDashboardStats));
-router.get("/verify", require("../middlewares/adminAuth"), (req, res) => {
-  res.json({ success: true, adminId: req.adminId });
-});
+router.get("/verify", adminAuth, wrapAsync(controller.verifyAdmin));
 
 module.exports = router;
