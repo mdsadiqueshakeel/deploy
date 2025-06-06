@@ -34,18 +34,26 @@ export default function AdminLayout({ children, title }) {
 const handleLogout = async () => {
   try {
     console.log('Logout function called');
+    // First remove the token from localStorage before API call
+    localStorage.removeItem('adminToken');
+    // Also try with window.localStorage to ensure it's accessing the correct object
+    window.localStorage.removeItem('adminToken');
+    console.log('adminToken removed from localStorage');
+    
     // Call the API to clear the server-side cookie
     await API.post('/api/admin/logout', {}, { withCredentials: true });
-    // Remove the token from localStorage
-    localStorage.removeItem('adminToken');
-    console.log('adminToken removed from localStorage');
-    router.push('/admin/login');
+    
+    // Force a page reload to clear any in-memory state
+    window.location.href = '/admin/login';
   } catch (err) {
     console.error('Logout error:', err);
     // Remove the token from localStorage even if the API call fails
     localStorage.removeItem('adminToken');
+    window.localStorage.removeItem('adminToken');
     console.log('adminToken removed from localStorage (error case)');
-    router.push('/admin/login');
+    
+    // Force a page reload instead of using router.push
+    window.location.href = '/admin/login';
   }
 };
   const toggleSidebar = () => {
