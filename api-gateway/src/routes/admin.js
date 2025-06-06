@@ -31,29 +31,30 @@ router.get("/verify", adminAuth, async (req, res) => {
 
 
 // Logger for debug
+router.post("/login", async (req, res) => {
+  try {
+    const response = await axios.post(`${ADMIN_SERVICE_URL}/api/admin/login`, req.body);
 
-// 🔐 Admin Login
-try {
-  const response = await axios.post(`${ADMIN_SERVICE_URL}/api/admin/login`, req.body);
+    const token = response.data.token;
 
-  const token = response.data.token;
+    // ✅ Set the cookie correctly for cross-origin access
+    res
+      .cookie("adminToken", token, {
+        httpOnly: true,
+        secure: true, // 🔥 Railway is HTTPS so this MUST be true
+        sameSite: "None", // 🔥 To allow cross-site cookies
+        path: "/",
+        maxAge: 7 * 24 * 60 * 60 * 1000, // Optional: 7 days
+      })
+      .status(200)
+      .json({ message: "Admin logged in successfully" }); // No need to send token in body again
+  } catch (err) {
+    res
+      .status(err.response?.status || 500)
+      .json(err.response?.data || { error: "Service error" });
+  }
+});
 
-  // ✅ Set the cookie correctly for cross-origin access
-  res
-    .cookie("adminToken", token, {
-      httpOnly: true,
-      secure: true, // 🔥 Force this TRUE always on Railway (it's HTTPS anyway)
-      sameSite: "None", // 🔥 Always "None" for cross-origin
-      path: "/",
-      maxAge: 7 * 24 * 60 * 60 * 1000, // Optional: 7 days
-    })
-    .status(200)
-    .json({ message: "Admin logged in successfully" }); // 🔥 Don't send token again
-} catch (err) {
-  res
-    .status(err.response?.status || 500)
-    .json(err.response?.data || { error: "Service error" });
-}
 
 
 // 🔁 Change Admin Password
