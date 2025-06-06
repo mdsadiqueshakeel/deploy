@@ -8,15 +8,16 @@ import axios from 'axios';
 // This is critical for Docker Compose networking:
 // - From your browser: http://localhost:5000 (because Docker maps container port 5000 to host port 5000)
 // - From frontend container to API Gateway container: http://api-gateway:5000 (using Docker's internal DNS resolution)
+const API_URL = process.env.NEXT_PUBLIC_API_URL;
+
 
 // Create an Axios instance
-
 const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || 'https://mlm-api-gateway-production.up.railway.app',
-  withCredentials: true,
+  baseURL: API_URL,
   headers: {
     'Content-Type': 'application/json',
   },
+  withCredentials: true, // Necessary for sending cookies/session tokens if your backend uses them
 });
 
 // --- Request Interceptor: Add Authorization header ---
