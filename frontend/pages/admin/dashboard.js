@@ -59,6 +59,7 @@ function AdminDashboard() {
   };
 
   return (
+    <AdminProtectedRoute>
     <AdminLayout title="Dashboard">
       <Head>
         <title>Admin Dashboard | User Management</title>
@@ -303,7 +304,8 @@ function AdminDashboard() {
         )}
       </div>
     </AdminLayout>
+    </AdminProtectedRoute>
   );
 }
 
-export default AdminProtectedRoute(AdminDashboard);
+export default AdminDashboard;

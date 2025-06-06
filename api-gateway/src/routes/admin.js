@@ -31,26 +31,18 @@ router.get("/verify", adminAuth, async (req, res) => {
 
 
 // Logger for debug
-router.use((req, res, next) => {
-  console.log(`[API Gateway - Admin] ${req.method} ${req.originalUrl}`);
-  next();
-});
 
 // 🔐 Admin Login
 router.post("/login", async (req, res) => {
   try {
     const response = await axios.post(`${ADMIN_SERVICE_URL}/api/admin/login`, req.body);
     const token = response.data.token;
-
-    res
-      .cookie("adminToken", token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
-        path: "/",
-        domain: "localhost",
-        maxAge: 24 * 60 * 60 * 1000,
-      })
+res.cookie("adminToken", token, {
+  httpOnly: true,
+  secure: process.env.NODE_ENV === "production", // true for prod
+  sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+  path: "/",
+})
       .status(200)
       .json({ message: "Admin logged in successfully", token: token });
   } catch (err) {

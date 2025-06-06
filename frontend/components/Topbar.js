@@ -23,18 +23,21 @@ const Topbar = ({ toggleSidebar, searchQuery, setSearchQuery, coins }) => {
   };
 
   // Effect to trigger coin update animation
-  useEffect(() => {
-    if (coinRef.current) {
-      coinRef.current.classList.add('coin-update-animation');
-      const handler = () => {
-        coinRef.current.classList.remove('coin-update-animation');
-      };
-      coinRef.current.addEventListener('animationend', handler);
-      return () => {
-        coinRef.current?.removeEventListener('animationend', handler);
-      };
-    }
-  }, [coins]); // Re-run effect when coins change
+useEffect(() => {
+  const currentRef = coinRef.current; // Capture current value
+  
+  if (currentRef) {
+    currentRef.classList.add('coin-update-animation');
+    const handler = () => {
+      currentRef.classList.remove('coin-update-animation');
+    };
+    currentRef.addEventListener('animationend', handler);
+    
+    return () => {
+      currentRef.removeEventListener('animationend', handler);
+    };
+  }
+}, [coins]); // Re-run effect when coins change
 
   return (
     <nav

@@ -1,5 +1,8 @@
+// components/Products.js
+
 import { useEffect, useState } from 'react';
-import styles from './Products.module.css';
+// Assuming Products.module.css exists in the same directory as this component
+import styles from './Products.module.css'; // Make sure you have this CSS module
 import Image from 'next/image';
 
 // Sample product data with Unsplash image URLs
@@ -162,7 +165,6 @@ export default function Products({ searchQuery, coins, onPurchase }) { // Destru
   const handleBuyNow = (product) => {
     if (coins >= product.coins) {
       onPurchase(product.coins); // Call the onPurchase function passed from Dashboard
-      // alert(`Purchased ${product.name} for ${product.coins} points!`); // Removed redundant alert
       setPurchaseError('');
     } else {
       setPurchaseError(`Not enough points to purchase ${product.name}. You need ${product.coins} coins.`);
@@ -171,8 +173,9 @@ export default function Products({ searchQuery, coins, onPurchase }) { // Destru
   };
 
   // Filter products based on search query
+  // Ensure searchQuery is a string before calling toLowerCase()
   const filteredProducts = products.filter((product) =>
-    product.name.toLowerCase().includes(searchQuery.toLowerCase())
+    product.name.toLowerCase().includes((searchQuery || '').toLowerCase()) // Added || '' to handle undefined/null searchQuery
   );
 
   return (

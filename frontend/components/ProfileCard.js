@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 // import api from "../../utils/api";
+import Image from 'next/image';
 import { useRouter } from "next/router";
 
 import {
@@ -300,7 +301,7 @@ const ProfileCard = ({ user: propUser }) => {
               }}
             >
               {user.avatar ? (
-                <img
+                <Image
                   src={user.avatar}
                   alt="User Avatar"
                   style={{

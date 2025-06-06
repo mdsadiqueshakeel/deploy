@@ -1,11 +1,12 @@
-// jsconfig.json
 {
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
-      "@components/*": ["./components/*"],
-      "@pages/*": ["./pages/*"],
+      "@components/*": ["components/*"],
+      "@pages/*": ["pages/*"],
       "@utils/*": ["utils/*"]
     }
-  }
+  },
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", "**/*.js", "**/*.jsx"],
+  "exclude": ["node_modules"]
 }

@@ -1,9 +1,8 @@
-// utils/profileService.js
-import api from './api';
+import api from './api'; // Ensure it imports from the consolidated api.js
 
 export const fetchProfile = async () => {
   try {
-    const response = await api.get('/api/auth/me');
+    const response = await api.get('/api/auth/me'); // Or whatever your profile endpoint is
     return response.data;
   } catch (error) {
     console.error('Error fetching profile:', error);

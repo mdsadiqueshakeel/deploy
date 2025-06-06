@@ -1,9 +1,10 @@
 import { useRouter } from 'next/router';
-import { useState, useEffect } from 'react';
-import { fetchProfile } from 'utils/profileService';
+import { useState, useEffect, useMemo } from 'react';
+import { fetchProfile } from '@utils/profileService';
 import { logout } from '../utils/auth';
+import Image from 'next/image';
 
-const Sidebar = ({isSidebarOpen, toggleSidebar, setActiveSection, activeSection }) => {
+const Sidebar = ({ isSidebarOpen, toggleSidebar, setActiveSection, activeSection }) => {
   const router = useRouter();
   const [user, setUser] = useState({
     name: '',
@@ -12,7 +13,7 @@ const Sidebar = ({isSidebarOpen, toggleSidebar, setActiveSection, activeSection 
   });
   const [loading, setLoading] = useState(true);
 
-  const navItems = [
+  const navItems = useMemo(() => [
     { label: 'Dashboard', path: '/dashboard', icon: 'bi-speedometer2' },
     { label: 'Products', path: '/dashboard/products', icon: 'bi-box-seam' },
     { label: 'Business', path: '/dashboard/business', icon: 'bi-briefcase' },
@@ -20,7 +21,7 @@ const Sidebar = ({isSidebarOpen, toggleSidebar, setActiveSection, activeSection 
     { label: 'Status', path: '/dashboard/status', icon: 'bi-graph-up' },
     { label: 'Rank & Rewards', path: '/dashboard/rank', icon: 'bi-trophy' },
     { label: 'Support', path: '/dashboard/support', icon: 'bi-headset' },
-  ];
+  ], []);
 
   const handleNavItemClick = (item) => {
     if (router.pathname !== '/dashboard' && item.path.startsWith('/dashboard')) {
@@ -45,7 +46,6 @@ const Sidebar = ({isSidebarOpen, toggleSidebar, setActiveSection, activeSection 
     }
   };
 
-  // Fetch user profile data
   useEffect(() => {
     const loadProfile = async () => {
       try {
@@ -56,34 +56,35 @@ const Sidebar = ({isSidebarOpen, toggleSidebar, setActiveSection, activeSection 
             email: profileData.basicInfo?.email || '',
             avatar: profileData.basicInfo?.avatar || null
           });
+          console.log('Profile loaded successfully:', profileData); // Added for clearer debugging
         }
       } catch (error) {
         console.error('Failed to load profile:', error);
+        setUser({ name: 'Guest', email: 'guest@example.com', avatar: null });
       } finally {
         setLoading(false);
       }
     };
 
-    // Listen for profile updates
+    // This part might be causing multiple calls if 'profile-updated' is fired frequently
     const handleProfileUpdated = () => loadProfile();
     window.addEventListener('profile-updated', handleProfileUpdated);
 
-    // Set active section based on current route
     const currentItem = navItems.find((item) => item.path === router.pathname);
     if (currentItem && setActiveSection) {
-      setActiveSection(currentItem.label);    
+      setActiveSection(currentItem.label);
     }
 
+    // This is the initial call to loadProfile when the component mounts or dependencies change
     loadProfile();
 
     return () => {
       window.removeEventListener('profile-updated', handleProfileUpdated);
     };
-  }, [router.pathname, setActiveSection, fetchProfile]);
+  }, [router.pathname, setActiveSection, navItems]); // Dependencies here are the key
 
   return (
     <>
-      {/* Overlay for mobile */}
       {isSidebarOpen && (
         <div
           className="d-lg-none"
@@ -100,7 +101,6 @@ const Sidebar = ({isSidebarOpen, toggleSidebar, setActiveSection, activeSection 
         />
       )}
 
-      {/* Sidebar */}
       <div
         className={`d-flex flex-column flex-shrink-0 p-3 sidebar ${isSidebarOpen ? 'sidebar-open' : ''}`}
         style={{
@@ -120,7 +120,6 @@ const Sidebar = ({isSidebarOpen, toggleSidebar, setActiveSection, activeSection 
         </div>
         <hr style={{ borderColor: 'rgba(58, 134, 255, 0.3)' }} />
 
-        {/* User Profile Container */}
         {!loading && (
           <div
             className="p-3 mb-4 rounded d-flex align-items-center"
@@ -152,9 +151,11 @@ const Sidebar = ({isSidebarOpen, toggleSidebar, setActiveSection, activeSection 
               }}
             >
               {user.avatar ? (
-                <img
+                <Image
                   src={user.avatar}
                   alt="User Avatar"
+                  width={48}
+                  height={48}
                   style={{
                     width: '100%',
                     height: '100%',
@@ -167,13 +168,12 @@ const Sidebar = ({isSidebarOpen, toggleSidebar, setActiveSection, activeSection 
             </div>
             <div>
               <strong style={{ display: 'block', fontSize: '1.1rem' }}>
-                {user.name  || 'User'}
+                {user.name || 'User'}
               </strong>
               <small style={{ color: '#E0E0E0', fontSize: '0.85rem' }}>
                 {user.email || 'user@example.com'}
               </small>
             </div>
-
           </div>
         )}
 
@@ -223,6 +223,7 @@ const Sidebar = ({isSidebarOpen, toggleSidebar, setActiveSection, activeSection 
           ))}
         </ul>
         <hr style={{ borderColor: 'rgba(58, 134, 255, 0.3)' }} />
+
         <div className="mt-auto">
           <button
             className="btn btn-danger w-100"
