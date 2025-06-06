@@ -33,14 +33,18 @@ export default function AdminLayout({ children, title }) {
 
 const handleLogout = async () => {
   try {
+    console.log('Logout function called');
     // Call the API to clear the server-side cookie
     await API.post('/api/admin/logout', {}, { withCredentials: true });
     // Remove the token from localStorage
     localStorage.removeItem('adminToken');
+    console.log('adminToken removed from localStorage');
     router.push('/admin/login');
   } catch (err) {
+    console.error('Logout error:', err);
     // Remove the token from localStorage even if the API call fails
     localStorage.removeItem('adminToken');
+    console.log('adminToken removed from localStorage (error case)');
     router.push('/admin/login');
   }
 };
