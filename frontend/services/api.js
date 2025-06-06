@@ -5,7 +5,8 @@
 import axios from 'axios';
 
 const API = axios.create({
-  baseURL: 'http://localhost:5000',
+ baseURL: process.env.NEXT_PUBLIC_API_URL || 'https://mlm-api-gateway-production.up.railway.app',
+
   headers: {
     'Content-Type': 'application/json',
   },

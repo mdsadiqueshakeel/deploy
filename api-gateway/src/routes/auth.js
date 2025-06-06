@@ -4,7 +4,10 @@ const axios = require("axios");
 
 
 const jwtAuth = require("../middlewares/jwtAuth");
-const USER_SERVICE_URL = process.env.USER_SERVICE_URL || "http://localhost:5001";
+
+//sameer changed
+const USER_SERVICE_URL = process.env.USER_SERVICE_URL;
+// const USER_SERVICE_URL = process.env.USER_SERVICE_URL || "http://localhost:5001";
 
 // Add this for better error logging
 router.use((req, res, next) => {
