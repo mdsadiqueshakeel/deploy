@@ -22,7 +22,7 @@ const DashboardLayout = ({ children }) => {
   return (
     <div className="d-flex" style={{ minHeight: '100vh', backgroundColor: '#F0F2F5' }}>
       <Head>
-        <title>BOT ALPHA Dashboard</title>
+        <title>GROWTHAFFINITY Dashboard</title>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/favicon.ico" />
       </Head>

@@ -82,8 +82,8 @@ export default function Dashboard({ initialUser }) {
   return (
     <>
       <Head>
-        <title>Dashboard - Bot Alpha</title>
-        <meta name="description" content="Manage your Bot Alpha account" />
+        <title>Dashboard - GROWTHAFFINITY</title>
+        <meta name="description" content="Manage your GROWTHAFFINITY account" />
         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
         <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet" />
       </Head>

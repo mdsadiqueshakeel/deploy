@@ -115,7 +115,7 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar, setActiveSection, activeSection
       >
         <div className="d-flex align-items-center mb-3 mb-md-0 me-md-auto text-white text-decoration-none">
           <span className="fs-4 fw-bold" style={{ color: '#00F5FF' }}>
-            BOT ALPHA
+            GROWTHAFFINITY
           </span>
         </div>
         <hr style={{ borderColor: 'rgba(58, 134, 255, 0.3)' }} />
