@@ -27,7 +27,7 @@ const products = [
     name: 'Tropica Multifruits Face Wash',
     dp: 160,
     mrp: 250,
-    image: '/assets/images/i3.jpg',
+    image: '/assets/images/i3.png',
   },
   {
     id: 4,
