@@ -11,7 +11,7 @@ const products = [
     name: 'Neem Extract',
     dp: 350,
     mrp: 500,
-    image: 'assets/images/i1.png',
+    image: '/assets/images/i1.png',
   },
   {
     id: 2,
@@ -19,7 +19,7 @@ const products = [
     name: 'Mix Multi Berries Capsules',
     dp: 520,
     mrp: 700,
-    image: 'assets/images/i2.png',
+    image: '/assets/images/i2.png',
   },
   {
     id: 3,
@@ -27,7 +27,7 @@ const products = [
     name: 'Tropica Multifruits Face Wash',
     dp: 160,
     mrp: 250,
-    image: 'assets/images/i3.jpg',
+    image: '/assets/images/i3.jpg',
   },
   {
     id: 4,
@@ -35,7 +35,7 @@ const products = [
     name: 'Coconut & Aloe-Vera Hair Oil',
     dp: 280,
     mrp: 350,
-    image: 'assets/images/i4.jpg',
+    image: '/assets/images/i4.jpg',
   },
   {
     id: 5,
@@ -43,7 +43,7 @@ const products = [
     name: 'Onion & Blackseed Shampoo',
     dp: 300,
     mrp: 400,
-    image: 'assets/images/i5.jpg',
+    image: '/assets/images/i5.jpg',
   },
   {
     id: 6,
@@ -51,7 +51,7 @@ const products = [
     name: 'Aloe-Vera Extract',
     dp: 350,
     mrp: 500,
-    image: 'assets/images/i6.jpg',
+    image: '/assets/images/i6.jpg',
   },
 ];
 
