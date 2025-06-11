@@ -13,9 +13,11 @@
     "bootstrap": "^5.3.6",
     "cors": "^2.8.5",
     "cross-env": "^7.0.3",
+    "cross-origin": "^1.0.6",
     "next": "15.3.2",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "react-organizational-chart": "^2.2.1"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",

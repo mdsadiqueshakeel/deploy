@@ -1,11 +1,14 @@
 const dotenv = require("dotenv");
-dotenv.config({
-  path: `.env.${process.env.NODE_ENV || 'development'}`
-});
+// Load the default .env file directly
+dotenv.config();
+
 const express = require("express");
 const mongoose = require("mongoose");
 const cookieParser = require("cookie-parser");
 const cors = require("cors");
+
+
+
 
 const adminRoutes = require("./src/routes/adminRoutes");
 
@@ -14,10 +17,11 @@ const PORT = process.env.PORT || 5002;
 
 app.use(
   cors({
-    origin: process.env.CLIENT_URL,
+    origin: process.env.CLIENT_URL || 'http://localhost:3000',
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
+    exposedHeaders: ['Access-Control-Allow-Origin']
   })
 );
 app.use(express.json());

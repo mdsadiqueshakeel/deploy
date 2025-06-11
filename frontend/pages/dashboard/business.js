@@ -1,48 +1,50 @@
 import { useEffect, useState } from 'react';
-import BusinessVolumeForm from '../../components/BusinessVolumeForm';
-import BusinessVolumeStats from '../../components/BusinessVolumeStats';
 import { fetchProfile } from '../../utils/profileService';
+import dynamic from 'next/dynamic';
+
+// Lazy load BinaryTree (no SSR)
+const BinaryTree = dynamic(() => import('../../components/BinaryTree'), {
+  ssr: false,
+});
 
 export default function BusinessPage() {
   const [userId, setUserId] = useState(null);
-  const [refresh, setRefresh] = useState(0);
 
   useEffect(() => {
-    // Try to get userId from localStorage profile data
+    // Try to get userId from localStorage first
     const savedUser = localStorage.getItem('userProfileData');
     let foundId = null;
+
     if (savedUser) {
       const parsed = JSON.parse(savedUser);
-      console.log('Parsed user from localStorage:', parsed);
       if (parsed._id) foundId = parsed._id;
       else if (parsed.basicInfo && parsed.basicInfo._id) foundId = parsed.basicInfo._id;
     }
+
     if (foundId) {
-      console.log('Found userId:', foundId);
       setUserId(foundId);
     } else {
-      // Fallback: fetch profile from backend
-      fetchProfile().then(profile => {
-        console.log('Fetched profile from backend:', profile);
-        if (profile.basicInfo && profile.basicInfo._id) setUserId(profile.basicInfo._id);
-      }).catch(err => {
-        console.error('Error fetching profile:', err);
-      });
+      // fallback: fetch from backend
+      fetchProfile()
+        .then((profile) => {
+          if (profile?.basicInfo?._id) {
+            setUserId(profile.basicInfo._id);
+          }
+        })
+        .catch((err) => {
+          console.error('Failed to fetch profile:', err);
+        });
     }
   }, []);
 
   return (
     <div className="p-4">
-      <h2 className="mb-4" style={{ color: '#0A2463', fontWeight: '600' }}>
-        Business Volume
-      </h2>
+      <h2 className="text-2xl font-bold mb-4 text-[#0A2463]">My Binary Tree</h2>
+
       {userId ? (
-        <>
-          <BusinessVolumeForm userId={userId} onSuccess={() => setRefresh(r => r + 1)} />
-          <BusinessVolumeStats userId={userId} refreshTrigger={refresh} />
-        </>
+        <BinaryTree userId={userId} />
       ) : (
-        <div>Loading user information...</div>
+        <p className="text-gray-500">Loading your tree...</p>
       )}
     </div>
   );

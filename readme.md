@@ -1,291 +1,206 @@
-# MLM System (Multi-Level Marketing)
+# User Service - MLM System
 
-A complete MLM system with binary tree structure, built using Next.js, Express.js microservices, and MongoDB.
+This service is part of the **MLM-System** backend. It handles user authentication, registration, profile management, password reset, referral logic, user placement (how users are connected in the referral/binary tree), and admin operations. It is designed to be accessed via the API Gateway and communicates with a MongoDB database.
 
-## 🌟 Overview
+---
 
-This MLM system provides a platform for managing multi-level marketing operations with features like user management, binary tree referrals, business volume tracking, and comprehensive admin controls.
+## 📁 Directory Structure
 
-## 🏗 Architecture
-
-### Frontend (Next.js)
-- Port: 3000
-- Features:
-  - User Dashboard
-  - Admin Panel
-  - Referral Management
-  - Binary Tree Visualization
-  - Real-time Business Volume Tracking
-
-### Backend Microservices
-
-1. **API Gateway**
-   - Port: 5000
-   - Entry point for all API requests
-   - Handles routing and authentication
-   - CORS enabled for frontend communication
-
-2. **User Service**
-   - Port: 5001
-   - Manages user authentication
-   - Handles referral logic
-   - Binary tree management
-
-3. **Admin Service**
-   - Port: 5002
-   - Admin authentication
-   - User management
-   - System statistics
-
-## 🚀 Getting Started
-
-### Prerequisites
-- Node.js >= 18
-- MongoDB
-- npm or yarn
-
-### Installation
-
-1. **Clone the repository**
-```bash
-git clone <repository-url>
-cd MLM-System
+```
+user-service/
+│
+├── .env                # Environment variables (not committed)
+├── .env.example        # Example environment variables
+├── Dockerfile          # Docker build file
+├── index.js            # Main entry point (legacy, use src/index.js)
+├── package.json        # NPM dependencies and scripts
+├── seed.js             # Script to seed admin users
+└── src/
+    ├── controllers/
+    │   ├── auth.js         # User authentication, registration, profile, password logic
+    │   ├── admin.js        # Admin-specific logic
+    │   └── referral.js     # Referral tree and validation logic
+    ├── middlewares/
+    │   ├── jwtAuth.js      # JWT authentication middleware
+    │   └── ...             # Other custom middlewares
+    ├── models/
+    │   └── User.js         # Mongoose User schema
+    ├── routes/
+    │   ├── auth.js         # Auth/user-related API routes
+    │   ├── adminRoutes.js  # Admin API routes
+    │   └── referral.js     # Referral API routes
+    ├── utils/
+    │   ├── referralUtils.js # Referral code generation, tree helpers
+    │   ├── sendEmail.js     # Email sending utility (nodemailer)
+    │   └── wrapAsync.js     # Async error wrapper for routes
+    └── index.js            # Main Express app entry point
 ```
 
-2. **Set up environment variables**
-```bash
-# Copy environment files
-cp .env.example api-gateway/.env
-cp .env.example backend/user-service/.env
-cp .env.example backend/admin-service/.env
+---
+
+## 🚦 Main Functionality
+
+- **User Registration & Login:**  
+  Handles new user sign-up, login, and JWT issuance.
+- **Profile Management:**  
+  Fetch and update user profile, including personal and bank details.
+- **Password Management:**  
+  Forgot password (email reset link), reset password, and change password.
+- **Referral System:**  
+  Supports direct and binary tree referral logic, referral code validation.
+- **User Placement (Referral/Binary Tree):**  
+  When a user registers with a referral code, the system places them in the correct position in the referral/binary tree. Placement logic ensures each user is connected to their sponsor and, if using a binary tree, to the left or right position as per business rules. This structure enables tracking of downlines and network growth.
+- **Admin Operations:**  
+  Admin login, user management, and admin-specific endpoints.
+- **Email Notifications:**  
+  Sends password reset and other transactional emails.
+- **Security:**  
+  Uses JWT for authentication, bcrypt for password hashing, and CORS for frontend access.
+
+---
+
+## 🛡️ Middlewares
+
+- **CORS:**  
+  Configured to allow requests from the frontend (`CLIENT_URL` or `http://localhost:3000`), with credentials and standard headers.
+- **cookieParser:**  
+  Parses cookies for JWT and session management.
+- **express.json:**  
+  Parses incoming JSON requests.
+- **jwtAuth:**  
+  Protects routes that require authentication by verifying JWT tokens.
+- **wrapAsync:**  
+  Utility to catch async errors in route handlers and pass them to Express error handling.
+- **Error Handler:**  
+  Catches all errors and returns a JSON response with error details.
+
+---
+
+## 🛣️ Routes Overview
+
+### `/api/auth` (see [`src/routes/auth.js`](src/routes/auth.js))
+
+| Method | Endpoint                | Description                        | Middleware      |
+|--------|-------------------------|------------------------------------|-----------------|
+| POST   | `/register`             | Register new user                  |                 |
+| POST   | `/login`                | User login (returns JWT)           |                 |
+| POST   | `/forgot-password`      | Request password reset email       |                 |
+| POST   | `/reset-password`       | Reset password with token          |                 |
+| PUT    | `/profile`              | Update user profile                | `jwtAuth`       |
+| PUT    | `/change-password`      | Change password                    | `jwtAuth`       |
+| GET    | `/me`                   | Get current user profile           | `jwtAuth`       |
+
+### `/api/admin` (see [`src/routes/adminRoutes.js`](src/routes/adminRoutes.js))
+
+| Method | Endpoint                | Description                        | Middleware      |
+|--------|-------------------------|------------------------------------|-----------------|
+| POST   | `/login`                | Admin login                        |                 |
+| GET    | `/users`                | List all users                     | `jwtAuth` (admin only) |
+| ...    | ...                     | Other admin operations             |                 |
+
+### `/api/referral` (see [`src/routes/referral.js`](src/routes/referral.js))
+
+| Method | Endpoint                | Description                        | Middleware      |
+|--------|-------------------------|------------------------------------|-----------------|
+| GET    | `/validate/:code`       | Validate referral code             |                 |
+| GET    | `/tree/:userId`         | Get referral tree for user         | `jwtAuth`       |
+| POST   | `/placement`            | Place a new user under a sponsor (binary/left/right logic) | `jwtAuth` or as required |
+| ...    | ...                     | Other referral endpoints           |                 |
+
+---
+
+## 🌳 User Placement & Connection Logic
+
+### How User Placement Works
+
+- **Referral Code:**  
+  When a new user registers, they provide a referral code. The system validates this code and determines the sponsor.
+- **Binary Tree Placement:**  
+  The system checks the sponsor's left and right positions. If a position is available, the new user is placed there. If both are filled, placement may follow a spillover or other business logic.
+- **User Document Fields:**
+  - `sponsorId`: The direct sponsor (referrer).
+  - `parentId`: The parent in the binary tree (may be same as sponsor or determined by placement logic).
+  - `leftUser` / `rightUser`: References to the user's left and right downlines.
+  - `referralCodeLeft` / `referralCodeRight`: Codes for left/right placement.
+- **Placement Endpoint:**  
+  The `/api/referral/placement` endpoint (or handled during registration) manages this logic, ensuring users are connected correctly in the tree.
+
+### Example Placement Flow
+
+1. **User registers with referral code.**
+2. **System validates the code and finds the sponsor.**
+3. **System checks sponsor's left/right positions:**
+   - If left is empty, user is placed left.
+   - If right is empty, user is placed right.
+   - If both are filled, system finds next available position (spillover).
+4. **User document is updated with sponsor/parent/left/right references.**
+5. **Sponsor's user document is updated to reference the new user.**
+
+---
+
+## 🧩 Key Files
+
+- [`src/controllers/auth.js`](src/controllers/auth.js):  
+  All user authentication, registration, profile, and password logic.
+- [`src/controllers/referral.js`](src/controllers/referral.js):  
+  Referral validation and tree logic.
+- [`src/models/User.js`](src/models/User.js):  
+  Mongoose schema for users, including referral fields.
+- [`src/middlewares/jwtAuth.js`](src/middlewares/jwtAuth.js):  
+  JWT authentication middleware.
+- [`src/utils/sendEmail.js`](src/utils/sendEmail.js):  
+  Utility for sending emails (e.g., password reset).
+- [`src/utils/referralUtils.js`](src/utils/referralUtils.js):  
+  Referral code generation and helpers.
+
+---
+
+## ⚙️ Environment Variables
+
+See `.env.example` for all required variables:
+
 ```
-
-3. **Install dependencies**
-```bash
-# Frontend
-cd frontend
-npm install
-
-# API Gateway
-cd ../api-gateway
-npm install
-
-# User Service
-cd ../backend/user-service
-npm install
-
-# Admin Service
-cd ../backend/admin-service
-npm install
-```
-
-4. **Start the services**
-```bash
-# Frontend (Terminal 1)
-cd frontend
-npm run dev
-
-# API Gateway (Terminal 2)
-cd api-gateway
-npm run dev
-
-# User Service (Terminal 3)
-cd backend/user-service
-npm run dev
-
-# Admin Service (Terminal 4)
-cd backend/admin-service
-npm run dev
-```
-
-## 🔌 Service URLs
-
-- Frontend: http://localhost:3000
-- API Gateway: http://localhost:5000
-- User Service: http://localhost:5001
-- Admin Service: http://localhost:5002
-
-## 📝 Features
-
-### User Features
-- Registration and Authentication
-- Binary Tree Position
-- Referral Link Generation
-- Business Volume Tracking
-- Income Dashboard
-- Profile Management
-- Bank Details Management
-
-### Admin Features
-- Comprehensive User Management
-- System Statistics Dashboard
-- Business Volume Override
-- User Status Management
-- Transaction History
-- Report Generation
-
-## 🔒 Environment Variables
-
-```env
-# API Gateway
-PORT=5000
-USER_SERVICE_URL=http://localhost:5001
-ADMIN_SERVICE_URL=http://localhost:5002
-
-# User Service
-PORT=5001
-MONGO_URI=your_mongodb_uri
-JWT_SECRET=your_jwt_secret
+MONGO_URI=your-mongodb-uri
+JWT_SECRET=your-jwt-secret
+CLIENT_URL=http://localhost:3000
 EMAIL_HOST=smtp.gmail.com
 EMAIL_PORT=587
-EMAIL_USER=your_email
-EMAIL_PASS=your_app_password
-
-# Admin Service
-PORT=5002
-MONGO_URI=your_mongodb_uri
-JWT_SECRET=your_jwt_secret
-USER_SERVICE_URL=http://localhost:5001
+EMAIL_USER=your-email
+EMAIL_PASS=your-app-password
+EMAIL_FROM=your-email
 ```
 
-## 🗄️ Database Schema
+---
 
-### User Schema
-- name: String
-- email: String (unique)
-- password: String (hashed)
-- phone: Number
-- referralCode: String
-- parentId: ObjectId
-- bankDetails: Object
-  - accountNumber: Number
-  - ifscCode: String
-  - bankName: String
-  - accountHolderName: String
-- isActive: Boolean
-- createdAt: Date
-- updatedAt: Date
+## 🏁 Running the Service
 
-## 🔄 API Routes
+```bash
+# Install dependencies
+npm install
 
-### Auth Routes
-- POST /api/auth/register
-- POST /api/auth/login
-- GET /api/auth/me
-- PUT /api/auth/profile
-- POST /api/auth/logout
+# Start the service (development)
+npm run dev
 
-### Admin Routes
-- POST /api/admin/login
-- GET /api/admin/users
-- GET /api/admin/user/:id
-- PUT /api/admin/user/:id
-- GET /api/admin/dashboard
-
-### User Routes
-- GET /api/user/profile
-- PUT /api/user/profile
-- GET /api/user/referrals
-- GET /api/user/business-volume
-
-## 📁 Project Structure
-
-```
-MLM-System/
-├── frontend/                   # Next.js frontend application
-│   ├── components/            # Reusable components
-│   │   ├── admin/            # Admin-specific components
-│   │   │   ├── AdminLayout.js
-│   │   │   └── AdminProtectedRoute.js
-│   │   └── user/             # User-specific components
-│   ├── pages/                # Next.js pages
-│   │   ├── admin/           # Admin routes
-│   │   │   ├── dashboard.js
-│   │   │   ├── login.js
-│   │   │   └── users/
-│   │   │       ├── index.js
-│   │   │       └── [userId].js
-│   │   ├── user/            # User routes
-│   │   │   ├── dashboard.js
-│   │   │   └── profile.js
-│   │   ├── _app.js
-│   │   └── index.js
-│   ├── public/              # Static files
-│   ├── services/            # API services
-│   │   └── api.js
-│   └── styles/              # CSS styles
-│
-├── api-gateway/             # API Gateway service
-│   ├── src/
-│   │   ├── routes/
-│   │   │   ├── adminRoutes.js
-│   │   │   └── userRoutes.js
-│   │   ├── middleware/
-│   │   │   └── auth.js
-│   │   └── server.js
-│   └── package.json
-│
-├── backend/
-│   ├── user-service/        # User microservice
-│   │   ├── src/
-│   │   │   ├── controllers/
-│   │   │   │   ├── auth.js
-│   │   │   │   └── user.js
-│   │   │   ├── models/
-│   │   │   │   └── User.js
-│   │   │   ├── routes/
-│   │   │   │   └── userRoutes.js
-│   │   │   └── server.js
-│   │   └── package.json
-│   │
-│   └── admin-service/       # Admin microservice
-│       ├── src/
-│       │   ├── controllers/
-│       │   │   └── adminController.js
-│       │   ├── models/
-│       │   │   └── Admin.js
-│       │   ├── routes/
-│       │   │   └── adminRoutes.js
-│       │   └── server.js
-│       └── package.json
-│
-├── .gitignore
-├── README.md
-└── package.json
+# Or with Docker
+docker build -t user-service .
+docker run --env-file .env -p 5001:5001 user-service
 ```
 
-## 🔧 Key Files Description
+---
 
-### Frontend
-- `components/admin/AdminLayout.js`: Main layout for admin dashboard
-- `components/admin/AdminProtectedRoute.js`: Authentication wrapper for admin routes
-- `pages/admin/dashboard.js`: Admin dashboard with user management
-- `pages/admin/users/[userId].js`: Individual user details page
-- `services/api.js`: Axios configuration for API calls
+## 📝 Notes
 
-### API Gateway
-- `routes/adminRoutes.js`: Admin API route definitions
-- `routes/userRoutes.js`: User API route definitions
-- `middleware/auth.js`: Authentication middleware
+- All passwords are hashed with bcrypt.
+- JWT tokens are set as HTTP-only cookies on login.
+- Profile update does not allow changing referral or admin fields.
+- All errors are returned as JSON.
+- Referral and placement logic supports both direct and binary tree relationships.
+- Admin users can be seeded via `seed.js`.
+- **User placement logic ensures every new user is connected in the referral/binary tree as per business rules.**
 
-### User Service
-- `controllers/auth.js`: User authentication logic
-- `controllers/user.js`: User management functions
-- `models/User.js`: MongoDB user schema
+---
 
-### Admin Service
-- `controllers/adminController.js`: Admin functionality
-- `models/Admin.js`: MongoDB admin schema
-- `routes/adminRoutes.js`: Admin route handlers
+## 📚 See Also
 
-## 👥 Contributing
-
-1. Fork the repository
-2. Create your feature branch
-3. Commit your changes
-4. Push to the branch
-5. Open a Pull Request
-
-## 📜 License
-
-This project is proprietary and confidential. Unauthorized copying or distribution is prohibited.
+- [API Gateway README](../api-gateway/README.md)
+- [Frontend README](../../frontend/README.md)

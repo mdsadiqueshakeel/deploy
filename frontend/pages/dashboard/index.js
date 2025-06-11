@@ -3,13 +3,11 @@ import Head from 'next/head';
 import Topbar from '@components/Topbar';
 import Sidebar from '@components/Sidebar';
 import ProfileCard from '@components/ProfileCard';
-import Products from '@pages/dashboard/products'; // Correct import path
-import BusinessVolumeForm from '@components/BusinessVolumeForm';
-import BusinessVolumeStats from '@components/BusinessVolumeStats';
+import Products from '@pages/dashboard/products'; // Keep this if Products page is used
 import BusinessPage from './business';
 
 // Placeholder components for other sections
-const DashboardOverview = ({ user, refresh, setRefresh }) => (
+const DashboardOverview = () => (
   <div className="p-4">
     <h2 className="mb-4" style={{ color: '#0A2463', fontWeight: '600' }}>
       Dashboard Overview
@@ -17,31 +15,40 @@ const DashboardOverview = ({ user, refresh, setRefresh }) => (
     <p style={{ color: '#0A2463' }}>
       Welcome to your dashboard! Here you can manage your business, wallet, and more.
     </p>
-    {user && user._id && (
-      <>
-        <h4 className="mt-4 mb-2">Business Volume</h4>
-        <BusinessVolumeForm userId={user._id} onSuccess={() => setRefresh(r => r + 1)} />
-        <BusinessVolumeStats userId={user._id} refreshTrigger={refresh} />
-      </>
-    )}
   </div>
 );
 
-const Business = () => <div className="p-4"><h2 className="mb-4" style={{ color: '#0A2463', fontWeight: '600' }}>Business</h2></div>;
-const Wallet = () => <div className="p-4"><h2 className="mb-4" style={{ color: '#0A2463', fontWeight: '600' }}>Wallet</h2></div>;
-const Status = () => <div className="p-4"><h2 className="mb-4" style={{ color: '#0A2463', fontWeight: '600' }}>Status</h2></div>;
-const RankRewards = () => <div className="p-4"><h2 className="mb-4" style={{ color: '#0A2463', fontWeight: '600' }}>Rank & Rewards</h2></div>;
-const Support = () => <div className="p-4"><h2 className="mb-4" style={{ color: '#0A2463', fontWeight: '600' }}>Support</h2></div>;
+const Wallet = () => (
+  <div className="p-4">
+    <h2 className="mb-4" style={{ color: '#0A2463', fontWeight: '600' }}>Wallet</h2>
+  </div>
+);
+
+const Status = () => (
+  <div className="p-4">
+    <h2 className="mb-4" style={{ color: '#0A2463', fontWeight: '600' }}>Status</h2>
+  </div>
+);
+
+const RankRewards = () => (
+  <div className="p-4">
+    <h2 className="mb-4" style={{ color: '#0A2463', fontWeight: '600' }}>Rank & Rewards</h2>
+  </div>
+);
+
+const Support = () => (
+  <div className="p-4">
+    <h2 className="mb-4" style={{ color: '#0A2463', fontWeight: '600' }}>Support</h2>
+  </div>
+);
 
 export default function Dashboard({ initialUser }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [activeSection, setActiveSection] = useState('Dashboard');
   const [searchQuery, setSearchQuery] = useState('');
   const [user, setUser] = useState(initialUser);
-  const [coins, setCoins] = useState(1000); // Initialize coins to 1000
-  const [refresh, setRefresh] = useState(0);
+  const [coins, setCoins] = useState(1000); // demo coins
 
-  // Load user data from localStorage on client-side only
   useEffect(() => {
     try {
       const savedUser = localStorage.getItem('userProfileData');
@@ -55,15 +62,14 @@ export default function Dashboard({ initialUser }) {
 
   const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
 
-  // Function to handle coin deduction
   const handlePurchase = (cost) => {
-    setCoins(prevCoins => prevCoins - cost); // Deduct the exact cost of the product
+    setCoins(prevCoins => prevCoins - cost);
   };
 
   const sectionComponents = {
-    Dashboard: <DashboardOverview user={user} refresh={refresh} setRefresh={setRefresh} />,
-    Products: <Products searchQuery={searchQuery} coins={coins} onPurchase={handlePurchase} />, // Pass coins and handlePurchase
-    Business: <BusinessPage />,
+    Dashboard: <DashboardOverview />,
+    Products: <Products searchQuery={searchQuery} coins={coins} onPurchase={handlePurchase} />,
+    Business: <BusinessPage />, // ✅ Renders Binary Tree now
     Wallet: <Wallet />,
     Status: <Status />,
     'Rank & Rewards': <RankRewards />,
@@ -109,10 +115,10 @@ export default function Dashboard({ initialUser }) {
             toggleSidebar={toggleSidebar}
             searchQuery={searchQuery}
             setSearchQuery={setSearchQuery}
-            coins={coins} // Pass coins to Topbar
+            coins={coins}
           />
           <main className="p-4">
-            {sectionComponents[activeSection] || <DashboardOverview user={user} refresh={refresh} setRefresh={setRefresh} />}
+            {sectionComponents[activeSection] || <DashboardOverview />}
           </main>
         </div>
       </div>
@@ -127,7 +133,6 @@ export default function Dashboard({ initialUser }) {
 }
 
 export async function getServerSideProps(context) {
-  // Simulate fetching user data (replace with your actual API call)
   const initialUser = {
     name: 'sam',
     email: 'samreels22@gmail.com',

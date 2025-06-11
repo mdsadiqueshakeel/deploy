@@ -5,9 +5,23 @@ const crypto = require("crypto");
 const nodemailer = require("nodemailer");
 dotenv = require("dotenv").config();
 const { generateReferralCode } = require("../utils/referralUtils");
+const { findBinaryPlacement, updateLevelTree } = require('../utils/placment');
+const {buildBinaryTree} = require('../utils/buildBinaryTree');
 
 // for reset and forget password
 const sendEmail = require("../utils/sendEmail");
+
+
+exports.getBinaryTree = async (req, res) => {
+  try {
+    const userId = req.params.userId;
+    const tree = await buildBinaryTree(userId);
+    res.json(tree);
+  } catch (err) {
+    console.error("Error building binary tree:", err);
+    res.status(500).json({ error: "Server error" });
+  }
+};
 
 // USER REGISTRATION -------------------------------------------------------------------------------------------
 /**
@@ -26,6 +40,8 @@ const sendEmail = require("../utils/sendEmail");
  *
  * @throws {Error} - Throws an error if there is a server issue during the registration process.
  */
+
+
 
 
 // referral 
@@ -53,7 +69,6 @@ exports.validateReferral = async (req, res) => {
 exports.register = async (req, res) => {
   try {
     const { name, email, password, referralCode } = req.body;
-
     if (!name || !email || !password || !referralCode) {
       return res.status(400).json({ error: "All fields including referralCode are required" });
     }
@@ -63,31 +78,52 @@ exports.register = async (req, res) => {
       return res.status(409).json({ error: "User already exists" });
     }
 
-    // Validate referralCode against LEFT or RIGHT
-    const parent = await User.findOne({
+    const sponsor = await User.findOne({
       $or: [
         { referralCodeLeft: referralCode },
         { referralCodeRight: referralCode }
       ]
     });
 
-    if (!parent) {
+    if (!sponsor) {
       return res.status(400).json({ error: "Invalid referral code" });
     }
 
+    const direction = sponsor.referralCodeLeft === referralCode ? 'left' : 'right';
+
+    // 🌳 BINARY PLACEMENT
+    const { parentId, position } = await findBinaryPlacement(sponsor._id, direction);
+
+    // 🧬 Create new user
     const newUser = new User({
       name,
       email,
-      password, // Will be hashed in pre-save hook
+      password,
       referralCodeLeft: generateReferralCode(),
       referralCodeRight: generateReferralCode(),
-      parentId: parent._id
+      parentId,
+      binaryPosition: position,
+      referredBy: sponsor._id
     });
 
     await newUser.save();
 
+    // Update parent’s left/right + subtree
+    await User.findByIdAndUpdate(parentId, {
+      [position === 'left' ? 'leftUser' : 'rightUser']: newUser._id,
+      $push: {
+        [position === 'left' ? 'leftSubtreeUsers' : 'rightSubtreeUsers']: newUser._id
+      }
+    });
+
+    // 🌿 LEVEL TREE PLACEMENT
+    const levelDepth = await updateLevelTree(sponsor._id, newUser._id);
+    newUser.levelDepth = levelDepth;
+    await newUser.save();
+
     res.status(201).json({ message: "User created successfully", userId: newUser._id });
   } catch (error) {
+    console.error("Registration Error:", error);
     res.status(500).json({ error: "Server error", detail: error.message });
   }
 };

@@ -3,7 +3,7 @@
 import axios from 'axios';
 
 const API = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || 'https://mlm-api-gateway-production.up.railway.app',
+  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000',
   withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
