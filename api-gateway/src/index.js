@@ -12,6 +12,7 @@ const cookieParser = require("cookie-parser");
 const referralRoutes = require("./routes/referral");
 const authRoutes = require("./routes/auth");
 const adminRoutes = require("./routes/admin");
+const walletRoutes = require("./routes/wallet"); // Ensure wallet routes are included
 
 const app = express();
 
@@ -34,6 +35,7 @@ app.use(cookieParser());
 app.use("/api/auth", authRoutes);
 app.use("/api/referral", referralRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/wallet", walletRoutes); // Ensure wallet routes are included
 
 app.get("/ping", (req, res) => {
   console.log("PING HIT!");

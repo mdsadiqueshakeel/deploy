@@ -122,15 +122,31 @@ exports.getAllUsers = async (req, res) => {
 };
 
 // Get Single User Full Info
+const WALLET_SERVICE_URL = process.env.WALLET_SERVICE_URL || "http://localhost:5003";
+
 exports.getSingleUser = async (req, res) => {
   try {
     const { id } = req.params;
-    const { data } = await axios.get(`${USER_SERVICE_URL}/api/admin/user/${id}`);
-    res.json(data);
+
+    // Get user info
+    const { data: user } = await axios.get(`${USER_SERVICE_URL}/api/admin/user/${id}`);
+
+    // Get only PENDING requests
+    const [topupRes, withdrawRes] = await Promise.all([
+      axios.get(`${WALLET_SERVICE_URL}/admin/user/${id}/topup-requests?status=pending`),
+      axios.get(`${WALLET_SERVICE_URL}/admin/user/${id}/withdraw-requests?status=pending`)
+    ]);
+
+    res.json({
+      user,
+      topupRequests: topupRes.data.requests || [],
+      withdrawRequests: withdrawRes.data.requests || []
+    });
   } catch (err) {
-    res.status(500).json({ message: "Failed to fetch user", detail: err.message });
+    res.status(500).json({ message: "Failed to fetch full user info", detail: err.message });
   }
 };
+
 
 // Get Dashboard Stats
 exports.getDashboardStats = async (req, res) => {

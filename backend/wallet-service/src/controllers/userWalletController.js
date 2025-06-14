@@ -1,0 +1,44 @@
+const WithdrawRequest = require("../models/WithdrawRequest");
+const TopupRequest = require("../models/TopupRequest");
+const Wallet = require("../models/Wallet");
+
+exports.createTopupRequest = async (req, res) => {
+  const { amount, note } = req.body;
+  const userId = req.user._id; // comes from auth middleware
+
+  if (!amount || amount <= 0) {
+    return res.status(400).json({ message: "Invalid amount" });
+  }
+
+  const request = await TopupRequest.create({
+    userId,
+    amount,
+    note,
+  });
+
+  res.status(201).json({ message: "Top-up request created", request });
+};
+
+
+exports.createWithdrawRequest = async (req, res) => {
+  const { amount, note } = req.body;
+  const userId = req.user._id;
+
+  if (!amount || amount <= 0) {
+    return res.status(400).json({ message: "Invalid amount" });
+  }
+
+  const wallet = await Wallet.findOne({ userId });
+  if (!wallet || wallet.incomeWallet < amount) {
+    return res.status(400).json({ message: "Insufficient income wallet balance" });
+  }
+
+  const request = await WithdrawRequest.create({
+    userId,
+    amount,
+    note,
+  });
+
+  res.status(201).json({ message: "Withdraw request submitted", request });
+};
+
