@@ -39,6 +39,7 @@ mongoose.connect(process.env.MONGO_URI, {
 
 app.use("/api/auth", require("./routes/auth"));
 app.use("/api/admin", require("./routes/adminRoutes"));
+app.use(require("./routes/internalRoutes"));
 app.use("/api/referral", referralRoutes);
 
 const PORT = process.env.PORT || 5001;

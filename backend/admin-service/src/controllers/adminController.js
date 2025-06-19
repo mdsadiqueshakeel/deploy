@@ -173,3 +173,21 @@ exports.getDashboardStats = async (req, res) => {
     res.status(500).json({ message: "Failed to fetch dashboard stats", detail: err.message });
   }
 };
+
+exports.deleteUser = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Call user-service to delete user
+    const response = await axios.delete(`${USER_SERVICE_URL}/admin/delete-user/${id}`, {
+      headers: { Authorization: req.headers.authorization }
+    });
+
+    res.status(response.status).json(response.data);
+  } catch (err) {
+    console.error('Admin Service - Delete User Error:', err);
+    res.status(err.response?.status || 500).json(
+      err.response?.data || { message: "Failed to delete user", detail: err.message }
+    );
+  }
+}

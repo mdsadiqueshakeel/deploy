@@ -204,3 +204,109 @@ docker run --env-file .env -p 5001:5001 user-service
 
 - [API Gateway README](../api-gateway/README.md)
 - [Frontend README](../../frontend/README.md)
+
+---
+
+## 🛠️ Service Overview & Integration
+
+### 1. **API Gateway**
+- **Role:** Single entry point for all frontend/backend API calls.
+- **Routes:** Proxies requests to user, wallet, income, and admin services.
+- **Example:** `/api/auth/register` → user-service, `/api/wallet/user/topup-request` → wallet-service.
+
+### 2. **User Service**
+- **Role:** Handles user registration, authentication, profile, referral tree, and placement logic.
+- **Routes:** `/api/auth/*`, `/api/referral/*`
+- **Referral Placement:** On registration, users are placed in a binary tree structure under a sponsor.
+
+### 3. **Wallet Service** (NEW)
+- **Role:** Manages user wallets, top-up requests, withdrawal requests, and wallet transactions.
+- **Routes:** `/user/topup-request`, `/user/withdraw-request`, `/user/:id/wallet`, `/admin/topup-request/:id/approve`, `/admin/withdraw-request/:id/approve`
+- **Integration:** 
+  - When a top-up is approved, the wallet is credited and a trigger is sent to the income-service for commission distribution.
+  - Withdrawal requests are validated against wallet balance.
+
+### 4. **Income Service** (NEW)
+- **Role:** Handles income distribution, commission logic, and business volume calculations.
+- **Routes:** `/api/income/topup-trigger`, `/api/income/...`
+- **Integration:** Receives triggers from wallet-service after top-up approval and distributes income up the referral tree.
+
+### 5. **Admin Service**
+- **Role:** Admin authentication, user management, dashboard stats.
+- **Routes:** `/api/admin/*`
+
+---
+
+## 🔗 How Services Work Together
+
+### Example: **Top-up Approval Flow**
+
+1. **User submits a top-up request** via `/api/wallet/user/topup-request` (API Gateway → wallet-service).
+2. **Admin approves the top-up** via `/api/wallet/admin/topup-request/:id/approve` (API Gateway → wallet-service).
+3. **Wallet-service actions:**
+   - Marks the top-up as approved.
+   - Credits the user's topupWallet.
+   - **Triggers income-service** (`/api/income/topup-trigger`) to distribute commissions.
+   - **Optionally notifies user-service** to activate the user if this is their first top-up.
+4. **Income-service actions:**
+   - Calculates and distributes commissions up the referral tree.
+   - Updates business volume and income records.
+5. **Frontend** is updated via API Gateway responses.
+
+### Example: **Withdrawal Request Flow**
+
+1. **User submits a withdrawal request** via `/api/wallet/user/withdraw-request`.
+2. **Admin approves the withdrawal** via `/api/wallet/admin/withdraw-request/:id/approve`.
+3. **Wallet-service** deducts the amount from the user's incomeWallet and marks the request as approved.
+
+---
+
+## 🛣️ Main Routes Overview
+
+### **API Gateway**
+
+- `/api/auth/*` → user-service
+- `/api/referral/*` → user-service
+- `/api/wallet/*` → wallet-service
+- `/api/income/*` → income-service
+- `/api/admin/*` → admin-service
+
+### **User Service**
+
+- `/api/auth/register` — Register user (with referral code and placement)
+- `/api/auth/login` — Login
+- `/api/auth/forgot-password` — Send reset email
+- `/api/auth/reset-password` — Reset password
+- `/api/auth/profile` — Update profile (JWT required)
+- `/api/auth/change-password` — Change password (JWT required)
+- `/api/auth/me` — Get current user (JWT required)
+- `/api/referral/validate/:code` — Validate referral code
+- `/api/referral/binary-tree/:userId` — Get user's binary tree
+
+### **Wallet Service**
+
+- `/user/topup-request` — User requests top-up
+- `/user/withdraw-request` — User requests withdrawal
+- `/user/:id/wallet` — Get wallet info
+- `/admin/topup-request/:id/approve` — Admin approves top-up
+- `/admin/withdraw-request/:id/approve` — Admin approves withdrawal
+
+### **Income Service**
+
+- `/api/income/topup-trigger` — Triggered by wallet-service after top-up approval
+- `/api/income/...` — Other income/commission endpoints
+
+---
+
+## 🗄️ Database Schema Highlights
+
+- **User:** Includes referral codes, parent/child links for binary tree, wallet status, and profile info.
+- **Wallet:** Tracks topupWallet, incomeWallet, shoppingWallet, and transaction logs.
+- **TopupRequest/WithdrawRequest:** Track status and history of user wallet actions.
+- **Income:** Tracks commission and business volume per user.
+
+---
+
+## ⚙️ Environment Variables
+
+See `.env.example` for all required variables for each service, e.g.:

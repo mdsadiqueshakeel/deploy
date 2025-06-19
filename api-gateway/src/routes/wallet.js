@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const axios = require("axios");
 const walletAuth = require("../middlewares/walletAuth");
+const { createProxyMiddleware } = require("http-proxy-middleware");
  // same as used in /me route
 
 const WALLET_SERVICE_URL = process.env.WALLET_SERVICE_URL || "http://localhost:5003";
@@ -92,5 +93,20 @@ router.put("/admin/withdraw-request/:id/approve", walletAuth, async (req, res) =
     res.status(err.response?.status || 500).json(err.response?.data || { error: "Service error" });
   }
 });
+
+// Get Wallet by 
+// Get wallet for user (used in binary tree)
+// Wallet Info by User ID
+router.use(
+  createProxyMiddleware({
+    target: "http://localhost:5003", // or use Docker name like 'http://wallet-service:5003' if using Docker Compose
+    changeOrigin: true,
+    pathRewrite: {
+      "^/wallet": "", // remove /wallet prefix before forwarding
+    },
+  })
+);
+
+
 
 module.exports = router;

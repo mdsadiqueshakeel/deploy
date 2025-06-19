@@ -5,5 +5,7 @@ const wrapAsync = require("../utils/wrapAsync");
 
 router.get("/users", wrapAsync(controller.getAllUsers));
 router.get("/user/:id", wrapAsync(controller.getSingleUser));
+router.delete("/delete-user/:id", wrapAsync(controller.adminDeleteUser));
+
 
 module.exports = router;

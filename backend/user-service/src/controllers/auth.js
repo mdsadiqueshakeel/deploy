@@ -5,12 +5,11 @@ const crypto = require("crypto");
 const nodemailer = require("nodemailer");
 dotenv = require("dotenv").config();
 const { generateReferralCode } = require("../utils/referralUtils");
-const { findBinaryPlacement, updateLevelTree } = require('../utils/placment');
-const {buildBinaryTree} = require('../utils/buildBinaryTree');
+const { findBinaryPlacement, updateLevelTree } = require("../utils/placment");
+const { buildBinaryTree } = require("../utils/buildBinaryTree");
 
 // for reset and forget password
 const sendEmail = require("../utils/sendEmail");
-
 
 exports.getBinaryTree = async (req, res) => {
   try {
@@ -29,7 +28,7 @@ exports.getBinaryTree = async (req, res) => {
  *
  * This function handles the registration process by validating the input fields,
  * checking for existing users, validating t
- * 
+ *
  * he referral code, hashing the password,
  * and saving the new user to the database.
  *
@@ -41,22 +40,18 @@ exports.getBinaryTree = async (req, res) => {
  * @throws {Error} - Throws an error if there is a server issue during the registration process.
  */
 
-
-
-
-// referral 
+// referral
 exports.validateReferral = async (req, res) => {
   try {
     const { code } = req.params;
     const user = await User.findOne({
-      $or: [
-        { referralCodeLeft: code },
-        { referralCodeRight: code }
-      ]
+      $or: [{ referralCodeLeft: code }, { referralCodeRight: code }],
     });
 
     if (!user) {
-      return res.status(404).json({ valid: false, message: "Invalid referral code" });
+      return res
+        .status(404)
+        .json({ valid: false, message: "Invalid referral code" });
     }
 
     res.json({ valid: true, user: { name: user.name, email: user.email } });
@@ -70,7 +65,9 @@ exports.register = async (req, res) => {
   try {
     const { name, email, password, referralCode } = req.body;
     if (!name || !email || !password || !referralCode) {
-      return res.status(400).json({ error: "All fields including referralCode are required" });
+      return res
+        .status(400)
+        .json({ error: "All fields including referralCode are required" });
     }
 
     const existing = await User.findOne({ email });
@@ -81,18 +78,28 @@ exports.register = async (req, res) => {
     const sponsor = await User.findOne({
       $or: [
         { referralCodeLeft: referralCode },
-        { referralCodeRight: referralCode }
-      ]
+        { referralCodeRight: referralCode },
+      ],
     });
 
     if (!sponsor) {
       return res.status(400).json({ error: "Invalid referral code" });
     }
 
-    const direction = sponsor.referralCodeLeft === referralCode ? 'left' : 'right';
+    if (!sponsor.isActive) {
+      return res
+        .status(403)
+        .json({ message: "Referrer has not activated their account yet" });
+    }
+
+    const direction =
+      sponsor.referralCodeLeft === referralCode ? "left" : "right";
 
     // 🌳 BINARY PLACEMENT
-    const { parentId, position } = await findBinaryPlacement(sponsor._id, direction);
+    const { parentId, position } = await findBinaryPlacement(
+      sponsor._id,
+      direction
+    );
 
     // 🧬 Create new user
     const newUser = new User({
@@ -103,17 +110,18 @@ exports.register = async (req, res) => {
       referralCodeRight: generateReferralCode(),
       parentId,
       binaryPosition: position,
-      referredBy: sponsor._id
+      referredBy: sponsor._id,
     });
 
     await newUser.save();
 
     // Update parent’s left/right + subtree
     await User.findByIdAndUpdate(parentId, {
-      [position === 'left' ? 'leftUser' : 'rightUser']: newUser._id,
+      [position === "left" ? "leftUser" : "rightUser"]: newUser._id,
       $push: {
-        [position === 'left' ? 'leftSubtreeUsers' : 'rightSubtreeUsers']: newUser._id
-      }
+        [position === "left" ? "leftSubtreeUsers" : "rightSubtreeUsers"]:
+          newUser._id,
+      },
     });
 
     // 🌿 LEVEL TREE PLACEMENT
@@ -121,13 +129,14 @@ exports.register = async (req, res) => {
     newUser.levelDepth = levelDepth;
     await newUser.save();
 
-    res.status(201).json({ message: "User created successfully", userId: newUser._id });
+    res
+      .status(201)
+      .json({ message: "User created successfully", userId: newUser._id });
   } catch (error) {
     console.error("Registration Error:", error);
     res.status(500).json({ error: "Server error", detail: error.message });
   }
 };
-
 
 // USER LOGIN -------------------------------------------------------------------------------------------
 /**
@@ -171,7 +180,7 @@ exports.login = async (req, res) => {
 //   try {
 //     const { email } = req.body;
 //     console.log("Forgot password request for:", email);
-    
+
 //     const user = await User.findOne({ email });
 //     if (!user) {
 //       console.log("User not found with email:", email);
@@ -182,7 +191,7 @@ exports.login = async (req, res) => {
 //     const resetToken = crypto.randomBytes(20).toString('hex');
 //     user.resetPasswordToken = resetToken;
 //     user.resetPasswordExpires = Date.now() + 3600000; // 1 hour
-    
+
 //     await user.save();
 //     console.log("Reset token generated for user:", user._id);
 
@@ -221,13 +230,12 @@ exports.login = async (req, res) => {
  * @throws {Error} - Throws an error if there is a server issue during the forgot password process.
  */
 
-
 // Forgot Password - Fixed to use body instead of query
 exports.forgotPassword = async (req, res) => {
   try {
     const { email } = req.body;
     console.log("Forgot password request for:", email);
-    
+
     const user = await User.findOne({ email });
     if (!user) {
       console.log("User not found with email:", email);
@@ -235,10 +243,10 @@ exports.forgotPassword = async (req, res) => {
     }
 
     // Generate reset token
-    const resetToken = crypto.randomBytes(20).toString('hex');
+    const resetToken = crypto.randomBytes(20).toString("hex");
     user.resetPasswordToken = resetToken;
     user.resetPasswordExpires = Date.now() + 3600000; // 1 hour
-    
+
     await user.save();
     console.log("Reset token generated for user:", user._id);
 
@@ -252,8 +260,8 @@ exports.forgotPassword = async (req, res) => {
 
     await sendEmail({
       email: user.email,
-      subject: 'Password Reset Request',
-      message
+      subject: "Password Reset Request",
+      message,
     });
 
     console.log("Password reset email sent to:", user.email);
@@ -264,40 +272,39 @@ exports.forgotPassword = async (req, res) => {
   }
 };
 
-
 //Reset Password
 
 exports.resetPassword = async (req, res) => {
   try {
     const { token, password } = req.body;
     console.log("Reset password request with token:", token);
-    
+
     // 1. Find user by valid reset token
     const user = await User.findOne({
       resetPasswordToken: token,
-      resetPasswordExpires: { $gt: Date.now() }
+      resetPasswordExpires: { $gt: Date.now() },
     });
-    
+
     if (!user) {
       console.log("Invalid or expired token:", token);
       return res.status(400).json({ message: "Invalid or expired token" });
     }
-    
+
     // 2. Update password and clear token
     user.password = password;
     user.resetPasswordToken = undefined;
     user.resetPasswordExpires = undefined;
-    
+
     // 3. Save changes
     await user.save();
-    
+
     console.log("Password reset successful for user:", user.email);
     res.json({ message: "Password reset successful" });
   } catch (error) {
     console.error("Reset password error:", error);
-    res.status(500).json({ 
-      message: "Server error", 
-      error: error.message 
+    res.status(500).json({
+      message: "Server error",
+      error: error.message,
     });
   }
 };
@@ -354,10 +361,10 @@ exports.getProfile = async (req, res) => {
   try {
     const user = await User.findById(req.user.userId)
       .select("-password -resetPasswordToken -resetPasswordExpires")
-      .populate('parentId', 'name email')
-      .populate('leftUser rightUser', 'name email')
+      .populate("parentId", "name email")
+      .populate("leftUser rightUser", "name email")
       .lean();
-    
+
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
@@ -369,12 +376,12 @@ exports.getProfile = async (req, res) => {
         name: user.name,
         email: user.email,
         phone: user.phone,
-        avatar: user.avatar
+        avatar: user.avatar,
       },
       kycDetails: {
         panNumber: user.panNumber,
         aadharNumber: user.aadharNumber,
-        country: user.country
+        country: user.country,
       },
       bankDetails: user.bankDetails,
       referralInfo: {
@@ -383,22 +390,22 @@ exports.getProfile = async (req, res) => {
         referralCodeRight: user.referralCodeRight,
         leftUser: user.leftUser,
         rightUser: user.rightUser,
-        isRootSponsor: user.isRootSponsor
+        isRootSponsor: user.isRootSponsor,
       },
       systemInfo: {
         isAdmin: user.isAdmin,
-        createdAt: user.createdAt
+        createdAt: user.createdAt,
       },
       uiSettings: {
-        profileViewState: user.uiSettings?.profileViewState || 'view'
-      }
+        profileViewState: user.uiSettings?.profileViewState || "view",
+      },
     };
 
     res.json(responseData);
   } catch (error) {
-    res.status(500).json({ 
-      message: "Server error", 
-      error: error.message 
+    res.status(500).json({
+      message: "Server error",
+      error: error.message,
     });
   }
 };
@@ -419,18 +426,29 @@ exports.getProfile = async (req, res) => {
  */
 exports.updateProfile = async (req, res) => {
   try {
-    const forbiddenFields = ["_id", "referralCode", "referralCodeLeft", "referralCodeRight",
-     "parentId", "isAdmin", "isRootSponsor", "leftUser", "rightUser"];
+    const forbiddenFields = [
+      "_id",
+      "referralCode",
+      "referralCodeLeft",
+      "referralCodeRight",
+      "parentId",
+      "isAdmin",
+      "isRootSponsor",
+      "leftUser",
+      "rightUser",
+    ];
     const updates = { ...req.body };
 
     // Prevent overwriting restricted fields
-    forbiddenFields.forEach(field => delete updates[field]);
+    forbiddenFields.forEach((field) => delete updates[field]);
 
     const user = await User.findById(req.user.userId);
     if (!user) return res.status(404).json({ message: "User not found" });
 
-     if ("password" in req.body) {
-      return res.status(400).json({ message: "Use change password route to update password." });
+    if ("password" in req.body) {
+      return res
+        .status(400)
+        .json({ message: "Use change password route to update password." });
     }
 
     // Special handling for nested bankDetails
@@ -451,8 +469,6 @@ exports.updateProfile = async (req, res) => {
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
-
-
 
 // CHANGE PASSWORD -------------------------------------------------------------------------------------------
 /**
@@ -490,7 +506,9 @@ exports.changePassword = async (req, res) => {
 
     const isSameAsOld = await bcrypt.compare(newPassword, user.password);
     if (isSameAsOld) {
-      return res.status(400).json({ message: "New password cannot be same as current password" });
+      return res
+        .status(400)
+        .json({ message: "New password cannot be same as current password" });
     }
 
     user.password = newPassword; // will be hashed via mongoose pre-save
@@ -506,25 +524,25 @@ exports.changePassword = async (req, res) => {
 exports.getAllUsersForAdmin = async (req, res) => {
   try {
     const users = await User.find()
-      .select('name email phone createdAt isActive balance rank')
+      .select("name email phone createdAt isActive balance rank")
       .sort({ createdAt: -1 })
       .lean();
 
-    const formattedUsers = users.map(user => ({
+    const formattedUsers = users.map((user) => ({
       _id: user._id,
       name: user.name,
       email: user.email,
       phone: user.phone,
-     createdAt: user.createdAt ? user.createdAt.toISOString() : null,
+      createdAt: user.createdAt ? user.createdAt.toISOString() : null,
       isActive: user.isActive || false,
       balance: user.balance || 0,
-      rank: user.rank || 'Member'
+      rank: user.rank || "Member",
     }));
 
-   console.log('Admin Service - Sample user date:', data[0]?.createdAt);
+    console.log("Admin Service - Sample user date:", data[0]?.createdAt);
     res.json(data);
   } catch (error) {
-    console.error('Error in getAllUsersForAdmin:', error);
-    res.status(500).json({ error: 'Failed to fetch users' });
+    console.error("Error in getAllUsersForAdmin:", error);
+    res.status(500).json({ error: "Failed to fetch users" });
   }
 };

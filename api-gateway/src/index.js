@@ -13,6 +13,7 @@ const referralRoutes = require("./routes/referral");
 const authRoutes = require("./routes/auth");
 const adminRoutes = require("./routes/admin");
 const walletRoutes = require("./routes/wallet"); // Ensure wallet routes are included
+const incomeRoutes = require("./routes/income");
 
 const app = express();
 
@@ -36,6 +37,8 @@ app.use("/api/auth", authRoutes);
 app.use("/api/referral", referralRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/wallet", walletRoutes); // Ensure wallet routes are included
+app.use("/api/income", incomeRoutes);
+
 
 app.get("/ping", (req, res) => {
   console.log("PING HIT!");

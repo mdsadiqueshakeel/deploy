@@ -139,6 +139,18 @@ router.get("/user/:id", adminAuth, async (req, res) => {
   }
 });
 
+router.delete("/delete-user/:id",adminAuth, async (req, res) => {
+  try {
+    const response = await axios.delete(`${USER_SERVICE_URL}/api/admin/delete-user/${req.params.id}`, {
+      headers: {
+        Authorization: req.headers.authorization
+      }
+    });
+    res.status(response.status).json(response.data);
+  } catch (err) {
+    res.status(err.response?.status || 500).json(err.response?.data || { error: "Failed to delete user" });
+  }
+});
 
 router.post("/logout", (req, res) => {
   try {
@@ -155,5 +167,7 @@ router.post("/logout", (req, res) => {
     res.status(500).json({ message: "Logout error", error: err.message });
   }
 });
+
+
 
 module.exports = router;

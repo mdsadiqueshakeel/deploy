@@ -1,5 +1,5 @@
 const express = require("express");
-const { approveTopupRequest, approveWithdrawRequest } = require("../controllers/adminWalletController");
+const { approveTopupRequest, approveWithdrawRequest, creditIncome } = require("../controllers/adminWalletController");
 const { extractUser, isAuthenticated, isAdmin } = require("../middlewares/auth.js");
 const router = express.Router();
 
@@ -8,5 +8,6 @@ router.use(extractUser);
 
 router.put("/topup-request/:id/approve", isAuthenticated, isAdmin, approveTopupRequest);
 router.put("/withdraw-request/:id/approve", isAuthenticated, isAdmin, approveWithdrawRequest);
+router.post("/credit-income", isAuthenticated, isAdmin, creditIncome);
 
 module.exports = router;

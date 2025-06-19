@@ -42,3 +42,20 @@ exports.createWithdrawRequest = async (req, res) => {
   res.status(201).json({ message: "Withdraw request submitted", request });
 };
 
+// 🧾 Get wallet details for userId
+exports.getWalletByUserId = async (req, res) => {
+  try {
+    const wallet = await Wallet.findOne({ userId: req.params.userId });
+
+    if (!wallet) return res.status(404).json({ error: "Wallet not found" });
+
+    res.json({
+      topupWallet: wallet.topupWallet,
+      incomeWallet: wallet.incomeWallet,
+      shoppingWallet: wallet.shoppingWallet,
+    });
+  } catch (error) {
+    console.error("Wallet fetch failed:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+};
