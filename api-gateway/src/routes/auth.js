@@ -7,6 +7,7 @@ const jwtAuth = require("../middlewares/jwtAuth");
 
 //sameer changed
 const USER_SERVICE_URL = process.env.USER_SERVICE_URL;
+const INCOME_SERVICE_URL = process.env.INCOME_SERVICE_URL || "http://localhost:5004";
 // const USER_SERVICE_URL = process.env.USER_SERVICE_URL || "http://localhost:5001";
 
 // Add this for better error logging
@@ -145,6 +146,19 @@ router.put("/change-password", async (req, res) => {
 router.put("/profile", jwtAuth, async (req, res) => {
   try {
     const response = await axios.put(`${USER_SERVICE_URL}/api/auth/profile`, req.body, {
+      headers: {
+        Cookie: req.headers.cookie, // Pass token cookie along
+      },
+    });
+    resRI.status(response.status).json(response.data);
+  } catch (err) {
+    res.status(err.response?.status || 500).json(err.response?.data || { error: "Service error" });
+  }
+});
+
+router.get("/income", jwtAuth, async (req, res) => {
+  try {
+    const response = await axios.get(`${INCOME_SERVICE_URL}/api/income`, {
       headers: {
         Cookie: req.headers.cookie, // Pass token cookie along
       },

@@ -3,32 +3,40 @@ const LevelLog = require("../models/LevelLog.js");
 const TotalBusiness = require("../models/TotalBusiness.js");
 const { getUserById } = require("../services/userService");
 const { creditToWallet } = require("../services/walletService");
+const { updateMonthlyStats } = require("./monthTracker.js");
 
-const updateTotalBusiness = async (userId, incomeAmount) => {
-  const currentMonth = new Date().toISOString().slice(0, 7); // "YYYY-MM"
 
-  const record = await TotalBusiness.findOne({ userId });
+const updateLevelBusiness = async (userId, level, coins) => {
+  const doc = await TotalBusiness.findOne({ userId });
 
-  if (!record) {
+  if (!doc) {
     await TotalBusiness.create({
       userId,
-      totalIncome: incomeAmount,
-      monthlyStats: [{ month: currentMonth, income: incomeAmount }],
+      levelStats: [{
+        level,
+        teamCount: 1,
+        businessVolume: coins,
+      }],
     });
     return;
   }
 
-  record.totalIncome += incomeAmount;
+  const levelIndex = doc.levelStats.findIndex(lvl => lvl.level === level);
 
-  const monthIndex = record.monthlyStats.findIndex((m) => m.month === currentMonth);
-  if (monthIndex !== -1) {
-    record.monthlyStats[monthIndex].income += incomeAmount;
+  if (levelIndex !== -1) {
+    doc.levelStats[levelIndex].teamCount += 1;
+    doc.levelStats[levelIndex].businessVolume += coins;
   } else {
-    record.monthlyStats.push({ month: currentMonth, income: incomeAmount });
+    doc.levelStats.push({
+      level,
+      teamCount: 1,
+      businessVolume: coins,
+    });
   }
 
-  await record.save();
+  await doc.save();
 };
+
 
 const LEVEL_COMMISSIONS = {
   1: 10,
@@ -43,13 +51,15 @@ for (let i = 11; i <= 20; i++) LEVEL_COMMISSIONS[i] = 0.3;
 for (let i = 21; i <= 30; i++) LEVEL_COMMISSIONS[i] = 0.2;
 
 const calculateLevelIncome = async (userId, coins) => {
+  console.log(`[Calculate Level] calculateLevelIncome called for userId: ${userId}, coins: ${coins}`);
   const user = await getUserById(userId);
   if (!user || !user.referredBy) return;
 
   let current = await getUserById(user.referredBy);
   let level = 1;
 
-  while (current && level <= 30) {
+ while (current && level <= 30) {
+  try {
     const percentage = LEVEL_COMMISSIONS[level] || 0;
 
     if (percentage > 0) {
@@ -57,7 +67,6 @@ const calculateLevelIncome = async (userId, coins) => {
 
       await creditToWallet(current._id, income);
 
-      // optional: create income log
       await LevelLog.create({
         userId: current._id,
         levelFrom: level,
@@ -66,13 +75,19 @@ const calculateLevelIncome = async (userId, coins) => {
         incomeEarned: income,
       });
 
+      await updateMonthlyStats(current._id, income);
+      await updateLevelBusiness(current._id, level, coins);
+
       console.log(`💸 Level ${level} | ${income} to ${current.name} (${current._id})`);
     }
-
-    if (!current.referredBy) break;
-    current = await getUserById(current.referredBy);
-    level++;
+  } catch (err) {
+    console.error(`❌ Error at level ${level} for user ${current?._id || "Unknown"}:`, err.message);
   }
+
+  if (!current.referredBy) break;
+  current = await getUserById(current.referredBy);
+  level++;
+}
 };
 
 module.exports = { calculateLevelIncome };

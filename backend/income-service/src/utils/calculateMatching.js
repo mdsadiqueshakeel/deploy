@@ -3,6 +3,26 @@ const MatchingLog = require("../models/MatchingLog.js");
 const CarryForward = require("../models/CarryForward.js");
 const { getUserById } = require("../services/userService");
 const { creditToWallet } = require("../services/walletService");
+const TotalBusiness = require("../models/TotalBusiness.js");
+const { updateMonthlyStats } = require("./monthTracker.js");
+
+
+const updateMatchingBusiness = async (userId, side, coins) => {
+  try {
+    if (!["left", "right"].includes(side)) return;
+
+    const update = {};
+    update[`${side}Business`] = coins;
+
+    await TotalBusiness.findOneAndUpdate(
+      { userId },
+      { $inc: update },
+      { new: true, upsert: true }
+    );
+  } catch (err) {
+    console.error("❌ updateMatchingBusiness error:", err.message);
+  }
+};
 
 const calculateMatchingIncome = async (userId, coins) => {
   console.log("📈 Calculating Matching Income for:", userId);
@@ -44,6 +64,8 @@ const calculateMatchingIncome = async (userId, coins) => {
       if (matched > 0) {
         const income = matched * 0.05;
         await creditToWallet(current._id, income);
+        await updateMatchingBusiness(current._id, isLeft ? "left" : "right", coins);
+        await updateMonthlyStats(current._id, income);
 
         await MatchingLog.create({
           userId: current._id,

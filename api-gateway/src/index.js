@@ -37,7 +37,8 @@ app.use("/api/auth", authRoutes);
 app.use("/api/referral", referralRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/wallet", walletRoutes); // Ensure wallet routes are included
-app.use("/api/income", incomeRoutes);
+app.use("/api/income", incomeRoutes); // cleaner, more modular
+
 
 
 app.get("/ping", (req, res) => {
