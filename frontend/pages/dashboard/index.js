@@ -5,17 +5,8 @@ import Sidebar from '@components/Sidebar';
 import ProfileCard from '@components/ProfileCard';
 import Products from '@pages/dashboard/products';
 import BusinessPage from './business';
-import WalletPage from './wallet'; // ✅ Importing the Wallet component
-
-// Placeholder components
-const DashboardOverview = () => (
-  <div className="p-4">
-    <h2 className="mb-4" style={{ color: '#0A2463', fontWeight: '600' }}>Dashboard Overview</h2>
-    <p style={{ color: '#0A2463' }}>
-      Welcome to your dashboard! Here you can manage your business, wallet, and more.
-    </p>
-  </div>
-);
+import WalletPage from './wallet';
+import DashboardPage from '../../components/DashboardPage'; 
 
 const Status = () => (
   <div className="p-4">
@@ -40,7 +31,7 @@ export default function Dashboard({ initialUser }) {
   const [activeSection, setActiveSection] = useState('Dashboard');
   const [searchQuery, setSearchQuery] = useState('');
   const [user, setUser] = useState(initialUser);
-  const [coins, setCoins] = useState(1000); // demo coins
+  const [coins, setCoins] = useState(1000);
 
   useEffect(() => {
     try {
@@ -60,10 +51,10 @@ export default function Dashboard({ initialUser }) {
   };
 
   const sectionComponents = {
-    Dashboard: <DashboardOverview />,
+    Dashboard: <DashboardPage />, // ✅ Use the actual dashboard page now
     Products: <Products searchQuery={searchQuery} coins={coins} onPurchase={handlePurchase} />,
     Business: <BusinessPage />,
-    Wallet: <WalletPage />, // ✅ Connected wallet page
+    Wallet: <WalletPage />,
     Status: <Status />,
     'Rank & Rewards': <RankRewards />,
     Support: <Support />,
@@ -114,7 +105,7 @@ export default function Dashboard({ initialUser }) {
             coins={coins}
           />
           <main className="p-4">
-            {sectionComponents[activeSection] || <DashboardOverview />}
+            {sectionComponents[activeSection] || <DashboardPage />}
           </main>
         </div>
       </div>

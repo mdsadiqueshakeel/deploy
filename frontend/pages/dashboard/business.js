@@ -13,7 +13,7 @@ export default function BusinessPage() {
   const [rightBusiness, setRightBusiness] = useState(0);
   const [matchingBusiness, setMatchingBusiness] = useState(0);
 
-  const [activeView, setActiveView] = useState('direct'); // 'direct' or 'total'
+  const [activeView, setActiveView] = useState('direct');
 
   useEffect(() => {
     const savedUser = localStorage.getItem('userProfileData');
@@ -68,8 +68,8 @@ export default function BusinessPage() {
         <h2 className="fw-bold text-primary">📊 Business Overview</h2>
       </div>
 
-      {/* Toggle buttons */}
-      <div className="d-flex justify-content-center gap-3 mb-4">
+      {/* Toggle Buttons */}
+      <div className="d-flex flex-wrap justify-content-center gap-3 mb-4">
         <button
           className={`btn ${activeView === 'direct' ? 'btn-primary' : 'btn-outline-primary'}`}
           onClick={() => setActiveView('direct')}
@@ -84,7 +84,6 @@ export default function BusinessPage() {
         </button>
       </div>
 
-      {/* Conditionally rendered sections */}
       {loading ? (
         <div className="d-flex justify-content-center align-items-center" style={{ height: '200px' }}>
           <div className="spinner-border text-primary" role="status">
@@ -92,53 +91,62 @@ export default function BusinessPage() {
           </div>
         </div>
       ) : activeView === 'total' ? (
-        // Total Business Team Overview
-        <div className="card shadow p-4">
-          <h5 className="mb-3 fw-semibold">👥 Team Overview</h5>
-          <div className="row text-center">
-            <div className="col-md-2 col-6 mb-3">
-              <div className="border p-3 rounded shadow-sm">
-                <h5 className="text-primary">Left Team</h5>
-                <h2 className="fw-bold text-dark">{leftTeam}</h2>
+        // ✅ TOTAL BUSINESS OVERVIEW
+        <div className="card shadow-sm p-4">
+          <h5 className="mb-4 fw-semibold">👥 Team & Business Summary</h5>
+          <div className="row g-3">
+            {/* Left Team */}
+            <div className="col-6 col-sm-6 col-md-4 col-lg-2">
+              <div className="border rounded p-3 text-center bg-light h-100">
+                <h6 className="text-primary">Left Team</h6>
+                <h4 className="fw-bold">{leftTeam}</h4>
                 <small>Total members</small>
               </div>
             </div>
-            <div className="col-md-2 col-6 mb-3">
-              <div className="border p-3 rounded shadow-sm">
-                <h5 className="text-success">₹ Left Business</h5>
-                <h2 className="fw-bold text-dark">₹{leftBusiness.toFixed(2)}</h2>
+
+            {/* Left Business */}
+            <div className="col-6 col-sm-6 col-md-4 col-lg-2">
+              <div className="border rounded p-3 text-center bg-light h-100">
+                <h6 className="text-success">₹ Left Business</h6>
+                <h4 className="fw-bold">₹{leftBusiness.toFixed(2)}</h4>
                 <small>Total volume</small>
               </div>
             </div>
-            <div className="col-md-2 col-6 mb-3">
-              <div className="border p-3 rounded shadow-sm">
-                <h5 className="text-primary">Right Team</h5>
-                <h2 className="fw-bold text-dark">{rightTeam}</h2>
+
+            {/* Right Team */}
+            <div className="col-6 col-sm-6 col-md-4 col-lg-2">
+              <div className="border rounded p-3 text-center bg-light h-100">
+                <h6 className="text-primary">Right Team</h6>
+                <h4 className="fw-bold">{rightTeam}</h4>
                 <small>Total members</small>
               </div>
             </div>
-            <div className="col-md-2 col-6 mb-3">
-              <div className="border p-3 rounded shadow-sm">
-                <h5 className="text-success">₹ Right Business</h5>
-                <h2 className="fw-bold text-dark">₹{rightBusiness.toFixed(2)}</h2>
+
+            {/* Right Business */}
+            <div className="col-6 col-sm-6 col-md-4 col-lg-2">
+              <div className="border rounded p-3 text-center bg-light h-100">
+                <h6 className="text-success">₹ Right Business</h6>
+                <h4 className="fw-bold">₹{rightBusiness.toFixed(2)}</h4>
                 <small>Total volume</small>
               </div>
             </div>
-            <div className="col-md-4 col-12 mb-3">
-              <div className="border p-3 rounded shadow-sm">
-                <h5 className="text-info">💼 Matching Business</h5>
-                <h2 className="fw-bold text-dark">₹{matchingBusiness.toFixed(2)}</h2>
-                <small>Total earning</small>
+
+            {/* Matching Business */}
+            <div className="col-12 col-md-12 col-lg-4">
+              <div className="border rounded p-3 text-center bg-light h-100">
+                <h6 className="text-info">💼 Matching Business</h6>
+                <h4 className="fw-bold">₹{matchingBusiness.toFixed(2)}</h4>
+                <small>Total Matching Income</small>
               </div>
             </div>
           </div>
         </div>
       ) : (
-        // Direct Business Report Table
-        <div className="card shadow p-4">
+        // ✅ DIRECT BUSINESS REPORT
+        <div className="card shadow-sm p-4">
           <h5 className="mb-3 fw-semibold">📑 Direct Business Report</h5>
           <div className="table-responsive">
-            <table className="table table-bordered text-center">
+            <table className="table table-bordered table-hover text-center align-middle">
               <thead className="table-light">
                 <tr>
                   <th>Level</th>

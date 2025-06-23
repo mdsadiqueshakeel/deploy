@@ -43,33 +43,19 @@ export default function WalletPage() {
     };
 
     const fetchWallet = async (uid) => {
-  try {
-    // Debug: Check what's actually in localStorage
-    console.log("Current localStorage token:", localStorage.getItem("token"));
-    console.log("Current localStorage contents:", localStorage);
-
-    const walletRes = await api.get(`/api/wallet/user/${uid}/wallet`);
-    
-    console.log("Wallet API response:", walletRes); // Debug the response
-    
-    const data = walletRes.data;
-    setIncomeWallet(data.incomeWallet || 0);
-    setTopupWallet(data.topupWallet || 0);
-    setShoppingWallet(data.shoppingWallet || 0);
-    
-  } catch (err) {
-    console.error("Full error object:", err);
-    if (err.response) {
-      console.error("Error response data:", err.response.data);
-      console.error("Error status:", err.response.status);
-      console.error("Error headers:", err.response.headers);
-    }
-    // Optional: Redirect to login if unauthorized
-    if (err.response?.status === 401) {
-      window.location.href = '/login';
-    }
-  }
-};
+      try {
+        const walletRes = await api.get(`/api/wallet/user/${uid}/wallet`);
+        const data = walletRes.data;
+        setIncomeWallet(data.incomeWallet || 0);
+        setTopupWallet(data.topupWallet || 0);
+        setShoppingWallet(data.shoppingWallet || 0);
+      } catch (err) {
+        console.error("❌ Wallet fetch error:", err);
+        if (err.response?.status === 401) {
+          window.location.href = '/login';
+        }
+      }
+    };
 
     const init = async (id) => {
       setUserId(id);
@@ -103,6 +89,7 @@ export default function WalletPage() {
     );
   }
 
+  // Card style
   const cardStyle = {
     flex: "1",
     padding: "1.2rem",
@@ -123,14 +110,14 @@ export default function WalletPage() {
       <div style={{ display: "flex", gap: "2rem", flexWrap: "wrap", marginBottom: "2rem" }}>
         <div style={cardStyle}>
           <h4 style={{ color: "#3A86FF", fontWeight: "600" }}>Total Income</h4>
-          <p style={{ fontSize: "2rem", fontWeight: "bold", color: "#2d3436", marginTop: "0.5rem" }}>
+          <p style={{ fontSize: "2rem", fontWeight: "bold", color: "#3A86FF", marginTop: "0.5rem" }}>
             ₹ {totalIncome.toFixed(2)}
           </p>
         </div>
 
         <div style={cardStyle}>
           <h4 style={{ color: "#00b894", fontWeight: "600" }}>Monthly Income</h4>
-          <p style={{ fontSize: "2rem", fontWeight: "bold", color: "#2d3436", marginTop: "0.5rem" }}>
+          <p style={{ fontSize: "2rem", fontWeight: "bold", color: "#00b894", marginTop: "0.5rem" }}>
             ₹ {monthlyIncome.toFixed(2)}
           </p>
         </div>
@@ -140,21 +127,21 @@ export default function WalletPage() {
       <div style={{ display: "flex", gap: "2rem", flexWrap: "wrap" }}>
         <div style={cardStyle}>
           <h5 style={{ color: "#3A86FF" }}>Income Wallet</h5>
-          <p style={{ fontSize: "1.5rem", fontWeight: "bold", color: "#2d3436" }}>
+          <p style={{ fontSize: "1.5rem", fontWeight: "bold", color: "#3A86FF" }}>
             ₹ {incomeWallet.toFixed(2)}
           </p>
         </div>
 
         <div style={cardStyle}>
           <h5 style={{ color: "#00b894" }}>Top-up Wallet</h5>
-          <p style={{ fontSize: "1.5rem", fontWeight: "bold", color: "#2d3436" }}>
+          <p style={{ fontSize: "1.5rem", fontWeight: "bold", color: "#00b894" }}>
             ₹ {topupWallet.toFixed(2)}
           </p>
         </div>
 
         <div style={cardStyle}>
           <h5 style={{ color: "#fd7e14" }}>Shopping Wallet</h5>
-          <p style={{ fontSize: "1.5rem", fontWeight: "bold", color: "#2d3436" }}>
+          <p style={{ fontSize: "1.5rem", fontWeight: "bold", color: "#fd7e14" }}>
             ₹ {shoppingWallet.toFixed(2)}
           </p>
         </div>
