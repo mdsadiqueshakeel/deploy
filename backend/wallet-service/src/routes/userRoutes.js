@@ -6,7 +6,10 @@ const Wallet = require("../models/Wallet");
 
 // Apply extractUser middleware to all routes
 
-router.get("/:id/wallet", async (req, res) => {
+
+
+router.use(extractUser);
+router.get("/:id/wallet" ,isAuthenticated,async (req, res) => {
   try {
     const wallet = await Wallet.findOne({ userId: req.params.id });
     if (!wallet) return res.status(404).json({ error: "Wallet not found" });
@@ -16,8 +19,6 @@ router.get("/:id/wallet", async (req, res) => {
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
-
-router.use(extractUser);
 
 router.post("/withdraw-request", isAuthenticated, createWithdrawRequest);
 router.post("/topup-request", isAuthenticated, createTopupRequest);

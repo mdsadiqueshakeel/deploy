@@ -1,21 +1,157 @@
+import axios from 'axios';
+import { useEffect, useState } from "react";
+import { fetchProfile } from '../../utils/profileService';
 
-import DashboardLayout from '@components/DashboardLayout'; // Assuming this layout is used for dashboard pages
+export default function WalletPage() {
+  
+  const [userId, setUserId] = useState(null);
+  const [totalIncome, setTotalIncome] = useState(0);
+  const [monthlyIncome, setMonthlyIncome] = useState(0);
+  const [topupWallet, setTopupWallet] = useState(0);
+  const [incomeWallet, setIncomeWallet] = useState(0);
+  const [shoppingWallet, setShoppingWallet] = useState(0);
+  const [loading, setLoading] = useState(true);
+  
 
-/**
- * WalletPage component
- * This is a placeholder component for the user's wallet section.
- * It provides a basic structure within the DashboardLayout.
- */
-const WalletPage = () => {
-  return (
-    <DashboardLayout>
-      <div className="container-fluid py-4">
-        <h2 className="fw-bold mb-4" style={{ color: '#1E293B' }}>My Wallet</h2>
-        <p>This is the wallet page. You can manage your earnings and transactions here.</p>
-        {/* Add more wallet-related content and components here */}
-      </div>
-    </DashboardLayout>
-  );
+  useEffect(() => {
+    const savedUser = localStorage.getItem('userProfileData');
+    let foundId = null;
+
+    if (savedUser) {
+      const parsed = JSON.parse(savedUser);
+      if (parsed._id) foundId = parsed._id;
+      else if (parsed.basicInfo && parsed.basicInfo._id) foundId = parsed.basicInfo._id;
+    }
+
+    const fetchIncomeData = async (uid) => {
+      try {
+        const incomeRes = await axios.get(`http://localhost:5000/api/income/business/${uid}`);
+        const incomeData = incomeRes.data;
+
+        setTotalIncome(incomeData.totalIncome || 0);
+
+        const now = new Date();
+        const currentMonthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+
+        const currentMonthEntry = (incomeData.monthlyStats || []).find(
+          (stat) => stat.month === currentMonthKey
+        );
+
+        setMonthlyIncome(currentMonthEntry?.income || 0);
+      } catch (err) {
+        console.error('❌ Error fetching income data:', err);
+      }
+    };
+
+    const fetchWallet = async (uid) => {
+  try {
+    // ✅ No need to manually get token here. The interceptor handles it.
+    const walletRes = await api.get(`/api/wallet/user/${uid}/wallet`);
+
+    const data = walletRes.data;
+
+    setIncomeWallet(data.incomeWallet || 0);
+    setTopupWallet(data.topupWallet || 0);
+    setShoppingWallet(data.shoppingWallet || 0);
+  } catch (err) {
+    // ✅ Still log clear errors
+    if (err.response?.status === 401) {
+      console.error("❌ Unauthorized: Token may be missing or invalid.");
+    } else {
+      console.error("❌ Error fetching wallet data:", err.response?.data || err.message);
+    }
+  }
 };
 
-export default WalletPage;
+
+    const init = async (id) => {
+      setUserId(id);
+      await fetchIncomeData(id);
+      await fetchWallet(id);
+      setLoading(false);
+    };
+
+    if (foundId) {
+      init(foundId);
+    } else {
+      fetchProfile()
+        .then((profile) => {
+          const id = profile?.basicInfo?._id;
+          if (id) init(id);
+        })
+        .catch((err) => {
+          console.error('❌ Failed to fetch profile:', err);
+          setLoading(false);
+        });
+    }
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="d-flex justify-content-center align-items-center" style={{ height: '200px' }}>
+        <div className="spinner-border text-primary" role="status">
+          <span className="visually-hidden">Loading...</span>
+        </div>
+      </div>
+    );
+  }
+
+  const cardStyle = {
+    flex: "1",
+    padding: "1.2rem",
+    borderRadius: "12px",
+    background: "#fff",
+    boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
+    textAlign: "center",
+    minWidth: "200px"
+  };
+
+  return (
+    <div style={{ padding: "2rem", fontFamily: "sans-serif" }}>
+      <h2 style={{ marginBottom: "1.5rem", color: "#0A2463", fontWeight: "bold" }}>
+        💼 Wallet Overview
+      </h2>
+
+      {/* Income Section */}
+      <div style={{ display: "flex", gap: "2rem", flexWrap: "wrap", marginBottom: "2rem" }}>
+        <div style={cardStyle}>
+          <h4 style={{ color: "#3A86FF", fontWeight: "600" }}>Total Income</h4>
+          <p style={{ fontSize: "2rem", fontWeight: "bold", color: "#2d3436", marginTop: "0.5rem" }}>
+            ₹ {totalIncome.toFixed(2)}
+          </p>
+        </div>
+
+        <div style={cardStyle}>
+          <h4 style={{ color: "#00b894", fontWeight: "600" }}>Monthly Income</h4>
+          <p style={{ fontSize: "2rem", fontWeight: "bold", color: "#2d3436", marginTop: "0.5rem" }}>
+            ₹ {monthlyIncome.toFixed(2)}
+          </p>
+        </div>
+      </div>
+
+      {/* Wallet Section */}
+      <div style={{ display: "flex", gap: "2rem", flexWrap: "wrap" }}>
+        <div style={cardStyle}>
+          <h5 style={{ color: "#3A86FF" }}>Income Wallet</h5>
+          <p style={{ fontSize: "1.5rem", fontWeight: "bold", color: "#2d3436" }}>
+            ₹ {incomeWallet.toFixed(2)}
+          </p>
+        </div>
+
+        <div style={cardStyle}>
+          <h5 style={{ color: "#00b894" }}>Top-up Wallet</h5>
+          <p style={{ fontSize: "1.5rem", fontWeight: "bold", color: "#2d3436" }}>
+            ₹ {topupWallet.toFixed(2)}
+          </p>
+        </div>
+
+        <div style={cardStyle}>
+          <h5 style={{ color: "#fd7e14" }}>Shopping Wallet</h5>
+          <p style={{ fontSize: "1.5rem", fontWeight: "bold", color: "#2d3436" }}>
+            ₹ {shoppingWallet.toFixed(2)}
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}

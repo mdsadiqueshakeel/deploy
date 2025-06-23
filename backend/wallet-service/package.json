@@ -20,5 +20,8 @@
     "express": "^5.1.0",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.15.2"
+  },
+  "devDependencies": {
+    "cross-env": "^7.0.3"
   }
 }

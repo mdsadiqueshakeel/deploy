@@ -3,24 +3,17 @@ import Head from 'next/head';
 import Topbar from '@components/Topbar';
 import Sidebar from '@components/Sidebar';
 import ProfileCard from '@components/ProfileCard';
-import Products from '@pages/dashboard/products'; // Keep this if Products page is used
+import Products from '@pages/dashboard/products';
 import BusinessPage from './business';
+import WalletPage from './wallet'; // ✅ Importing the Wallet component
 
-// Placeholder components for other sections
+// Placeholder components
 const DashboardOverview = () => (
   <div className="p-4">
-    <h2 className="mb-4" style={{ color: '#0A2463', fontWeight: '600' }}>
-      Dashboard Overview
-    </h2>
+    <h2 className="mb-4" style={{ color: '#0A2463', fontWeight: '600' }}>Dashboard Overview</h2>
     <p style={{ color: '#0A2463' }}>
       Welcome to your dashboard! Here you can manage your business, wallet, and more.
     </p>
-  </div>
-);
-
-const Wallet = () => (
-  <div className="p-4">
-    <h2 className="mb-4" style={{ color: '#0A2463', fontWeight: '600' }}>Wallet</h2>
   </div>
 );
 
@@ -69,8 +62,8 @@ export default function Dashboard({ initialUser }) {
   const sectionComponents = {
     Dashboard: <DashboardOverview />,
     Products: <Products searchQuery={searchQuery} coins={coins} onPurchase={handlePurchase} />,
-    Business: <BusinessPage />, // ✅ Renders Binary Tree now
-    Wallet: <Wallet />,
+    Business: <BusinessPage />,
+    Wallet: <WalletPage />, // ✅ Connected wallet page
     Status: <Status />,
     'Rank & Rewards': <RankRewards />,
     Support: <Support />,
@@ -103,14 +96,17 @@ export default function Dashboard({ initialUser }) {
           activeSection={activeSection}
         />
 
-        <div className="flex-grow-1" style={{
-          marginLeft: isSidebarOpen && window.innerWidth <= 992 ? '0' : '280px',
-          transition: 'margin-left 0.3s ease-in-out',
-          backgroundColor: '#FFFFFF',
-          backgroundImage: 'radial-gradient(circle at 10% 20%, rgba(58, 134, 255, 0.1) 0%, rgba(10, 36, 99, 0.1) 90%)',
-          minHeight: '100vh',
-          paddingTop: '60px',
-        }}>
+        <div
+          className="flex-grow-1"
+          style={{
+            marginLeft: isSidebarOpen && window.innerWidth <= 992 ? '0' : '280px',
+            transition: 'margin-left 0.3s ease-in-out',
+            backgroundColor: '#FFFFFF',
+            backgroundImage: 'radial-gradient(circle at 10% 20%, rgba(58, 134, 255, 0.1) 0%, rgba(10, 36, 99, 0.1) 90%)',
+            minHeight: '100vh',
+            paddingTop: '60px',
+          }}
+        >
           <Topbar
             toggleSidebar={toggleSidebar}
             searchQuery={searchQuery}
@@ -125,7 +121,9 @@ export default function Dashboard({ initialUser }) {
 
       <style jsx>{`
         @media (max-width: 992px) {
-          .flex-grow-1 { margin-left: 0 !important; }
+          .flex-grow-1 {
+            margin-left: 0 !important;
+          }
         }
       `}</style>
     </>
