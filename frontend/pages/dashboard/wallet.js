@@ -1,9 +1,9 @@
 import axios from 'axios';
 import { useEffect, useState } from "react";
+import api from '../../utils/api';
 import { fetchProfile } from '../../utils/profileService';
 
 export default function WalletPage() {
-  
   const [userId, setUserId] = useState(null);
   const [totalIncome, setTotalIncome] = useState(0);
   const [monthlyIncome, setMonthlyIncome] = useState(0);
@@ -11,7 +11,6 @@ export default function WalletPage() {
   const [incomeWallet, setIncomeWallet] = useState(0);
   const [shoppingWallet, setShoppingWallet] = useState(0);
   const [loading, setLoading] = useState(true);
-  
 
   useEffect(() => {
     const savedUser = localStorage.getItem('userProfileData');
@@ -45,24 +44,32 @@ export default function WalletPage() {
 
     const fetchWallet = async (uid) => {
   try {
-    // ✅ No need to manually get token here. The interceptor handles it.
+    // Debug: Check what's actually in localStorage
+    console.log("Current localStorage token:", localStorage.getItem("token"));
+    console.log("Current localStorage contents:", localStorage);
+
     const walletRes = await api.get(`/api/wallet/user/${uid}/wallet`);
-
+    
+    console.log("Wallet API response:", walletRes); // Debug the response
+    
     const data = walletRes.data;
-
     setIncomeWallet(data.incomeWallet || 0);
     setTopupWallet(data.topupWallet || 0);
     setShoppingWallet(data.shoppingWallet || 0);
+    
   } catch (err) {
-    // ✅ Still log clear errors
+    console.error("Full error object:", err);
+    if (err.response) {
+      console.error("Error response data:", err.response.data);
+      console.error("Error status:", err.response.status);
+      console.error("Error headers:", err.response.headers);
+    }
+    // Optional: Redirect to login if unauthorized
     if (err.response?.status === 401) {
-      console.error("❌ Unauthorized: Token may be missing or invalid.");
-    } else {
-      console.error("❌ Error fetching wallet data:", err.response?.data || err.message);
+      window.location.href = '/login';
     }
   }
 };
-
 
     const init = async (id) => {
       setUserId(id);

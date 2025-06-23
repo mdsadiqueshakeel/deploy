@@ -149,7 +149,6 @@ const ProfileCard = ({ user: propUser }) => {
         const updatedUser = { ...user, avatar: reader.result };
         setUser(updatedUser);
         setFormData((prev) => ({ ...prev, avatar: reader.result }));
-        localStorage.setItem("token", response.data.token);
         localStorage.setItem("userProfileData", JSON.stringify(updatedUser));
       };
       reader.onerror = () => {
