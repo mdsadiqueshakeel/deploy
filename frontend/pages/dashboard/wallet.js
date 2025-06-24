@@ -233,7 +233,6 @@ export default function WalletPage() {
   }, []);
 
   const handleTopupRequest = async () => {
-    const token = localStorage.getItem('token');
     if (!topupAmount || isNaN(topupAmount) || Number(topupAmount) <= 0) {
       setRequestStatus("Please enter a valid amount.");
       return;
@@ -241,9 +240,10 @@ export default function WalletPage() {
 
     try {
       const token = localStorage.getItem("token");
+      console.log('Token before API call:', token);
       
       // Updated endpoint to match your API Gateway route
-      const res = await api.post('/user/topup-request', {
+      const res = await api.post('/api/wallet/user/topup-request', {
         amount: Number(topupAmount),
         note: "User top-up request" // Optional note field
       }, {

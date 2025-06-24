@@ -41,6 +41,16 @@ exports.approveTopupRequest = async (req, res) => {
   res.json({ message: "Top-up request approved", wallet });
 };
 
+exports.getAllTopupRequests = async (req, res) => {
+  try {
+    const requests = await TopupRequest.find().populate('userId', 'name email'); // Populate user info
+    res.json(requests);
+  } catch (error) {
+    console.error("Failed to fetch top-up requests:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
 exports.approveWithdrawRequest = async (req, res) => {
   const { id } = req.params;
 

@@ -54,6 +54,21 @@ router.post("/user/withdraw-request", walletAuth, async (req, res) => {
 // 👑 ADMIN ROUTES
 //
 
+// Get all top-up requests for admin
+router.get("/admin/topup-requests", walletAuth, async (req, res) => {
+  try {
+    const response = await axios.get(`${WALLET_SERVICE_URL}/admin/topup-requests`, {
+      headers: {
+        Authorization: req.headers.authorization,
+      },
+    });
+    res.status(response.status).json(response.data);
+  } catch (err) {
+    console.error("Get top-up requests error:", err.response?.data || err.message);
+    res.status(err.response?.status || 500).json(err.response?.data || { error: "Service error" });
+  }
+});
+
 // Approve Top-up
 router.put("/admin/topup-request/:id/approve", walletAuth, async (req, res) => {
   try {

@@ -21,25 +21,41 @@ exports.createTopupRequest = async (req, res) => {
 
 
 exports.createWithdrawRequest = async (req, res) => {
-  const { amount, note } = req.body;
-  const userId = req.user._id;
+  try {
+    const { amount, note } = req.body;
+    const userId = req.user._id;
 
-  if (!amount || amount <= 0) {
-    return res.status(400).json({ message: "Invalid amount" });
+    if (!amount || amount <= 0) {
+      return res.status(400).json({ message: "Invalid amount" });
+    }
+
+    const wallet = await Wallet.findOne({ userId });
+    if (!wallet || wallet.incomeWallet < amount) {
+      return res.status(400).json({ message: "Insufficient income wallet balance" });
+    }
+
+    const request = await WithdrawRequest.create({
+      userId,
+      amount,
+      note,
+    });
+
+    res.status(201).json({ message: "Withdraw request submitted", request });
+  } catch (error) {
+    console.error("Withdraw request error:", error);
+    res.status(500).json({ message: "Server error" });
   }
+};
 
-  const wallet = await Wallet.findOne({ userId });
-  if (!wallet || wallet.incomeWallet < amount) {
-    return res.status(400).json({ message: "Insufficient income wallet balance" });
+exports.getUserTopupRequests = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const requests = await TopupRequest.find({ userId: id }).sort({ createdAt: -1 });
+    res.json(requests);
+  } catch (error) {
+    console.error("Failed to fetch user's top-up requests:", error);
+    res.status(500).json({ message: "Server error" });
   }
-
-  const request = await WithdrawRequest.create({
-    userId,
-    amount,
-    note,
-  });
-
-  res.status(201).json({ message: "Withdraw request submitted", request });
 };
 
 // 🧾 Get wallet details for userId
