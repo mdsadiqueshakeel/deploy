@@ -13,10 +13,20 @@ export default function UserManagement() {
     const fetchUsers = async () => {
       try {
         const response = await api.get('/api/admin/users');
-        setUsers(response.data);
-        setLoading(false);
+        const enrichedUsers = await Promise.all(
+          response.data.map(async (user) => {
+            try {
+              const details = await api.get(`/api/admin/user/${user._id}`);
+              return { ...user, ...details.data };
+            } catch {
+              return user;
+            }
+          })
+        );
+        setUsers(enrichedUsers);
       } catch (error) {
         console.error('Error fetching users:', error);
+      } finally {
         setLoading(false);
       }
     };
@@ -25,12 +35,21 @@ export default function UserManagement() {
   }, []);
 
   const filteredUsers = users.filter(user => 
-    user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.name.toLowerCase().includes(searchTerm.toLowerCase())
+    String(user.email || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    String(user.name || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const viewUserDetails = (userId) => {
     router.push(`/admin/users/${userId}`);
+  };
+
+  const formatDate = (dateStr) => {
+    if (!dateStr) return '-';
+    try {
+      return new Date(dateStr).toLocaleDateString();
+    } catch {
+      return '-';
+    }
   };
 
   return (
@@ -77,18 +96,7 @@ export default function UserManagement() {
                 </button>
               </div>
             </div>
-            <button 
-              className="btn fw-medium"
-              style={{ 
-                background: 'linear-gradient(135deg, #3A86FF 0%, #0A2463 100%)',
-                color: 'white',
-                border: 'none',
-                borderRadius: '10px',
-                boxShadow: '0 4px 15px rgba(58, 134, 255, 0.4)',
-              }}
-            >
-              <i className="bi bi-plus-lg me-1"></i> Add User
-            </button>
+            
           </div>
         </div>
         
@@ -128,18 +136,20 @@ export default function UserManagement() {
                         <td style={{ color: '#0A2463' }}>{user._id.substring(0, 8)}</td>
                         <td style={{ color: '#0A2463' }}>{user.name}</td>
                         <td style={{ color: '#0A2463' }}>{user.email}</td>
-                        <td style={{ color: '#0A2463' }}>{new Date(user.createdAt).toLocaleDateString()}</td>
+                        <td style={{ color: '#0A2463' }}>{formatDate(user.createdAt)}</td>
                         <td>
                           {user.isActive ? 
                             <span className="badge" style={{ 
-                              background: '#3A86FF',
+                              background: '#28a745',
                               padding: '5px 10px',
-                              borderRadius: '20px'
+                              borderRadius: '20px',
+                              color: 'white'
                             }}>Active</span> : 
                             <span className="badge" style={{ 
                               background: '#FF5252',
                               padding: '5px 10px',
-                              borderRadius: '20px'
+                              borderRadius: '20px',
+                              color: 'white'
                             }}>Inactive</span>
                           }
                         </td>
@@ -156,16 +166,6 @@ export default function UserManagement() {
                             }}
                           >
                             <i className="bi bi-eye"></i>
-                          </button>
-                          <button 
-                            className="btn btn-sm me-1"
-                            style={{ 
-                              border: '1px solid #0A2463',
-                              color: '#0A2463',
-                              borderRadius: '8px'
-                            }}
-                          >
-                            <i className="bi bi-pencil"></i>
                           </button>
                           <button 
                             className="btn btn-sm"

@@ -19,6 +19,7 @@ const app = express();
 
 // ✅ UPDATED CORS SETTINGS
 
+
 app.use(
   cors({
     origin: process.env.CLIENT_URL || 'http://localhost:3000', 
