@@ -1,3 +1,4 @@
+import axios from 'axios';
 import { useEffect, useState } from "react";
 import api from '../../utils/api';
 import { fetchProfile } from '../../utils/profileService';
@@ -15,7 +16,6 @@ export default function WalletPage() {
   const [topupStatus, setTopupStatus] = useState(null);
   const [withdrawStatus, setWithdrawStatus] = useState(null);
 
-
   useEffect(() => {
     const savedUser = localStorage.getItem('userProfileData');
     let foundId = null;
@@ -28,7 +28,7 @@ export default function WalletPage() {
 
     const fetchIncomeData = async (uid) => {
       try {
-        const incomeRes = await api.get(`http://localhost:5000/api/income/business/${uid}`);
+        const incomeRes = await axios.get(`http://localhost:5000/api/income/business/${uid}`);
         const incomeData = incomeRes.data;
 
         setTotalIncome(incomeData.totalIncome || 0);
@@ -90,13 +90,15 @@ export default function WalletPage() {
   }
 
   try {
+
+    // ✅ Hitting the correct backend route
     const res = await api.post(
       '/api/wallet/user/topup-request',
       {
         amount: Number(topupAmount),
         note: "User top-up request", // Optional note
       },
-      
+
     );
 
     setTopupStatus("✅ Top-up request sent successfully!");
@@ -126,6 +128,9 @@ export default function WalletPage() {
   }
 
   try {
+
+
+    // ✅ Hitting the correct backend route
     const res = await api.post(
       '/api/wallet/user/withdraw-request',
       {
@@ -141,7 +146,7 @@ export default function WalletPage() {
     // 🔁 Refresh wallet data after success
     if (userId) {
       const walletRes = await api.get(`/api/wallet/user/${userId}/wallet`, {
-
+      
       });
       const data = walletRes.data;
       setTopupWallet(data.topupWallet || 0);
@@ -263,7 +268,7 @@ export default function WalletPage() {
           <p style={{ fontSize: "1.5rem", fontWeight: "bold", color: "#00b894" }}>
             ₹ {topupWallet.toFixed(2)}
           </p>
-          
+
           {/* Top-up Request Form */}
           <div style={formContainerStyle}>
             <h6 style={{ color: "#0A2463", marginBottom: "1rem" }}>Request Top-up</h6>
