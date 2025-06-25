@@ -7,6 +7,8 @@ export default function UserManagement() {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [confirming, setConfirming] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -30,11 +32,11 @@ export default function UserManagement() {
         setLoading(false);
       }
     };
-    
+
     fetchUsers();
   }, []);
 
-  const filteredUsers = users.filter(user => 
+  const filteredUsers = users.filter(user =>
     String(user.email || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
     String(user.name || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -52,9 +54,31 @@ export default function UserManagement() {
     }
   };
 
+  const canDeleteUser = (user) => {
+    if (!user.isActive && user.createdAt) {
+      const inactiveDays = (Date.now() - new Date(user.createdAt)) / (1000 * 60 * 60 * 24);
+      return inactiveDays > 3;
+    }
+    return false;
+  };
+
+  const handleDeleteUser = async () => {
+    if (!deleteTarget) return;
+
+    try {
+      await api.delete(`/api/admin/delete-user/${deleteTarget._id}`);
+      setUsers(users.filter(u => u._id !== deleteTarget._id));
+    } catch (err) {
+      console.error('Failed to delete user:', err);
+    } finally {
+      setConfirming(false);
+      setDeleteTarget(null);
+    }
+  };
+
   return (
     <AdminLayout title="User Management">
-      <div 
+      <div
         className="p-4 min-vh-100"
         style={{
           background: '#FFFFFF',
@@ -69,23 +93,23 @@ export default function UserManagement() {
           <div className="d-flex">
             <div className="me-2">
               <div className="input-group">
-                <input 
-                  type="text" 
-                  className="form-control" 
+                <input
+                  type="text"
+                  className="form-control"
                   placeholder="Search users..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  style={{ 
+                  style={{
                     border: '2px solid #E0E0E0',
                     borderRadius: '10px 0 0 10px',
                     color: '#0A2463',
                     backgroundColor: '#F5F5F5',
                   }}
                 />
-                <button 
-                  className="btn" 
+                <button
+                  className="btn"
                   type="button"
-                  style={{ 
+                  style={{
                     background: '#3A86FF',
                     color: 'white',
                     border: 'none',
@@ -96,10 +120,9 @@ export default function UserManagement() {
                 </button>
               </div>
             </div>
-            
           </div>
         </div>
-        
+
         {loading ? (
           <div className="d-flex justify-content-center align-items-center" style={{ height: '300px' }}>
             <div className="spinner-border" style={{ color: '#3A86FF' }} role="status">
@@ -107,9 +130,9 @@ export default function UserManagement() {
             </div>
           </div>
         ) : (
-          <div 
+          <div
             className="card shadow-sm"
-            style={{ 
+            style={{
               border: 'none',
               borderRadius: '15px',
               boxShadow: '0 10px 25px rgba(58, 134, 255, 0.2)',
@@ -120,7 +143,7 @@ export default function UserManagement() {
                 <table className="table table-hover mb-0">
                   <thead style={{ background: 'linear-gradient(135deg, #3A86FF 0%, #0A2463 100%)', color: 'white' }}>
                     <tr>
-                      <th>ID</th>
+                      {/* Removed <th>ID</th> */}
                       <th>Name</th>
                       <th>Email</th>
                       <th>Join Date</th>
@@ -133,19 +156,19 @@ export default function UserManagement() {
                   <tbody>
                     {filteredUsers.map(user => (
                       <tr key={user._id}>
-                        <td style={{ color: '#0A2463' }}>{user._id.substring(0, 8)}</td>
+                        {/* Removed <td>ID</td> */}
                         <td style={{ color: '#0A2463' }}>{user.name}</td>
                         <td style={{ color: '#0A2463' }}>{user.email}</td>
                         <td style={{ color: '#0A2463' }}>{formatDate(user.createdAt)}</td>
                         <td>
-                          {user.isActive ? 
-                            <span className="badge" style={{ 
+                          {user.isActive ?
+                            <span className="badge" style={{
                               background: '#28a745',
                               padding: '5px 10px',
                               borderRadius: '20px',
                               color: 'white'
-                            }}>Active</span> : 
-                            <span className="badge" style={{ 
+                            }}>Active</span> :
+                            <span className="badge" style={{
                               background: '#FF5252',
                               padding: '5px 10px',
                               borderRadius: '20px',
@@ -156,10 +179,10 @@ export default function UserManagement() {
                         <td style={{ color: '#0A2463' }}>${user.balance?.toFixed(2) || '0.00'}</td>
                         <td style={{ color: '#0A2463' }}>{user.rank || 'Member'}</td>
                         <td>
-                          <button 
+                          <button
                             className="btn btn-sm me-1"
                             onClick={() => viewUserDetails(user._id)}
-                            style={{ 
+                            style={{
                               border: '1px solid #3A86FF',
                               color: '#3A86FF',
                               borderRadius: '8px'
@@ -167,16 +190,23 @@ export default function UserManagement() {
                           >
                             <i className="bi bi-eye"></i>
                           </button>
-                          <button 
-                            className="btn btn-sm"
-                            style={{ 
-                              border: '1px solid #FF5252',
-                              color: '#FF5252',
-                              borderRadius: '8px'
-                            }}
-                          >
-                            <i className="bi bi-trash"></i>
-                          </button>
+
+                          {canDeleteUser(user) && (
+                            <button
+                              className="btn btn-sm"
+                              onClick={() => {
+                                setDeleteTarget(user);
+                                setConfirming(true);
+                              }}
+                              style={{
+                                border: '1px solid #FF5252',
+                                color: '#FF5252',
+                                borderRadius: '8px'
+                              }}
+                            >
+                              <i className="bi bi-trash"></i>
+                            </button>
+                          )}
                         </td>
                       </tr>
                     ))}
@@ -186,7 +216,28 @@ export default function UserManagement() {
             </div>
           </div>
         )}
+
+        {confirming && deleteTarget && (
+          <div className="modal fade show d-block" tabIndex="-1" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
+            <div className="modal-dialog modal-dialog-centered">
+              <div className="modal-content">
+                <div className="modal-header">
+                  <h5 className="modal-title">Confirm Deletion</h5>
+                  <button type="button" className="btn-close" onClick={() => setConfirming(false)}></button>
+                </div>
+                <div className="modal-body">
+                  <p>Are you sure you want to delete user <strong>{deleteTarget.name}</strong>?</p>
+                </div>
+                <div className="modal-footer">
+                  <button className="btn btn-secondary" onClick={() => setConfirming(false)}>No</button>
+                  <button className="btn btn-danger" onClick={handleDeleteUser}>Yes, Delete</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </AdminLayout>
   );
 }
+
