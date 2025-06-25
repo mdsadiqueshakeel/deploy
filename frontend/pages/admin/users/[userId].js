@@ -8,54 +8,6 @@ export default function UserDetails() {
   const { userId } = router.query;
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('referral'); // 'referral', 'transactions', 'topup-requests', 'settings'
-  const [topupRequests, setTopupRequests] = useState([]);
-  const [topupRequestsLoading, setTopupRequestsLoading] = useState(false);
-
-  useEffect(() => {
-    const fetchTopupRequests = async () => {
-      if (activeTab !== 'topup-requests' || !userId) return;
-      setTopupRequestsLoading(true);
-      try {
-        const response = await api.get(`/api/wallet/user/${userId}/topup-requests`);
-        setTopupRequests(response.data);
-      } catch (error) {
-        console.error('Error fetching top-up requests for user:', error);
-      }
-      finally {
-        setTopupRequestsLoading(false);
-      }
-    };
-    fetchTopupRequests();
-  }, [userId, activeTab]);
-
-  const handleApproveTopup = async (requestId) => {
-    try {
-      await api.put(`/api/wallet/admin/topup-request/${requestId}/approve`);
-      // Refresh the list after approval
-      const response = await api.get(`/api/wallet/user/${userId}/topup-requests`);
-      setTopupRequests(response.data);
-    } catch (err) {
-      console.error('Error approving top-up request:', err);
-      alert('Failed to approve top-up request.');
-    }
-  };
-
-  const handleRejectTopup = async (requestId) => {
-    try {
-      // Assuming a reject endpoint exists or can be added
-      // For now, we'll just remove it from the list or mark as rejected locally
-      // You would typically have a backend endpoint for rejection as well
-      alert('Reject functionality not yet implemented on backend.');
-      // Example: await api.put(`/api/wallet/admin/topup-request/${requestId}/reject`);
-      // Refresh the list after rejection
-      const response = await api.get(`/api/wallet/user/${userId}/topup-requests`);
-      setTopupRequests(response.data);
-    } catch (err) {
-      console.error('Error rejecting top-up request:', err);
-      alert('Failed to reject top-up request.');
-    }
-  };
 
   // Color theme variables from AdminLayout
   const primaryColor = '#3A86FF';
@@ -236,14 +188,13 @@ export default function UserDetails() {
               <ul className="nav nav-tabs card-header-tabs" style={{ borderBottom: 'none' }}>
                 <li className="nav-item">
                   <a
-                    className={`nav-link ${activeTab === 'referral' ? 'active' : ''}`}
+                    className="nav-link active"
                     href="#"
-                    onClick={() => setActiveTab('referral')}
                     style={{
-                      color: activeTab === 'referral' ? primaryDarkColor : textColor,
-                      borderColor: activeTab === 'referral' ? `transparent transparent ${primaryColor} transparent` : 'transparent',
+                      color: primaryDarkColor,
+                      borderColor: `transparent transparent ${primaryColor} transparent`,
                       borderWidth: '2px',
-                      fontWeight: activeTab === 'referral' ? 'bold' : 'normal',
+                      fontWeight: 'bold',
                       backgroundColor: 'transparent'
                     }}
                   >
@@ -252,15 +203,13 @@ export default function UserDetails() {
                 </li>
                 <li className="nav-item">
                   <a
-                    className={`nav-link ${activeTab === 'transactions' ? 'active' : ''}`}
+                    className="nav-link"
                     href="#"
-                    onClick={() => setActiveTab('transactions')}
                     style={{
-                      color: activeTab === 'transactions' ? primaryDarkColor : textColor,
-                      borderColor: activeTab === 'transactions' ? `transparent transparent ${primaryColor} transparent` : 'transparent',
-                      borderWidth: '2px',
-                      fontWeight: activeTab === 'transactions' ? 'bold' : 'normal',
-                      backgroundColor: 'transparent'
+                      color: textColor,
+                      opacity: 0.7,
+                      borderColor: 'transparent',
+                      fontWeight: 'normal'
                     }}
                   >
                     Transactions
@@ -268,31 +217,13 @@ export default function UserDetails() {
                 </li>
                 <li className="nav-item">
                   <a
-                    className={`nav-link ${activeTab === 'topup-requests' ? 'active' : ''}`}
+                    className="nav-link"
                     href="#"
-                    onClick={() => setActiveTab('topup-requests')}
                     style={{
-                      color: activeTab === 'topup-requests' ? primaryDarkColor : textColor,
-                      borderColor: activeTab === 'topup-requests' ? `transparent transparent ${primaryColor} transparent` : 'transparent',
-                      borderWidth: '2px',
-                      fontWeight: activeTab === 'topup-requests' ? 'bold' : 'normal',
-                      backgroundColor: 'transparent'
-                    }}
-                  >
-                    Top-up Requests
-                  </a>
-                </li>
-                <li className="nav-item">
-                  <a
-                    className={`nav-link ${activeTab === 'settings' ? 'active' : ''}`}
-                    href="#"
-                    onClick={() => setActiveTab('settings')}
-                    style={{
-                      color: activeTab === 'settings' ? primaryDarkColor : textColor,
-                      borderColor: activeTab === 'settings' ? `transparent transparent ${primaryColor} transparent` : 'transparent',
-                      borderWidth: '2px',
-                      fontWeight: activeTab === 'settings' ? 'bold' : 'normal',
-                      backgroundColor: 'transparent'
+                      color: textColor,
+                      opacity: 0.7,
+                      borderColor: 'transparent',
+                      fontWeight: 'normal'
                     }}
                   >
                     Settings
@@ -301,117 +232,51 @@ export default function UserDetails() {
               </ul>
             </div>
             <div className="card-body p-4">
-              {activeTab === 'referral' && (
-                <div>
-                  <h5 className="mb-4 fw-bold" style={{ color: primaryDarkColor }}>Referral Information</h5>
-                  <div className="row g-3">
-                    <div className="col-md-6">
-                      <div
-                        className="border rounded p-3"
-                        style={{
-                          borderColor: lightBackground,
-                          backgroundColor: 'white',
-                          boxShadow: '0 2px 10px rgba(0, 0, 0, 0.03)',
-                          borderRadius: '10px'
-                        }}
-                      >
-                        <h6 className="text-uppercase mb-2 small" style={{ color: textColor, opacity: 0.7 }}>
-                          Referred By
-                        </h6>
-                        <p className="mb-0 fw-medium" style={{ color: primaryColor }}>
-                          {user.parentId?.name || 'Root User'}
-                        </p>
-                      </div>
+              {/* Referral Information */}
+              <div>
+                <h5 className="mb-4 fw-bold" style={{ color: primaryDarkColor }}>Referral Information</h5>
+                <div className="row g-3">
+                  <div className="col-md-6">
+                    <div
+                      className="border rounded p-3"
+                      style={{
+                        borderColor: lightBackground,
+                        backgroundColor: 'white',
+                        boxShadow: '0 2px 10px rgba(0, 0, 0, 0.03)',
+                        borderRadius: '10px'
+                      }}
+                    >
+                      <h6 className="text-uppercase mb-2 small" style={{ color: textColor, opacity: 0.7 }}>
+                        Referred By
+                      </h6>
+                      <p className="mb-0 fw-medium" style={{ color: primaryColor }}>
+                        {user.parentId?.name || 'Root User'}
+                      </p>
                     </div>
-                    <div className="col-md-6">
-                      <div
-                        className="border rounded p-3"
-                        style={{
-                          borderColor: lightBackground,
-                          backgroundColor: 'white',
-                          boxShadow: '0 2px 10px rgba(0, 0, 0, 0.03)',
-                          borderRadius: '10px'
-                        }}
-                      >
-                        <h6 className="text-uppercase mb-2 small" style={{ color: textColor, opacity: 0.7 }}>
-                          Referral Codes
-                        </h6>
-                        <p className="mb-1" style={{ color: textColor }}>
-                          <span className="fw-medium">Left:</span> {user.referralCodeLeft || 'N/A'}
-                        </p>
-                        <p className="mb-0" style={{ color: textColor }}>
-                          <span className="fw-medium">Right:</span> {user.referralCodeRight || 'N/A'}
-                        </p>
-                      </div>
+                  </div>
+                  <div className="col-md-6">
+                    <div
+                      className="border rounded p-3"
+                      style={{
+                        borderColor: lightBackground,
+                        backgroundColor: 'white',
+                        boxShadow: '0 2px 10px rgba(0, 0, 0, 0.03)',
+                        borderRadius: '10px'
+                      }}
+                    >
+                      <h6 className="text-uppercase mb-2 small" style={{ color: textColor, opacity: 0.7 }}>
+                        Referral Codes
+                      </h6>
+                      <p className="mb-1" style={{ color: textColor }}>
+                        <span className="fw-medium">Left:</span> {user.referralCodeLeft || 'N/A'}
+                      </p>
+                      <p className="mb-0" style={{ color: textColor }}>
+                        <span className="fw-medium">Right:</span> {user.referralCodeRight || 'N/A'}
+                      </p>
                     </div>
                   </div>
                 </div>
-              )}
-
-              {activeTab === 'transactions' && (
-                <div>
-                  <h5 className="mb-4 fw-bold" style={{ color: primaryDarkColor }}>Transactions</h5>
-                  {/* Add transactions table here */}
-                  <p>Transaction history will be displayed here.</p>
-                </div>
-              )}
-
-              {activeTab === 'topup-requests' && (
-                <div>
-                  <h5 className="mb-4 fw-bold" style={{ color: primaryDarkColor }}>Top-up Requests</h5>
-                  {topupRequestsLoading ? (
-                    <p>Loading top-up requests...</p>
-                  ) : topupRequests.length > 0 ? (
-                    <table className="table table-striped table-hover">
-                      <thead>
-                        <tr>
-                          <th>Amount</th>
-                          <th>Status</th>
-                          <th>Date</th>
-                          <th>Actions</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {topupRequests.map((request) => (
-                          <tr key={request._id}>
-                            <td>₹{request.amount.toFixed(2)}</td>
-                            <td>{request.status}</td>
-                            <td>{new Date(request.createdAt).toLocaleDateString()}</td>
-                            <td>
-                              {request.status === 'pending' && (
-                                <>
-                                  <button
-                                    onClick={() => handleApproveTopup(request._id)}
-                                    className="btn btn-success btn-sm me-2"
-                                  >
-                                    Approve
-                                  </button>
-                                  <button
-                                    onClick={() => handleRejectTopup(request._id)}
-                                    className="btn btn-danger btn-sm"
-                                  >
-                                    Reject
-                                  </button>
-                                </>
-                              )}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  ) : (
-                    <p>No top-up requests found for this user.</p>
-                  )}
-                </div>
-              )}
-
-              {activeTab === 'settings' && (
-                <div>
-                  <h5 className="mb-4 fw-bold" style={{ color: primaryDarkColor }}>Settings</h5>
-                  {/* Add settings form/details here */}
-                  <p>User settings will be displayed here.</p>
-                </div>
-              )}
+              </div>
 
               {/* Bank Details Section */}
               <div className="mt-4">
@@ -419,12 +284,21 @@ export default function UserDetails() {
                   Bank Information
                 </h6>
                 <ul className="list-unstyled mb-0">
-                  <li className="mb-2 d-flex justify-content-between align-items-center">
-                    <span className="fw-medium" style={{ color: textColor }}>Account Number:</span>
+                  {/* <li className="mb-2 d-flex justify-content-between align-items-center">
+                    <span className="fw-medium" style={{ color: textColor }}>Account Holder:</span>
                     <span style={{ color: textColor, opacity: 0.8 }}>
-                      {user.bankDetails?.accountNumber || 'N/A'}
+                      {user.bankDetails?.accountHolderName || 'N/A'}
                     </span>
-                  </li>
+                  </li> */}
+    
+    <li className="mb-2 d-flex justify-content-between align-items-center">
+  <span className="fw-medium" style={{ color: textColor }}>Account Number:</span>
+  <span style={{ color: textColor, opacity: 0.8 }}>
+    {user.bankDetails?.accountNumber || 'N/A'}
+  </span>
+</li>
+
+
                   <li className="mb-2 d-flex justify-content-between align-items-center">
                     <span className="fw-medium" style={{ color: textColor }}>Bank Name:</span>
                     <span style={{ color: textColor, opacity: 0.8 }}>

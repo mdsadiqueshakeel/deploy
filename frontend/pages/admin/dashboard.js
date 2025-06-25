@@ -112,18 +112,6 @@ function AdminDashboard() {
                     </div>
                   </div>
                 </div>
-                <div className="col-md-3">
-                  <div className="card text-white bg-success" style={{
-                    borderRadius: '15px',
-                    boxShadow: '0 4px 15px rgba(40, 167, 69, 0.4)',
-                    cursor: 'pointer'
-                  }} onClick={() => router.push('/admin/topup-requests')}>
-                    <div className="card-body">
-                      <h5 className="card-title">Top-up Requests</h5>
-                      <h2 className="fw-bold"><i className="bi bi-cash-stack"></i></h2>
-                    </div>
-                  </div>
-                </div>
               </div>
 
               <div className="card shadow-sm" style={{ borderRadius: '15px' }}>

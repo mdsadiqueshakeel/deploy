@@ -78,7 +78,23 @@ router.put("/change-password", adminAuth, async (req, res) => {
 });
 
 // ✅ Get Admin Profile (for dashboard)
-router.get("/me", adminAuth, async (req, res) => {
+// router.get("/me", adminAuth, async (req, res) => {
+//   try {
+//     const response = await axios.get(`${ADMIN_SERVICE_URL}/api/admin/me`, {
+//       headers: {
+//         Authorization: req.headers.authorization, // forward token to admin-service
+//       },
+//     });
+
+//     res.status(response.status).json(response.data);
+//   } catch (err) {
+//     res.status(err.response?.status || 500).json(
+//       err.response?.data || { message: "Service error" }
+//     );
+//   }
+// });
+
+router.get("/profile", adminAuth, async (req, res) => {
   try {
     const response = await axios.get(`${ADMIN_SERVICE_URL}/api/admin/me`, {
       headers: {

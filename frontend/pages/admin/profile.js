@@ -1,7 +1,7 @@
-import axios from 'axios';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import AdminLayout from '../../components/admin/AdminLayout';
+import API from '../../services/api';
 
 export default function AdminProfilePage() {
   const [profile, setProfile] = useState(null);
@@ -17,13 +17,13 @@ export default function AdminProfilePage() {
           return;
         }
 
-        const res = await axios.get('http://localhost:5000/api/admin/profile', {
+        const res = await API.get('/api/admin/profile', {
           headers: { Authorization: `Bearer ${token}` }
         });
 
         setProfile(res.data);
       } catch (err) {
-        console.error('Failed to fetch profile:', err.message);
+        console.error('Failed to fetch profile:', err);
         router.push('/admin/login');
       } finally {
         setLoading(false);
@@ -31,22 +31,39 @@ export default function AdminProfilePage() {
     };
 
     fetchAdminProfile();
-  }, []);
+  }, [router]);
 
   return (
     <AdminLayout title="Profile">
       <div className="container mt-4">
-        <h3 className="mb-4">Admin Profile</h3>
+        <div className="d-flex justify-content-between align-items-center mb-4">
+          <h3>Admin Profile</h3>
+        </div>
+        
         {loading ? (
-          <p>Loading...</p>
+          <div className="text-center py-5">
+            <div className="spinner-border text-primary" role="status">
+              <span className="visually-hidden">Loading...</span>
+            </div>
+          </div>
         ) : profile ? (
           <div className="card shadow-sm p-4">
-            <p><strong>ID:</strong> {profile._id}</p>
-            <p><strong>Email:</strong> {profile.email}</p>
-            <p><strong>Joined:</strong> {new Date(profile.createdAt).toLocaleDateString()}</p>
+            <div className="row">
+              <div className="col-md-6">
+                <div className="mb-3">
+                  <label className="form-label text-muted">Admin ID</label>
+                  <p className="form-control-plaintext">{profile._id}</p>
+                </div>
+                <div className="mb-3">
+                  <label className="form-label text-muted">Email</label>
+                  <p className="form-control-plaintext">{profile.email}</p>
+                </div>
+              </div>
+              
+            </div>
           </div>
         ) : (
-          <p>Profile not found.</p>
+          <div className="alert alert-danger">Profile not found.</div>
         )}
       </div>
     </AdminLayout>

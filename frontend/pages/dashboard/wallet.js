@@ -232,40 +232,51 @@ export default function WalletPage() {
     }
   }, []);
 
-  const handleTopupRequest = async () => {
-    if (!topupAmount || isNaN(topupAmount) || Number(topupAmount) <= 0) {
-      setRequestStatus("Please enter a valid amount.");
-      return;
-    }
+ const handleTopupRequest = async () => {
+  if (!topupAmount || isNaN(topupAmount) || Number(topupAmount) <= 0) {
+    setRequestStatus("❌ Please enter a valid amount.");
+    return;
+  }
 
-    try {
-      const token = localStorage.getItem("token");
-      console.log('Token before API call:', token);
-      
-      // Updated endpoint to match your API Gateway route
-      const res = await api.post('/api/wallet/user/topup-request', {
+  try {
+    // const token = localStorage.getItem("token");
+
+    // if (!token) {
+    //   setRequestStatus("❌ You are not logged in.");
+    //   window.location.href = "/login";
+    //   return;
+    // }
+
+    // ✅ Hitting the correct backend route
+    const res = await api.post(
+      '/api/wallet/user/topup-request',
+      {
         amount: Number(topupAmount),
-        note: "User top-up request" // Optional note field
-      }, {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      });
-
-      setRequestStatus("✅ Top-up request sent successfully!");
-      setTopupAmount('');
+        note: "User top-up request", // Optional note
+      },
       
-      // Refresh wallet data after successful request
-      if (userId) {
-        const walletRes = await api.get(`/api/wallet/user/${userId}/wallet`);
-        const data = walletRes.data;
-        setTopupWallet(data.topupWallet || 0);
-      }
-    } catch (err) {
-      console.error("Top-up request error:", err);
-      setRequestStatus(`❌ Failed to send request: ${err.response?.data?.message || err.message}`);
+    );
+
+    setRequestStatus("✅ Top-up request sent successfully!");
+    setTopupAmount('');
+
+    // 🔁 Refresh wallet data after success
+    if (userId) {
+      const walletRes = await api.get(`/api/wallet/user/${userId}/wallet`, {
+      
+      });
+      const data = walletRes.data;
+      setTopupWallet(data.topupWallet || 0);
     }
-  };
+
+  } catch (err) {
+    console.error("Top-up request error:", err);
+    const errorMessage =
+      err.response?.data?.message || err.response?.data?.error || err.message;
+    setRequestStatus(`❌ Failed to send request: ${errorMessage}`);
+  }
+};
+
 
   if (loading) {
     return (
