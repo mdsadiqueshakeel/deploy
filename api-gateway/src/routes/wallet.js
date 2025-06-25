@@ -9,7 +9,6 @@ const WALLET_SERVICE_URL = process.env.WALLET_SERVICE_URL || "http://localhost:5
 
 // Logger
 router.use((req, res, next) => {
-  console.log(`[API Gateway] ${req.method} ${req.originalUrl}`);
   next();
 });
 

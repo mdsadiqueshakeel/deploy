@@ -234,11 +234,8 @@ exports.login = async (req, res) => {
 exports.forgotPassword = async (req, res) => {
   try {
     const { email } = req.body;
-    console.log("Forgot password request for:", email);
-
     const user = await User.findOne({ email });
     if (!user) {
-      console.log("User not found with email:", email);
       return res.status(404).json({ error: "User not found" });
     }
 
@@ -248,8 +245,6 @@ exports.forgotPassword = async (req, res) => {
     user.resetPasswordExpires = Date.now() + 3600000; // 1 hour
 
     await user.save();
-    console.log("Reset token generated for user:", user._id);
-
     // Send email
     const resetUrl = `${process.env.CLIENT_URL}/auth/reset-password?token=${resetToken}`;
     const message = `
@@ -264,7 +259,6 @@ exports.forgotPassword = async (req, res) => {
       message,
     });
 
-    console.log("Password reset email sent to:", user.email);
     res.json({ message: "Password reset email sent" });
   } catch (error) {
     console.error("Error in forgotPassword:", error);
@@ -277,8 +271,6 @@ exports.forgotPassword = async (req, res) => {
 exports.resetPassword = async (req, res) => {
   try {
     const { token, password } = req.body;
-    console.log("Reset password request with token:", token);
-
     // 1. Find user by valid reset token
     const user = await User.findOne({
       resetPasswordToken: token,
@@ -286,7 +278,6 @@ exports.resetPassword = async (req, res) => {
     });
 
     if (!user) {
-      console.log("Invalid or expired token:", token);
       return res.status(400).json({ message: "Invalid or expired token" });
     }
 
@@ -298,7 +289,6 @@ exports.resetPassword = async (req, res) => {
     // 3. Save changes
     await user.save();
 
-    console.log("Password reset successful for user:", user.email);
     res.json({ message: "Password reset successful" });
   } catch (error) {
     console.error("Reset password error:", error);
@@ -539,7 +529,6 @@ exports.getAllUsersForAdmin = async (req, res) => {
       rank: user.rank || "Member",
     }));
 
-    console.log("Admin Service - Sample user date:", data[0]?.createdAt);
     res.json(data);
   } catch (error) {
     console.error("Error in getAllUsersForAdmin:", error);

@@ -41,12 +41,6 @@ app.use("/api/wallet", walletRoutes); // Ensure wallet routes are included
 app.use("/api/income", incomeRoutes); // cleaner, more modular
 
 
-
-app.get("/ping", (req, res) => {
-  console.log("PING HIT!");
-  res.status(200).send("API Gateway is working 💥");
-});
-
 // Global error handler
 app.use((err, req, res, next) => {
   console.error("ERROR:", err.message);

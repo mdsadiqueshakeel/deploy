@@ -17,7 +17,6 @@ router.get("/validate/:referralCode", async (req, res) => {
 
 // In routes/referral.js or main router
 router.get('/binary-tree/:userId', async (req, res) => {
-   console.log('🔁 [Gateway] Hit /binary-tree with userId:', req.params.userId);
   try {
     const response = await axios.get(`${USER_SERVICE_URL}/api/referral/binary-tree/${req.params.userId}`, {
       headers: req.headers // forward auth headers if needed
