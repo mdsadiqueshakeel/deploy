@@ -1,5 +1,3 @@
-
-import axios from 'axios';
 import { useEffect, useState } from "react";
 import api from '../../utils/api';
 import { fetchProfile } from '../../utils/profileService';
@@ -14,7 +12,8 @@ export default function WalletPage() {
   const [loading, setLoading] = useState(true);
   const [topupAmount, setTopupAmount] = useState('');
   const [withdrawAmount, setWithdrawAmount] = useState('');
-  const [requestStatus, setRequestStatus] = useState(null);
+  const [topupStatus, setTopupStatus] = useState(null);
+  const [withdrawStatus, setWithdrawStatus] = useState(null);
 
 
   useEffect(() => {
@@ -29,7 +28,7 @@ export default function WalletPage() {
 
     const fetchIncomeData = async (uid) => {
       try {
-        const incomeRes = await axios.get(`http://localhost:5000/api/income/business/${uid}`);
+        const incomeRes = await api.get(`http://localhost:5000/api/income/business/${uid}`);
         const incomeData = incomeRes.data;
 
         setTotalIncome(incomeData.totalIncome || 0);
@@ -86,20 +85,11 @@ export default function WalletPage() {
 
  const handleTopupRequest = async () => {
   if (!topupAmount || isNaN(topupAmount) || Number(topupAmount) <= 0) {
-    setRequestStatus("❌ Please enter a valid amount.");
+    setTopupStatus("❌ Please enter a valid amount.");
     return;
   }
 
   try {
-    // const token = localStorage.getItem("token");
-
-    // if (!token) {
-    //   setRequestStatus("❌ You are not logged in.");
-    //   window.location.href = "/login";
-    //   return;
-    // }
-
-    // ✅ Hitting the correct backend route
     const res = await api.post(
       '/api/wallet/user/topup-request',
       {
@@ -109,13 +99,13 @@ export default function WalletPage() {
       
     );
 
-    setRequestStatus("✅ Top-up request sent successfully!");
+    setTopupStatus("✅ Top-up request sent successfully!");
     setTopupAmount('');
 
     // 🔁 Refresh wallet data after success
     if (userId) {
       const walletRes = await api.get(`/api/wallet/user/${userId}/wallet`, {
-      
+
       });
       const data = walletRes.data;
       setTopupWallet(data.topupWallet || 0);
@@ -125,26 +115,17 @@ export default function WalletPage() {
     console.error("Top-up request error:", err);
     const errorMessage =
       err.response?.data?.message || err.response?.data?.error || err.message;
-    setRequestStatus(`❌ Failed to send request: ${errorMessage}`);
+    setTopupStatus(`❌ Failed to send request: ${errorMessage}`);
   }
 };
 
  const handleWithdrawRequest = async () => {
   if (!withdrawAmount || isNaN(withdrawAmount) || Number(withdrawAmount) <= 0) {
-    setRequestStatus("❌ Please enter a valid amount.");
+    setWithdrawStatus("❌ Please enter a valid amount.");
     return;
   }
 
   try {
-    // const token = localStorage.getItem("token");
-
-    // if (!token) {
-    //   setRequestStatus("❌ You are not logged in.");
-    //   window.location.href = "/login";
-    //   return;
-    // }
-
-    // ✅ Hitting the correct backend route
     const res = await api.post(
       '/api/wallet/user/withdraw-request',
       {
@@ -154,13 +135,13 @@ export default function WalletPage() {
       
     );
 
-    setRequestStatus("✅ Withdraw request sent successfully!");
+    setWithdrawStatus("✅ Withdraw request sent successfully!");
     setWithdrawAmount('');
 
     // 🔁 Refresh wallet data after success
     if (userId) {
       const walletRes = await api.get(`/api/wallet/user/${userId}/wallet`, {
-      
+
       });
       const data = walletRes.data;
       setTopupWallet(data.topupWallet || 0);
@@ -170,7 +151,7 @@ export default function WalletPage() {
     console.error("Withdraw request error:", err);
     const errorMessage =
       err.response?.data?.message || err.response?.data?.error || err.message;
-    setRequestStatus(`❌ Failed to send request: ${errorMessage}`);
+    setWithdrawStatus(`❌ Failed to send request: ${errorMessage}`);
   }
 };
 
@@ -265,13 +246,13 @@ export default function WalletPage() {
             >
               Request Amount
             </button>
-            {requestStatus && (
+            {withdrawStatus && (
               <p style={{ 
                 marginTop: "0.5rem", 
-                color: requestStatus.includes("❌") ? "#dc3545" : "#28a745",
+                color: withdrawStatus.includes("❌") ? "#dc3545" : "#28a745",
                 fontSize: "0.9rem"
               }}>
-                {requestStatus}
+                {withdrawStatus}
               </p>
             )}
           </div>
@@ -315,13 +296,13 @@ export default function WalletPage() {
             >
               Request Amount
             </button>
-            {requestStatus && (
+            {topupStatus && (
               <p style={{ 
                 marginTop: "0.5rem", 
-                color: requestStatus.includes("❌") ? "#dc3545" : "#28a745",
+                color: topupStatus.includes("❌") ? "#dc3545" : "#28a745",
                 fontSize: "0.9rem"
               }}>
-                {requestStatus}
+                {topupStatus}
               </p>
             )}
           </div>
