@@ -59,3 +59,23 @@ exports.getWalletByUserId = async (req, res) => {
     res.status(500).json({ error: "Internal Server Error" });
   }
 };
+
+exports.getTopupRequests = async (req, res) => {
+  try {
+    const requests = await TopupRequest.find({ userId: req.user._id });
+    res.json(requests);
+  } catch (error) {
+    console.error("Failed to fetch top-up requests:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+
+exports.getWithdrawRequests = async (req, res) => {
+  try {
+    const requests = await WithdrawRequest.find({ userId: req.user._id });
+    res.json(requests);
+  } catch (error) {
+    console.error("Failed to fetch withdraw requests:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+};

@@ -1,5 +1,5 @@
 const express = require("express");
-const { createTopupRequest, createWithdrawRequest } = require("../controllers/userWalletController");
+const { createTopupRequest, createWithdrawRequest , getTopupRequests, getWithdrawRequests} = require("../controllers/userWalletController");
 const { extractUser, isAuthenticated } = require("../middlewares/auth");
 const router = express.Router();
 const Wallet = require("../models/Wallet");
@@ -22,6 +22,8 @@ router.get("/:id/wallet" ,isAuthenticated,async (req, res) => {
 
 router.post("/withdraw-request", isAuthenticated, createWithdrawRequest);
 router.post("/topup-request", isAuthenticated, createTopupRequest);
+router.get("/topup/:userId", isAuthenticated, getTopupRequests);
+router.get("/withdraw/:userId", isAuthenticated, getWithdrawRequests);
 // GET /user/:id/wallet
 
 
