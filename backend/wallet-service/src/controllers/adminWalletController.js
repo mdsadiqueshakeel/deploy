@@ -108,3 +108,30 @@ exports.creditIncome = async (req, res) => {
 
   res.status(200).json({ message: "Income credited successfully" });
 };
+
+//pending request all topup+withdraw sum count
+exports.getPendingRequestsSummary = async (req, res) => {
+  try {
+    const [topupRequests, withdrawRequests] = await Promise.all([
+      TopupRequest.find({ status: "pending" }),
+      WithdrawRequest.find({ status: "pending" }),
+    ]);
+
+    const totalPendingTopup = topupRequests.reduce((sum, req) => sum + req.amount, 0);
+    const totalPendingWithdraw = withdrawRequests.reduce((sum, req) => sum + req.amount, 0);
+
+    res.json({
+      topup: {
+        count: topupRequests.length,
+        totalAmount: totalPendingTopup,
+      },
+      withdraw: {
+        count: withdrawRequests.length,
+        totalAmount: totalPendingWithdraw,
+      },
+    });
+  } catch (error) {
+    console.error("Failed to fetch pending requests summary:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
