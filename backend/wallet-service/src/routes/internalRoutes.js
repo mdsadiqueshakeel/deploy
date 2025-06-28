@@ -34,5 +34,22 @@ router.post("/internal/credit-income", async (req, res) => {
 
   res.status(200).json({ message: "Credited successfully" });
 });
+// send the all wallet data of individual user to income-service  
+router.get("/internal/wallet/:userId", async (req, res) => {
+  const { userId } = req.params;
+
+  if (!userId) return res.status(400).json({ message: "userId required" });
+
+  try {
+    const wallet = await Wallet.findOne({ userId });
+    if (!wallet) return res.status(404).json({ message: "Wallet not found" });
+
+    res.status(200).json(wallet);
+  } catch (err) {
+    console.error("Error fetching wallet:", err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 
 module.exports = router;

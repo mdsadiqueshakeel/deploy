@@ -2,9 +2,10 @@
 const express = require("express");
 const router = express.Router();
 const User = require("../models/User");
+const { updateStatus } = require("../controllers/internalController");
 
 // GET user by ID (already used by income-service)
-router.get("/user/:id", async (req, res) => {
+router.get("/internal/user/:id", async (req, res) => {
   try {
     const user = await User.findById(req.params.id);
     if (!user) return res.status(404).json({ message: "User not found" });
@@ -35,15 +36,24 @@ router.put("/activate-user/:id", async (req, res) => {
   try {
     const user = await User.findByIdAndUpdate(
       req.params.id,
-      { isActive: true },
+      {
+        isActive: true,
+        status: "Consumer", // 🆕 set default status
+      },
       { new: true }
     );
+
     if (!user) return res.status(404).json({ message: "User not found" });
-    res.json({ message: "User activated", user });
+
+    res.json({ message: "User activated and status set to Consumer", user });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
+
+
+router.put("/internal/update-status", updateStatus);
+
 
 
 module.exports = router;

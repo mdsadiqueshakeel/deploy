@@ -22,6 +22,7 @@ exports.approveTopupRequest = async (req, res) => {
   if (!wallet) wallet = await Wallet.create({ userId: request.userId });
 
   wallet.topupWallet += request.amount;
+  wallet.totalTopup += request.amount; // Update totalTopup
   await wallet.save();
 
   // ✅ trigger income-service!

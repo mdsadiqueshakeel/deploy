@@ -1,18 +1,78 @@
-// src/controllers/incomeController.js
 const { calculateMatchingIncome } = require("../utils/calculateMatching");
 const { calculateLevelIncome } = require("../utils/calculateLevel");
+const { checkAndUpgradeStatus } = require("../utils/statusUpdater");
+const { getUserById } = require("../services/userService");
+
+const recursivelyUpgradeParents = async (childUserId) => {
+  try {
+    const child = await getUserById(childUserId);
+    if (!child || !child.referredBy) {
+      console.log(`⏹️ End of parent chain for ${childUserId}`);
+      return;
+    }
+
+    const parentId = child.referredBy;
+    console.log(`🔼 Processing parent ${parentId}`);
+
+    // Get parent's current status
+    const parentBefore = await getUserById(parentId);
+    if (!parentBefore) {
+      console.log(`❌ Parent ${parentId} not found`);
+      return;
+    }
+
+    // Attempt upgrade
+    const newStatus = await checkAndUpgradeStatus(parentId);
+    
+    // Continue with parent's parent if exists, regardless of status change
+    if (parentBefore.referredBy) {
+      await recursivelyUpgradeParents(parentId);
+    } else {
+      console.log(`🏁 Reached top sponsor: ${parentId}`);
+    }
+  } catch (error) {
+    console.error(`💥 Parent chain error:`, error);
+    throw error;
+  }
+};
 
 exports.handleTopupTrigger = async (req, res) => {
   const { userId, coins } = req.body;
-  console.log("Request body:", req.body);
+  console.log("💰 Topup Trigger:", { userId, coins });
 
   try {
-    await calculateMatchingIncome(userId, coins);
-    await calculateLevelIncome(userId, coins);
-    res.status(200).json({ message: "Income calculated successfully" });
-    console.log("Request body:", req.body);
+    // 1. Get initial status
+    const userBefore = await getUserById(userId);
+    if (!userBefore) {
+      return res.status(404).json({ error: "User not found" });
+    }
 
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+    // 2. Upgrade user
+    const newStatus = await checkAndUpgradeStatus(userId);
+    
+    // 3. Always attempt to upgrade parents after user's status is checked
+    console.log(`Initiating recursive parent upgrade for ${userId}`);
+    await recursivelyUpgradeParents(userId);
+
+    // 4. Calculate incomes
+    await Promise.all([
+      calculateMatchingIncome(userId, coins),
+      calculateLevelIncome(userId, coins)
+    ]);
+
+    res.status(200).json({
+      success: true,
+      message: "Topup processed",
+      statusChanged: newStatus !== userBefore.status,
+      newStatus
+    });
+
+  } catch (error) {
+    console.error("💥 Topup processing failed:", error);
+    res.status(500).json({
+      success: false,
+      error: "Processing failed",
+      details: error.message
+    });
   }
 };

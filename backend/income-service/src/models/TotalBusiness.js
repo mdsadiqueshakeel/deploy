@@ -1,4 +1,4 @@
-// ✅ Step 1: Update TotalBusiness model (income-service/src/models/TotalBusiness.js)
+// income-service/src/models/TotalBusiness.js
 const mongoose = require("mongoose");
 
 const totalBusinessSchema = new mongoose.Schema({
@@ -9,6 +9,7 @@ const totalBusinessSchema = new mongoose.Schema({
   totalRightUsers: { type: Number, default: 0 },
   totalLeftCarry: { type: Number, default: 0 },
   totalRightCarry: { type: Number, default: 0 },
+  totalTopup: { type: Number, default: 0 },
 
   // Level income info
   levelStats: [

@@ -1,3 +1,4 @@
+// File: backend/wallet-service/src/models/Wallet.js
 const mongoose = require("mongoose");
 
 const walletSchema = new mongoose.Schema({
@@ -19,6 +20,10 @@ const walletSchema = new mongoose.Schema({
     type: Number,
     default: 0,
   },
+  totalTopup: {
+    type: Number,
+    default: 0,
+  }
 }, { timestamps: true });
 
 module.exports = mongoose.model("Wallet", walletSchema);

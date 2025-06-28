@@ -15,7 +15,14 @@ const carrySchema = new mongoose.Schema({
   rightCarry: {
     type: Number,
     default: 0,
-  }
+  },
+  matchedToday: {
+    type: Number,
+    default: 0,
+  },
+  lastReset: {
+    type: Date,
+  },
 }, { timestamps: true });
 
 module.exports = mongoose.model("CarryForward", carrySchema);

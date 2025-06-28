@@ -80,12 +80,31 @@ const userSchema = new mongoose.Schema(
     isAdmin: { type: Boolean, default: false },
 
     isActive: {
-  type: Boolean,
-  default: false,
-},joinedAt: {
-  type: Date,
-  default: Date.now,
-},
+      type: Boolean,
+      default: false,
+    },
+
+    status: {
+      type: String,
+      enum: [
+        "Inactive",
+        "Consumer",
+        "One Star",
+        "Two Star",
+        "Three Star",
+        "Four Star",
+        "Five Star",
+      ],
+      default: "Inactive",
+    },
+    statusUpdatedAt: {
+      type: Date,
+    },
+
+    joinedAt: {
+      type: Date,
+      default: Date.now,
+    },
 
     resetPasswordToken: {
       type: String,
