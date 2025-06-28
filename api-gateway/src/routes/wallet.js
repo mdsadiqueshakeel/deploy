@@ -107,6 +107,46 @@ router.put("/admin/withdraw-request/:id/approve", walletAuth, async (req, res) =
     res.status(err.response?.status || 500).json(err.response?.data || { error: "Service error" });
   }
 });
+// decline Top-up
+// ❌ Decline Top-up
+router.put("/admin/topup-request/:id/decline", walletAuth, async (req, res) => {
+  try {
+    const response = await axios.put(
+      `${WALLET_SERVICE_URL}/admin/topup-request/${req.params.id}/decline`,
+      {},
+      {
+        headers: {
+          Authorization: req.headers.authorization,
+          Cookie: req.headers.cookie,
+        },
+      }
+    );
+    res.status(response.status).json(response.data);
+  } catch (err) {
+    console.error("Top-up decline error:", err.response?.data || err.message);
+    res.status(err.response?.status || 500).json(err.response?.data || { error: "Service error" });
+  }
+});
+
+// decline Withdraw
+router.put("/admin/withdraw-request/:id/decline", walletAuth, async (req, res) => {
+  try {
+    const response = await axios.put(
+      `${WALLET_SERVICE_URL}/admin/withdraw-request/${req.params.id}/decline`,
+      {},
+      {
+        headers: {
+          Authorization: req.headers.authorization,
+          Cookie: req.headers.cookie,
+        },
+      }
+    );
+    res.status(response.status).json(response.data);
+  } catch (err) {
+    console.error("Withdraw decline error:", err.response?.data || err.message);
+    res.status(err.response?.status || 500).json(err.response?.data || { error: "Service error" });
+  }
+});
 
 // Get Wallet by 
 // Get wallet for user (used in binary tree)

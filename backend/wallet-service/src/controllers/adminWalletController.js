@@ -184,3 +184,49 @@ exports.getPendingWithdrawRequestsByUser = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
+
+// decline topup request
+exports.declineTopupRequest = async (req, res) => {
+  const { id } = req.params;
+
+  console.log("🔥 declineTopupRequest hit with id:", id); // add this
+
+  try {
+    const request = await TopupRequest.findById(id);
+
+    if (!request || request.status !== "pending") {
+      return res.status(400).json({ message: "Invalid or already processed request" });
+    }
+
+    request.status = "rejected";
+    await request.save();
+
+    res.json({ message: "Top-up request rejected", request });
+
+  } catch (error) {
+    console.error("Decline request error:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+// decline withdraw request
+exports.declineWithdrawRequest = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const request = await WithdrawRequest.findById(id);
+
+    if (!request || request.status !== "pending") {
+      return res.status(400).json({ message: "Invalid or already processed request" });
+    }
+
+    request.status = "rejected";
+    await request.save();
+
+    res.json({ message: "Withdraw request rejected", request });
+
+  } catch (error) {
+    console.error("Decline request error:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
