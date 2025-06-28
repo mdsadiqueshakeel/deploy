@@ -10,14 +10,20 @@
 //   const [loading, setLoading] = useState(true);
 //   const [error, setError] = useState(null);
 //   const [searchTerm, setSearchTerm] = useState('');
+//   const [pendingRequests, setPendingRequests] = useState({ topup: { count: 0 }, withdraw: { count: 0 } });
+//   const [usersWithPending, setUsersWithPending] = useState([]);
 //   const router = useRouter();
 
 //   useEffect(() => {
-//     const fetchUsers = async () => {
+//     const fetchDashboardData = async () => {
 //       try {
-//         const response = await api.get('/api/admin/users');
+//         const [usersRes, pendingRes] = await Promise.all([
+//           api.get('/api/admin/users'),
+//           api.get('/api/wallet/admin/pending-requests')
+//         ]);
+
 //         const enrichedUsers = await Promise.all(
-//           response.data.map(async (user) => {
+//           usersRes.data.map(async (user) => {
 //             try {
 //               const details = await api.get(`/api/admin/user/${user._id}`);
 //               return { ...user, ...details.data };
@@ -26,15 +32,45 @@
 //             }
 //           })
 //         );
+
+//         const userPendingStatuses = await Promise.all(
+//           enrichedUsers.map(async (user) => {
+//             try {
+//               const [topupRes, withdrawRes] = await Promise.all([
+//                 api.get(`/api/wallet/topup/${user._id}`),
+//                 api.get(`/api/wallet/withdraw/${user._id}`)
+//               ]);
+
+//               const hasPendingTopup = Array.isArray(topupRes.data) && topupRes.data.some(req => req.status === 'pending');
+//               const hasPendingWithdraw = Array.isArray(withdrawRes.data) && withdrawRes.data.some(req => req.status === 'pending');
+
+//               return {
+//                 userId: user._id,
+//                 hasPending: hasPendingTopup || hasPendingWithdraw
+//               };
+//             } catch {
+//               return { userId: user._id, hasPending: false };
+//             }
+//           })
+//         );
+
+//         setUsersWithPending(userPendingStatuses);
 //         setUsers(enrichedUsers);
+//         setPendingRequests(pendingRes.data);
 //       } catch (error) {
-//         setError(error.response?.data?.message || 'Failed to fetch users');
+//         setError(error.response?.data?.message || 'Failed to fetch dashboard data');
 //       } finally {
 //         setLoading(false);
 //       }
 //     };
-//     fetchUsers();
+
+//     fetchDashboardData();
 //   }, []);
+
+//   const isUserPending = (userId) => {
+//     const found = usersWithPending.find(item => item.userId === userId);
+//     return found?.hasPending;
+//   };
 
 //   const formatDate = (dateString) => {
 //     if (!dateString) return '-';
@@ -61,6 +97,8 @@
 //     const term = searchTerm.toLowerCase();
 //     return name.includes(term) || email.includes(term) || phone.includes(term);
 //   });
+
+//   const totalPendingRequests = pendingRequests.topup.count + pendingRequests.withdraw.count;
 
 //   return (
 //     <AdminProtectedRoute>
@@ -112,6 +150,20 @@
 //                     </div>
 //                   </div>
 //                 </div>
+
+//                 <div className="col-md-3">
+//                   <div className="card text-white" style={{
+//                     borderRadius: '15px',
+//                     background: 'linear-gradient(135deg, #FF7F50 0%, #FF4500 100%)',
+//                     boxShadow: '0 4px 15px rgba(255, 99, 71, 0.4)'
+//                   }}>
+//                     <div className="card-body">
+//                       <h5 className="card-title">Pending Requests</h5>
+//                       <h2 className="fw-bold">{totalPendingRequests}</h2>
+//                       <i className="bi bi-hourglass-split fs-3 float-end"></i>
+//                     </div>
+//                   </div>
+//                 </div>
 //               </div>
 
 //               <div className="card shadow-sm" style={{ borderRadius: '15px' }}>
@@ -139,6 +191,7 @@
 //                     </button>
 //                   </div>
 //                 </div>
+
 //                 <div className="table-responsive">
 //                   <table className="table table-hover mb-0">
 //                     <thead style={{
@@ -151,6 +204,7 @@
 //                         <th>Phone</th>
 //                         <th>Joined</th>
 //                         <th>Status</th>
+//                         <th>Request</th> {/* 🔔 New column */}
 //                       </tr>
 //                     </thead>
 //                     <tbody>
@@ -175,11 +229,22 @@
 //                                 {user.isActive ? 'Active' : 'Inactive'}
 //                               </span>
 //                             </td>
+//                             <td>
+//                               {isUserPending(user._id) ? (
+//                                 <i
+//                                   className="bi bi-bell-fill"
+//                                   style={{ color: '#ff9800', fontSize: '1.2rem' }}
+//                                   title="User has a pending request"
+//                                 ></i>
+//                               ) : (
+//                                 <span className="text-muted">—</span>
+//                               )}
+//                             </td>
 //                           </tr>
 //                         ))
 //                       ) : (
 //                         <tr>
-//                           <td colSpan="5" className="text-center py-4">
+//                           <td colSpan="6" className="text-center py-4">
 //                             {searchTerm ? 'No users found matching your search' : 'No users found'}
 //                           </td>
 //                         </tr>
@@ -197,7 +262,6 @@
 // }
 
 // export default AdminDashboard;
-// Top: same imports as before
 import Head from 'next/head';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
@@ -210,54 +274,52 @@ function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [pendingRequests, setPendingRequests] = useState({ topup: { count: 0 }, withdraw: { count: 0 } });
+  const [pendingRequests, setPendingRequests] = useState({ topup: 0, withdraw: 0 });
   const [usersWithPending, setUsersWithPending] = useState([]);
   const router = useRouter();
 
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
+        // Fetch all data in parallel
         const [usersRes, pendingRes] = await Promise.all([
           api.get('/api/admin/users'),
-          api.get('/api/wallet/admin/pending-requests')
+          api.get('/api/wallet/admin/pending-requests-count')
         ]);
 
+        // Get pending requests count
+        setPendingRequests(pendingRes.data);
+
+        // Enrich users with their details and check for pending requests
         const enrichedUsers = await Promise.all(
           usersRes.data.map(async (user) => {
             try {
-              const details = await api.get(`/api/admin/user/${user._id}`);
-              return { ...user, ...details.data };
-            } catch {
-              return user;
-            }
-          })
-        );
-
-        const userPendingStatuses = await Promise.all(
-          enrichedUsers.map(async (user) => {
-            try {
-              const [topupRes, withdrawRes] = await Promise.all([
-                api.get(`/api/wallet/topup/${user._id}`),
-                api.get(`/api/wallet/withdraw/${user._id}`)
+              // Get user details and pending requests in parallel
+              const [detailsRes, topupRes, withdrawRes] = await Promise.all([
+                api.get(`/api/admin/user/${user._id}`),
+                api.get(`/api/wallet/admin/user/${user._id}/pending-topup-requests`),
+                api.get(`/api/wallet/admin/user/${user._id}/pending-withdraw-requests`)
               ]);
 
-              const hasPendingTopup = Array.isArray(topupRes.data) && topupRes.data.some(req => req.status === 'pending');
-              const hasPendingWithdraw = Array.isArray(withdrawRes.data) && withdrawRes.data.some(req => req.status === 'pending');
+              const hasPendingTopup = topupRes.data.length > 0;
+              const hasPendingWithdraw = withdrawRes.data.length > 0;
+              const hasPending = hasPendingTopup || hasPendingWithdraw;
 
-              return {
-                userId: user._id,
-                hasPending: hasPendingTopup || hasPendingWithdraw
+              return { 
+                ...user, 
+                ...detailsRes.data,
+                hasPending 
               };
-            } catch {
-              return { userId: user._id, hasPending: false };
+            } catch (error) {
+              console.error(`Error fetching details for user ${user._id}:`, error);
+              return { ...user, hasPending: false };
             }
           })
         );
 
-        setUsersWithPending(userPendingStatuses);
         setUsers(enrichedUsers);
-        setPendingRequests(pendingRes.data);
       } catch (error) {
+        console.error('Error fetching dashboard data:', error);
         setError(error.response?.data?.message || 'Failed to fetch dashboard data');
       } finally {
         setLoading(false);
@@ -266,11 +328,6 @@ function AdminDashboard() {
 
     fetchDashboardData();
   }, []);
-
-  const isUserPending = (userId) => {
-    const found = usersWithPending.find(item => item.userId === userId);
-    return found?.hasPending;
-  };
 
   const formatDate = (dateString) => {
     if (!dateString) return '-';
@@ -298,7 +355,7 @@ function AdminDashboard() {
     return name.includes(term) || email.includes(term) || phone.includes(term);
   });
 
-  const totalPendingRequests = pendingRequests.topup.count + pendingRequests.withdraw.count;
+  const totalPendingRequests = pendingRequests.topup + pendingRequests.withdraw;
 
   return (
     <AdminProtectedRoute>
@@ -404,7 +461,7 @@ function AdminDashboard() {
                         <th>Phone</th>
                         <th>Joined</th>
                         <th>Status</th>
-                        <th>Request</th> {/* 🔔 New column */}
+                        <th>Request</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -430,11 +487,11 @@ function AdminDashboard() {
                               </span>
                             </td>
                             <td>
-                              {isUserPending(user._id) ? (
+                              {user.hasPending ? (
                                 <i
                                   className="bi bi-bell-fill"
                                   style={{ color: '#ff9800', fontSize: '1.2rem' }}
-                                  title="User has a pending request"
+                                  title="User has pending requests"
                                 ></i>
                               ) : (
                                 <span className="text-muted">—</span>
