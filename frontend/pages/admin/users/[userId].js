@@ -162,13 +162,6 @@ export default function UserDetails() {
                       <span>{new Date(request.createdAt).toLocaleString()}</span>
                     </div>
                     
-                    {request.updatedAt && (
-                      <div className="mb-3">
-                        <span className="fw-medium">Updated: </span>
-                        <span>{new Date(request.updatedAt).toLocaleString()}</span>
-                      </div>
-                    )}
-                    
                     {request.note && (
                       <div className="mb-3">
                         <span className="fw-medium">Note: </span>
@@ -232,7 +225,7 @@ export default function UserDetails() {
                     style={{ borderRadius: '10px', backgroundColor: 'rgba(255, 82, 82, 0.05)' }}
                   >
                     <div className="d-flex justify-content-between align-items-center mb-2">
-                      <span className="fw-bold" style={{ color: primaryDarkColor }}>Amount: ${request.amount}</span>
+                      <span className="fw-bold" style={{ color: primaryDarkColor }}>Amount: ₹{request.amount}</span>
                       <span className="badge bg-warning text-dark">Pending</span>
                     </div>
                     
@@ -586,16 +579,16 @@ export default function UserDetails() {
               </h6>
               <ul className="list-unstyled mb-0">
                 <li className="mb-2 d-flex justify-content-between align-items-center">
-                  <span className="fw-medium" style={{ color: textColor }}>User ID:</span>
-                  <span style={{ color: textColor, opacity: 0.8 }}>{user._id}</span>
-                </li>
-                <li className="mb-2 d-flex justify-content-between align-items-center">
                   <span className="fw-medium" style={{ color: textColor }}>Phone:</span>
                   <span style={{ color: textColor, opacity: 0.8 }}>{user.phone || 'N/A'}</span>
                 </li>
                 <li className="mb-2 d-flex justify-content-between align-items-center">
                   <span className="fw-medium" style={{ color: textColor }}>Joined:</span>
                   <span style={{ color: textColor, opacity: 0.8 }}>{new Date(user.createdAt).toLocaleDateString()}</span>
+                </li>
+                <li className="mb-2 d-flex justify-content-between align-items-center">
+                  <span className="fw-medium" style={{ color: textColor }}>Status:</span>
+                  <span style={{ color: textColor, opacity: 0.8 }}>{user.status}</span>
                 </li>
                 <li className="mb-2 d-flex justify-content-between align-items-center">
                   <span className="fw-medium" style={{ color: textColor }}>Rank:</span>
