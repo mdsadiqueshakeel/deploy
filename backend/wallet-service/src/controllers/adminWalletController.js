@@ -2,6 +2,7 @@ const axios = require("axios");
 const TopupRequest = require("../models/TopupRequest");
 const WithdrawRequest = require("../models/WithdrawRequest");
 const Wallet = require("../models/Wallet");
+const mongoose = require("mongoose");
 const INCOME_SERVICE_URL = process.env.INCOME_SERVICE_URL || "http://localhost:5004";
 const USER_SERVICE_URL = process.env.USER_SERVICE_URL || "http://localhost:5001";
 
@@ -113,25 +114,73 @@ exports.creditIncome = async (req, res) => {
 exports.getPendingRequestsSummary = async (req, res) => {
   try {
     const [topupRequests, withdrawRequests] = await Promise.all([
-      TopupRequest.find({ status: "pending" }),
-      WithdrawRequest.find({ status: "pending" }),
+      TopupRequest.find({ status: "pending" }).lean(),
+      WithdrawRequest.find({ status: "pending" }).lean(),
     ]);
 
-    const totalPendingTopup = topupRequests.reduce((sum, req) => sum + req.amount, 0);
-    const totalPendingWithdraw = withdrawRequests.reduce((sum, req) => sum + req.amount, 0);
+    // Filter only if amount is number and not NaN
+    const validTopups = topupRequests.filter(req =>
+      typeof req.amount === "number" && !isNaN(req.amount)
+    );
+
+    const validWithdraws = withdrawRequests.filter(req =>
+      typeof req.amount === "number" && !isNaN(req.amount)
+    );
+
+    const totalPendingTopup = validTopups.reduce((sum, req) => sum + req.amount, 0);
+    const totalPendingWithdraw = validWithdraws.reduce((sum, req) => sum + req.amount, 0);
 
     res.json({
       topup: {
-        count: topupRequests.length,
+        count: validTopups.length,
         totalAmount: totalPendingTopup,
       },
       withdraw: {
-        count: withdrawRequests.length,
+        count: validWithdraws.length,
         totalAmount: totalPendingWithdraw,
       },
     });
   } catch (error) {
     console.error("Failed to fetch pending requests summary:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+
+
+
+// geet all pending requests for topup for individual user
+exports.getPendingTopupRequestsByUser = async (req, res) => {
+  const { userId } = req.params;
+
+  try {
+    const requests = await TopupRequest.find({
+      userId: new mongoose.Types.ObjectId(userId),
+      status: "pending",
+      amount: { $type: "number" }, // optional: only valid numeric topups
+    }).lean();
+
+    res.json(requests);
+  } catch (error) {
+    console.error("Failed to fetch pending top-up requests:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+// get all pending requests for withdraw for individual user
+exports.getPendingWithdrawRequestsByUser = async (req, res) => {
+  const { userId } = req.params;
+
+  try {
+    const requests = await WithdrawRequest.find({
+      userId: new mongoose.Types.ObjectId(userId),
+      status: "pending",
+      amount: { $type: "number" }, // optional: only valid numeric withdraws
+    }).lean();
+
+    res.json(requests);
+  } catch (error) {
+    console.error("Failed to fetch pending withdraw requests:", error);
     res.status(500).json({ message: "Server error" });
   }
 };
