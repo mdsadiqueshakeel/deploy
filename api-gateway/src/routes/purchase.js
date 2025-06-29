@@ -61,6 +61,38 @@ router.get("/products/admin", walletAuth, async (req, res) => {
   }
 });
 
+// Get pending purchase requests by user
+router.get("/products/admin/user/:userId/pending-purchases", walletAuth, async (req, res) => {
+  try {
+    const response = await axios.get(`${WALLET_SERVICE_URL}/products/admin/user/${req.params.userId}/pending-purchases`, {
+      headers: {
+        Authorization: req.headers.authorization,
+        Cookie: req.headers.cookie,
+      },
+    });
+    res.status(response.status).json(response.data);
+  } catch (err) {
+    console.error("Get pending purchases error:", err.response?.data || err.message);
+    res.status(err.response?.status || 500).json(err.response?.data || { error: "Service error" });
+  }
+});
+
+
+router.get("/products/admin/user/:userId/approved-purchases", walletAuth, async (req, res) => {
+  try {
+    const response = await axios.get(`${WALLET_SERVICE_URL}/products/admin/user/${req.params.userId}/approved-purchases`, {
+      headers: {
+        Authorization: req.headers.authorization,
+        Cookie: req.headers.cookie,
+      },
+    });
+    res.status(response.status).json(response.data);
+  } catch (err) {
+    console.error("Get approved purchases error:", err.response?.data || err.message);
+    res.status(err.response?.status || 500).json(err.response?.data || { error: "Service error" });
+  }
+});
+
 // ✅ Approve purchase request
 router.patch("/products/admin/:purchaseId/approve", walletAuth, async (req, res) => {
   try {

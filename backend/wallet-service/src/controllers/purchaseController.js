@@ -1,6 +1,7 @@
 const PRODUCT_LIST = require("../Constraints/ProductList");
 const Purchase = require("../models/Purchase");
 const { getWalletByUserId, deductFromWallet } = require("../utils/WalletService");
+const mongoose = require("mongoose");
 
 // 📦 USER: Request product
 exports.requestProduct = async (req, res) => {
@@ -52,6 +53,40 @@ exports.getMyPurchases = async (req, res, next) => {
   }
 };
 
+// ADMIN: Get Single Purchase
+// controllers/purchaseController.js
+
+exports.getPendingPurchasesByUser = async (req, res) => {
+  const { userId } = req.params;
+
+  try {
+    const purchases = await Purchase.find({
+      userId: new mongoose.Types.ObjectId(userId),
+      status: "pending",
+    }).lean();
+
+    res.json(purchases);
+  } catch (err) {
+    console.error("Failed to fetch pending product purchases:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+exports.getApprovedPurchasesByUser = async (req, res) => {
+  const { userId } = req.params;
+
+  try {
+    const purchases = await Purchase.find({
+      userId: new mongoose.Types.ObjectId(userId),
+      status: "approved",
+    }).lean();
+
+    res.json(purchases);
+  } catch (err) {
+    console.error("Failed to fetch pending product purchases:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
 
 
 // ✅ ADMIN: Approve request
