@@ -37,7 +37,7 @@ const updateMatchingBusiness = async (userId, side, coins) => {
 
 const calculateMatchingIncome = async (userId, coins) => {
   console.log(`🚀 Starting Matching Income Calculation for Triggered User: ${userId} | Coins: ${coins}`);
-  
+
   const user = await getUserById(userId);
   if (!user || !user.parentId) {
     console.log(`❌ No parent found or invalid user.`);
@@ -49,79 +49,76 @@ const calculateMatchingIncome = async (userId, coins) => {
 
   while (parentId) {
     const parent = await getUserById(parentId);
-    if (!parent) {
-      console.log(`❌ Parent not found for ID: ${parentId}`);
-      break;
-    }
+    if (!parent) break;
 
-    console.log(`\n🔼 Moving from ${from} 👉 Parent: ${parent.name} (${parent._id}) | Status: ${parent.status}`);
+    console.log(`\n🔼 Parent: ${parent.name} (${parent._id}) | Status: ${parent.status}`);
 
     const isLeft = String(parent.leftUser) === String(from);
     const side = isLeft ? "leftCarry" : "rightCarry";
-    console.log(`📍 Business side for ${parent.name}: ${side === "leftCarry" ? "Left" : "Right"}`);
+    console.log(`📍 Side: ${side === "leftCarry" ? "Left" : "Right"}`);
 
     let carry = await CarryForward.findOne({ userId: parent._id }) || new CarryForward({ userId: parent._id });
-
-    // 🕛 Check if new day
     carry = resetMatchedTodayIfNewDay(carry);
 
-    // 💰 Add coins to carry
+    // ➕ Add BV to carry
     carry[side] += coins;
-    console.log(`➕ Added ${coins} to ${side} | Updated BV: Left=${carry.leftCarry}, Right=${carry.rightCarry}`);
+    console.log(`➕ Carry Updated | Left: ${carry.leftCarry} | Right: ${carry.rightCarry}`);
 
     const leftBV = carry.leftCarry;
     const rightBV = carry.rightCarry;
     const matchableBV = Math.min(leftBV, rightBV);
 
+    const cap = getDailyMatchingCapByStatus(parent.status);
+    const remainingCap = cap - carry.matchedToday;
+
     if (matchableBV > 0) {
-      const cap = getDailyMatchingCapByStatus(parent.status);
-      const remainingCap = cap - carry.matchedToday;
+      console.log(`🧮 Can Match: ${matchableBV}, Remaining Cap: ${remainingCap}`);
 
-      console.log(`🧮 Matching Check | Matchable: ${matchableBV}, Daily Cap: ${cap}, Used: ${carry.matchedToday}, Left: ${remainingCap}`);
+      const incomeBV = Math.min(matchableBV, remainingCap); // BV eligible for income
+      const income = incomeBV * 0.05;
 
-      if (remainingCap > 0) {
-        const matchedBV = Math.min(matchableBV, remainingCap);
-        const income = matchedBV * 0.05;
+      if (incomeBV > 0) {
+        console.log(`💸 Income: ₹${income} from ${incomeBV} BV`);
 
-        console.log(`💸 MATCHING | ${matchedBV} BV matched -> ₹${income} credited to ${parent.name}`);
-
-        // Credit income
         await creditToWallet(parent._id, income);
         await updateMonthlyStats(parent._id, income);
-
-        // Create log
-        await MatchingLog.create({
-          userId: parent._id,
-          matchedAmount: matchedBV,
-          incomeEarned: income,
-          matchBreakdown: { left: leftBV, right: rightBV }
-        });
-
-        // Deduct matched from both sides
-        carry.leftCarry = leftBV - matchedBV;
-        carry.rightCarry = rightBV - matchedBV;
-
-        // Update matchedToday
-        carry.matchedToday += matchedBV;
-
-        // Update TotalBusiness for rank/rewards
-        await updateMatchingBusiness(parent._id, "leftCarry", matchedBV);
-        await updateMatchingBusiness(parent._id, "rightCarry", matchedBV);
       } else {
-        console.log(`⛔ ${parent.name} has reached the daily cap for matching income. No income credited.`);
+        console.log(`⛔ Cap reached. No income for today.`);
       }
+
+      // Always log full matching event (even if income = 0)
+      await MatchingLog.create({
+        userId: parent._id,
+        matchedAmount: matchableBV,
+        incomeEarned: income,
+        matchBreakdown: { left: leftBV, right: rightBV }
+      });
+
+      // 💥 Subtract full matchedBV (not just income BV)
+      if (leftBV <= rightBV) {
+        carry.leftCarry = 0;
+        carry.rightCarry = rightBV - leftBV;
+      } else {
+        carry.rightCarry = 0;
+        carry.leftCarry = leftBV - rightBV;
+      }
+
+      // ➕ Update cap only with incomeBV
+      carry.matchedToday += incomeBV;
+
+      // 🧾 Track full matching business
+      await updateMatchingBusiness(parent._id, "leftCarry", matchableBV);
+      await updateMatchingBusiness(parent._id, "rightCarry", matchableBV);
     } else {
-      console.log(`⚠️ No matchable BV found for ${parent.name}`);
+      console.log(`⚠️ No matching BV.`);
     }
 
     await carry.save();
-
-    // Move up
     from = parent._id;
     parentId = parent.parentId;
   }
 
-  console.log(`✅ Matching income calculation completed for triggered user ${userId}\n`);
+  console.log(`✅ Matching income calculation completed for user ${userId}`);
 };
 
 module.exports = { calculateMatchingIncome };
