@@ -8,6 +8,7 @@ dotenv.config();
 const userRoutes = require("./routes/userRoutes");
 const adminRoutes = require("./routes/adminRoutes");
 const internalRoutes = require("./routes/internalRoutes");
+const productRoutes = require("./routes/productRoutes");
 
 
 app.use(cors({ origin: true, credentials: true }));
@@ -17,6 +18,8 @@ app.use(cookieParser());
 app.use(internalRoutes);
 app.use("/user", userRoutes);
 app.use("/admin", adminRoutes);
+app.use("/products", productRoutes);
+
 // app.use("/temp", tempRoutes);
 
 app.get("/ping", (req, res) => {

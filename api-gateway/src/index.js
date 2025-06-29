@@ -14,6 +14,7 @@ const authRoutes = require("./routes/auth");
 const adminRoutes = require("./routes/admin");
 const walletRoutes = require("./routes/wallet"); // Ensure wallet routes are included
 const incomeRoutes = require("./routes/income");
+const purchaseRoutes = require("./routes/purchase"); // cleaner, more modular
 
 const app = express();
 
@@ -39,6 +40,7 @@ app.use("/api/referral", referralRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/wallet", walletRoutes); // Ensure wallet routes are included
 app.use("/api/income", incomeRoutes); // cleaner, more modular
+app.use("/api/purchase", purchaseRoutes); // cleaner, more modular
 
 
 // Global error handler
