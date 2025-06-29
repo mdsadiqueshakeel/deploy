@@ -36,6 +36,23 @@ exports.requestProduct = async (req, res) => {
   res.status(201).json({ message: "Product request submitted", purchase });
 };
 
+// User: Get my purchases
+exports.getMyPurchases = async (req, res, next) => {
+  try {
+    const userId = req.user._id;
+
+    const purchases = await Purchase.find({ 
+      userId,
+      status: "approved" // ✅ only show actual completed orders
+    }).sort({ createdAt: -1 });
+
+    res.json({ purchases });
+  } catch (err) {
+    next(err);
+  }
+};
+
+
 
 // ✅ ADMIN: Approve request
 exports.approvePurchase = async (req, res, next) => {
@@ -66,4 +83,24 @@ exports.approvePurchase = async (req, res, next) => {
   }
 };
 
+exports.rejectPurchase = async (req, res, next) => {
+  try {
+    const { purchaseId } = req.params;
+
+    const purchase = await Purchase.findById(purchaseId);
+    if (!purchase) return res.status(404).json({ message: "Purchase not found" });
+
+    if (purchase.status !== "pending") {
+      return res.status(400).json({ message: "Already approved/rejected" });
+    }
+
+    purchase.status = "rejected";
+    purchase.rejectedAt = new Date();
+    await purchase.save();
+
+    res.json({ message: "Purchase request rejected", purchase });
+  } catch (err) {
+    next(err);
+  }
+};
 

@@ -15,11 +15,11 @@ router.use(extractUser);
 
 // ✅ USER ROUTES
 router.post("/request" ,isAuthenticated, requestProduct);
-// router.get("/my", isAuthenticated, getMyPurchases);
+router.get("/my-purchases", isAuthenticated, getMyPurchases);
 
 // ✅ ADMIN ROUTES
 // router.get("/admin", isAuthenticated, isAdmin, getAllPurchases);
 router.patch("/admin/:purchaseId/approve", isAuthenticated, isAdmin, approvePurchase);
-// router.patch("/admin/:purchaseId/reject", isAuthenticated, isAdmin, rejectPurchase);
+router.patch("/admin/:purchaseId/reject", isAuthenticated, isAdmin, rejectPurchase);
 
 module.exports = router;

@@ -26,9 +26,9 @@ router.post("/products/request", walletAuth, async (req, res) => {
 });
 
 // 🧾 Get my purchase history
-router.get("/products/my", walletAuth, async (req, res) => {
+router.get("/products/my-purchases", walletAuth, async (req, res) => {
   try {
-    const response = await axios.get(`${WALLET_SERVICE_URL}/products/my`, {
+    const response = await axios.get(`${WALLET_SERVICE_URL}/products/my-purchases`, {
       headers: {
         Authorization: req.headers.authorization,
         Cookie: req.headers.cookie,
