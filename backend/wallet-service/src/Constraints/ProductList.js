@@ -55,7 +55,7 @@
 //     dp: 350,
 //   },
 // ];
-const proPRODUCT_LISTducts = [
+const PRODUCT_LIST = [
   {
    
     productCode: 1025,
