@@ -24,7 +24,7 @@ function AdminDashboard() {
           api.get('/api/wallet/admin/pending-requests')
         ]);
 
-        // Get pending requests count
+        // Get pendingquests count
         setPendingRequests(pendingRes.data);
 
         // Enrich users with their details and check for pending requests
