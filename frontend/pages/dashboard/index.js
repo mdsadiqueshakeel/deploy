@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import Head from 'next/head';
 import Topbar from '@components/Topbar';
@@ -7,12 +8,7 @@ import Products from '@pages/dashboard/products';
 import BusinessPage from './business';
 import WalletPage from './wallet';
 import DashboardPage from '../../components/DashboardPage'; 
-
-const Status = () => (
-  <div className="p-4">
-    <h2 className="mb-4" style={{ color: '#0A2463', fontWeight: '600' }}>Status</h2>
-  </div>
-);
+import StatusPage from './status';
 
 const RankRewards = () => (
   <div className="p-4">
@@ -51,11 +47,11 @@ export default function Dashboard({ initialUser }) {
   };
 
   const sectionComponents = {
-    Dashboard: <DashboardPage />, // ✅ Use the actual dashboard page now
+    Dashboard: <DashboardPage />,
     Products: <Products searchQuery={searchQuery} coins={coins} onPurchase={handlePurchase} />,
     Business: <BusinessPage />,
     Wallet: <WalletPage />,
-    Status: <Status />,
+    Status: <StatusPage />,
     'Rank & Rewards': <RankRewards />,
     Support: <Support />,
     Profile: <ProfileCard user={user} setUser={setUser} />,
@@ -123,8 +119,8 @@ export default function Dashboard({ initialUser }) {
 
 export async function getServerSideProps(context) {
   const initialUser = {
-    name: 'sam',
-    email: 'samreels22@gmail.com',
+    name: 'ERROR',
+    email: 'error@gmail.com',
     avatar: null,
     country: 'India',
   };

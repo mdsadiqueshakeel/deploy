@@ -1,21 +1,789 @@
-// pages/dashboard/status.js
+// // import { useEffect, useState } from 'react';
+// // import api from '../../utils/api';
+// // import { fetchProfile } from '../../utils/profileService';
 
-import DashboardLayout from '@components/DashboardLayout'; // Assuming this layout is used for dashboard pages
+// // const STATUS_TIERS = [
+// //   {
+// //     name: "Consumer",
+// //     requiredTopup: 300,
+// //     levelDepth: 3,
+// //   },
+// //   {
+// //     name: "One Star",
+// //     requiredTopup: 1000,
+// //     levelDepth: 5,
+// //   },
+// //   {
+// //     name: "Two Star",
+// //     requiredTopup: 5000,
+// //     levelDepth: 10,
+// //   },
+// //   {
+// //     name: "Three Star",
+// //     requiredTopup: 15000,
+// //     levelDepth: 15,
+// //   },
+// //   {
+// //     name: "Four Star",
+// //     requiredTopup: 30000,
+// //     levelDepth: 20,
+// //   },
+// //   {
+// //     name: "Five Star",
+// //     requiredTopup: 50000,
+// //     levelDepth: 30,
+// //   },
+// // ];
 
-/**
- * StatusPage component
- * This is a placeholder component for the user's status overview.
- * It provides a basic structure within the DashboardLayout.
- */
+// // const StatusPage = () => {
+// //   const [userPoints, setUserPoints] = useState(0);
+// //   const [loading, setLoading] = useState(true);
+// //   const [userId, setUserId] = useState(null);
+
+// //   useEffect(() => {
+// //     const savedUser = localStorage.getItem('userProfileData');
+// //     let foundId = null;
+
+// //     if (savedUser) {
+// //       const parsed = JSON.parse(savedUser);
+// //       if (parsed._id) foundId = parsed._id;
+// //       else if (parsed.basicInfo && parsed.basicInfo._id) foundId = parsed.basicInfo._id;
+// //     }
+
+// //     const fetchWallet = async (uid) => {
+// //       try {
+// //         const walletRes = await api.get(`/api/wallet/user/${uid}/wallet`);
+// //         const data = walletRes.data;
+// //         const points = (data.totalTopup || 0) / 100; // ₹100 = 1 point
+// //         setUserPoints(points);
+// //       } catch (err) {
+// //         console.error("❌ Wallet fetch error:", err);
+// //         if (err.response?.status === 401) {
+// //           window.location.href = '/login';
+// //         }
+// //       }
+// //     };
+
+// //     const init = async (id) => {
+// //       setUserId(id);
+// //       await fetchWallet(id);
+// //       setLoading(false);
+// //     };
+
+// //     if (foundId) {
+// //       init(foundId);
+// //     } else {
+// //       fetchProfile()
+// //         .then((profile) => {
+// //           const id = profile?.basicInfo?._id;
+// //           if (id) init(id);
+// //         })
+// //         .catch((err) => {
+// //           console.error('❌ Failed to fetch profile:', err);
+// //           setLoading(false);
+// //         });
+// //     }
+// //   }, []);
+
+// //   const TierCard = ({ tier }) => {
+// //     const requiredPoints = tier.requiredTopup / 100;
+// //     const hasEnoughPoints = userPoints >= requiredPoints;
+    
+// //     // Get benefits based on tier
+// //     const getBenefits = () => {
+// //       switch(tier.name) {
+// //         case 'Consumer':
+// //           return [`Direct bonus upto ${tier.levelDepth} level`];
+// //         case 'One Star':
+// //           return [
+// //             `Direct bonus upto ${tier.levelDepth} level`,
+// //             'Matching income upto 50:50'
+// //           ];
+// //         case 'Two Star':
+// //           return [
+// //             `Direct bonus upto ${tier.levelDepth} level`,
+// //             'Matching income upto 100:100',
+// //             'Reward upto assistant manager'
+// //           ];
+// //         case 'Three Star':
+// //           return [
+// //             `Direct bonus upto ${tier.levelDepth} level`,
+// //             'Matching income upto 200:200',
+// //             'Reward upto manager'
+// //           ];
+// //         case 'Four Star':
+// //           return [
+// //             `Direct bonus upto ${tier.levelDepth} level`,
+// //             'Matching income upto 1000:1000',
+// //             'Reward upto manager'
+// //           ];
+// //         case 'Five Star':
+// //           return [
+// //             `Direct bonus upto ${tier.levelDepth} level`,
+// //             'Matching income upto 3000:3000',
+// //             'Reward upto manager'
+// //           ];
+// //         default:
+// //           return [];
+// //       }
+// //     };
+
+// //     return (
+// //       <div className="col-md-6 mb-4">
+// //         <div 
+// //           className="card h-100 p-3" 
+// //           style={{ 
+// //             backgroundColor: hasEnoughPoints ? '#e8f5e9' : 'white',
+// //             border: hasEnoughPoints ? '2px solid #4caf50' : '1px solid #e0e0e0',
+// //             transition: 'all 0.3s ease'
+// //           }}
+// //         >
+// //           <div className="card-body">
+// //             <h5 className="card-title" style={{ fontWeight: 'bold', fontSize: '1.25rem' }}>
+// //               {tier.name} : {requiredPoints} points
+// //             </h5>
+            
+// //             <div className="mb-3">
+// //               <div className="d-flex justify-content-between">
+// //                 <span>Points required:</span>
+// //                 <span style={{ fontWeight: '600' }}>{requiredPoints}</span>
+// //               </div>
+// //               <div className="d-flex justify-content-between">
+// //                 <span>Your points:</span>
+// //                 <span style={{ fontWeight: '600' }}>
+// //                   {userPoints.toFixed(2)}
+// //                   {!hasEnoughPoints && (
+// //                     <span className="text-danger" style={{ fontSize: '0.9rem' }}>
+// //                       &nbsp;(Need {(requiredPoints - userPoints).toFixed(2)} more)
+// //                     </span>
+// //                   )}
+// //                 </span>
+// //               </div>
+// //             </div>
+            
+// //             <div className="mt-3">
+// //               {getBenefits().map((benefit, index) => (
+// //                 <p key={index} className="mb-1" style={{ fontSize: '0.9rem' }}>
+// //                   • {benefit}
+// //                 </p>
+// //               ))}
+// //             </div>
+// //           </div>
+// //         </div>
+// //       </div>
+// //     );
+// //   };
+
+// //   if (loading) {
+// //     return (
+// //       <div className="d-flex justify-content-center align-items-center" style={{ height: '300px' }}>
+// //         <div className="spinner-border text-primary" role="status">
+// //           <span className="visually-hidden">Loading...</span>
+// //         </div>
+// //       </div>
+// //     );
+// //   }
+
+// //   return (
+// //     <div className="p-4">
+// //       <h2 className="mb-4" style={{ color: '#0A2463', fontWeight: '600' }}>
+// //         Status Overview
+// //       </h2>
+      
+// //       <div className="alert alert-info mb-4">
+// //         <strong>₹100 = 1 point</strong> - Your current points: {userPoints.toFixed(2)}
+// //       </div>
+      
+// //       <div className="row">
+// //         {STATUS_TIERS.map((tier) => (
+// //           <TierCard key={tier.name} tier={tier} />
+// //         ))}
+// //       </div>
+// //     </div>
+// //   );
+// // };
+
+// // export default StatusPage;
+// import { useEffect, useState } from 'react';
+// import api from '../../utils/api';
+// import { fetchProfile } from '../../utils/profileService';
+
+// const STATUS_TIERS = [
+//   {
+//     name: "Consumer",
+//     requiredTopup: 300,
+//     levelDepth: 3,
+//     color: "#4CAF50"
+//   },
+//   {
+//     name: "One Star",
+//     requiredTopup: 1000,
+//     levelDepth: 5,
+//     color: "#FFC107"
+//   },
+//   {
+//     name: "Two Star",
+//     requiredTopup: 5000,
+//     levelDepth: 10,
+//     color: "#FF9800"
+//   },
+//   {
+//     name: "Three Star",
+//     requiredTopup: 15000,
+//     levelDepth: 15,
+//     color: "#2196F3"
+//   },
+//   {
+//     name: "Four Star",
+//     requiredTopup: 30000,
+//     levelDepth: 20,
+//     color: "#9C27B0"
+//   },
+//   {
+//     name: "Five Star",
+//     requiredTopup: 50000,
+//     levelDepth: 30,
+//     color: "#E91E63"
+//   },
+// ];
+
+// const StatusPage = () => {
+//   const [userPoints, setUserPoints] = useState(0);
+//   const [loading, setLoading] = useState(true);
+//   const [userId, setUserId] = useState(null);
+
+//   useEffect(() => {
+//     const savedUser = localStorage.getItem('userProfileData');
+//     let foundId = null;
+
+//     if (savedUser) {
+//       const parsed = JSON.parse(savedUser);
+//       if (parsed._id) foundId = parsed._id;
+//       else if (parsed.basicInfo && parsed.basicInfo._id) foundId = parsed.basicInfo._id;
+//     }
+
+//     const fetchWallet = async (uid) => {
+//       try {
+//         const walletRes = await api.get(`/api/wallet/user/${uid}/wallet`);
+//         const data = walletRes.data;
+//         const points = (data.totalTopup || 0) / 100; // ₹100 = 1 point
+//         setUserPoints(points);
+//       } catch (err) {
+//         console.error("❌ Wallet fetch error:", err);
+//         if (err.response?.status === 401) {
+//           window.location.href = '/login';
+//         }
+//       }
+//     };
+
+//     const init = async (id) => {
+//       setUserId(id);
+//       await fetchWallet(id);
+//       setLoading(false);
+//     };
+
+//     if (foundId) {
+//       init(foundId);
+//     } else {
+//       fetchProfile()
+//         .then((profile) => {
+//           const id = profile?.basicInfo?._id;
+//           if (id) init(id);
+//         })
+//         .catch((err) => {
+//           console.error('❌ Failed to fetch profile:', err);
+//           setLoading(false);
+//         });
+//     }
+//   }, []);
+
+//   const TierCard = ({ tier }) => {
+//     const requiredPoints = tier.requiredTopup / 100;
+//     const hasEnoughPoints = userPoints >= requiredPoints;
+//     const progressPercentage = Math.min((userPoints / requiredPoints) * 100, 100);
+    
+//     // Get benefits based on tier
+//     const getBenefits = () => {
+//       switch(tier.name) {
+//         case 'Consumer':
+//           return [`Direct bonus upto ${tier.levelDepth} level`];
+//         case 'One Star':
+//           return [
+//             `Direct bonus upto ${tier.levelDepth} level`,
+//             'Matching income upto 50:50'
+//           ];
+//         case 'Two Star':
+//           return [
+//             `Direct bonus upto ${tier.levelDepth} level`,
+//             'Matching income upto 100:100',
+//             'Reward upto assistant manager'
+//           ];
+//         case 'Three Star':
+//           return [
+//             `Direct bonus upto ${tier.levelDepth} level`,
+//             'Matching income upto 200:200',
+//             'Reward upto manager'
+//           ];
+//         case 'Four Star':
+//           return [
+//             `Direct bonus upto ${tier.levelDepth} level`,
+//             'Matching income upto 1000:1000',
+//             'Reward upto manager'
+//           ];
+//         case 'Five Star':
+//           return [
+//             `Direct bonus upto ${tier.levelDepth} level`,
+//             'Matching income upto 3000:3000',
+//             'Reward upto manager'
+//           ];
+//         default:
+//           return [];
+//       }
+//     };
+
+//     return (
+//       <div className="col-md-6 mb-4">
+//         <div 
+//           className="card h-100 p-3" 
+//           style={{ 
+//             backgroundColor: hasEnoughPoints ? '#e8f5e9' : 'white',
+//             border: hasEnoughPoints ? '2px solid #4caf50' : '1px solid #e0e0e0',
+//             transition: 'all 0.3s ease'
+//           }}
+//         >
+//           <div className="card-body">
+//             <h5 
+//               className="card-title mb-3" 
+//               style={{ 
+//                 fontWeight: 'bold', 
+//                 fontSize: '1.25rem',
+//                 color: tier.color
+//               }}
+//             >
+//               {tier.name} : {requiredPoints} points
+//             </h5>
+            
+//             <div className="mb-3">
+//               <div className="d-flex justify-content-between mb-1">
+//                 <span>Points required:</span>
+//                 <span style={{ fontWeight: '600' }}>{requiredPoints}</span>
+//               </div>
+              
+//               {/* Progress Bar Container */}
+//               <div className="progress-container" style={{
+//                 height: '20px',
+//                 backgroundColor: '#e9ecef',
+//                 borderRadius: '10px',
+//                 overflow: 'hidden',
+//                 position: 'relative',
+//                 marginBottom: '10px'
+//               }}>
+//                 {/* Progress Bar Fill */}
+//                 <div 
+//                   className="progress-fill"
+//                   style={{
+//                     height: '100%',
+//                     width: `${progressPercentage}%`,
+//                     backgroundColor: tier.color,
+//                     borderRadius: '10px',
+//                     transition: 'width 0.5s ease'
+//                   }}
+//                 ></div>
+                
+//                 {/* Progress Text Overlay */}
+//                 <div style={{
+//                   position: 'absolute',
+//                   top: '0',
+//                   left: '0',
+//                   width: '100%',
+//                   height: '100%',
+//                   display: 'flex',
+//                   alignItems: 'center',
+//                   justifyContent: 'center',
+//                   fontWeight: '600',
+//                   fontSize: '0.8rem',
+//                   color: progressPercentage > 50 ? 'white' : 'black'
+//                 }}>
+//                   {userPoints.toFixed(2)} / {requiredPoints}
+//                 </div>
+//               </div>
+              
+//               {/* Points Summary */}
+//               <div className="d-flex justify-content-between">
+//                 <span>Your progress:</span>
+//                 <span style={{ fontWeight: '600' }}>
+//                   {!hasEnoughPoints ? (
+//                     <span className="text-danger">
+//                       Need {(requiredPoints - userPoints).toFixed(2)} more
+//                     </span>
+//                   ) : (
+//                     <span className="text-success">
+//                       Achieved!
+//                     </span>
+//                   )}
+//                 </span>
+//               </div>
+//             </div>
+            
+//             <div className="mt-4">
+//               {getBenefits().map((benefit, index) => (
+//                 <p 
+//                   key={index} 
+//                   className="mb-2 p-2" 
+//                   style={{ 
+//                     fontSize: '0.9rem',
+//                     backgroundColor: '#f8f9fa',
+//                     borderRadius: '5px',
+//                     borderLeft: `3px solid ${tier.color}`
+//                   }}
+//                 >
+//                   • {benefit}
+//                 </p>
+//               ))}
+//             </div>
+//           </div>
+//         </div>
+//       </div>
+//     );
+//   };
+
+//   if (loading) {
+//     return (
+//       <div className="d-flex justify-content-center align-items-center" style={{ height: '300px' }}>
+//         <div className="spinner-border text-primary" role="status">
+//           <span className="visually-hidden">Loading...</span>
+//         </div>
+//       </div>
+//     );
+//   }
+
+//   return (
+//     <div className="p-4">
+//       <h2 className="mb-4" style={{ color: '#0A2463', fontWeight: '600' }}>
+//         Status Overview
+//       </h2>
+      
+//       <div className="alert alert-info mb-4">
+//         <strong>₹100 = 1 point</strong> - Your current points: {userPoints.toFixed(2)}
+//       </div>
+      
+//       <div className="row">
+//         {STATUS_TIERS.map((tier) => (
+//           <TierCard key={tier.name} tier={tier} />
+//         ))}
+//       </div>
+//     </div>
+//   );
+// };
+
+// export default StatusPage;
+import { useEffect, useState } from 'react';
+import api from '../../utils/api';
+import { fetchProfile } from '../../utils/profileService';
+
+const STATUS_TIERS = [
+  {
+    name: "Consumer",
+    requiredTopup: 300,
+    requiredChildren: 0,
+    requiredStatus: null,
+    levelDepth: 3,
+    color: "#4CAF50"
+  },
+  {
+    name: "One Star",
+    requiredTopup: 1000,
+    requiredChildren: 2,
+    requiredStatus: "Consumer",
+    levelDepth: 5,
+    color: "#FFC107"
+  },
+  {
+    name: "Two Star",
+    requiredTopup: 5000,
+    requiredChildren: 2,
+    requiredStatus: "One Star",
+    levelDepth: 10,
+    color: "#FF9800"
+  },
+  {
+    name: "Three Star",
+    requiredTopup: 15000,
+    requiredChildren: 3,
+    requiredStatus: "Two Star",
+    levelDepth: 15,
+    color: "#2196F3"
+  },
+  {
+    name: "Four Star",
+    requiredTopup: 30000,
+    requiredChildren: 5,
+    requiredStatus: "Three Star",
+    levelDepth: 20,
+    color: "#9C27B0"
+  },
+  {
+    name: "Five Star",
+    requiredTopup: 50000,
+    requiredChildren: 7,
+    requiredStatus: "Four Star",
+    levelDepth: 30,
+    color: "#E91E63"
+  },
+];
+
 const StatusPage = () => {
-  return (
-    <DashboardLayout>
-      <div className="container-fluid py-4">
-        <h2 className="fw-bold mb-4" style={{ color: '#1E293B' }}>My Status</h2>
-        <p>Here you can view your overall business status and key metrics.</p>
-        {/* Add more status-related content and components here */}
+  const [userPoints, setUserPoints] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [userId, setUserId] = useState(null);
+
+  useEffect(() => {
+    const savedUser = localStorage.getItem('userProfileData');
+    let foundId = null;
+
+    if (savedUser) {
+      const parsed = JSON.parse(savedUser);
+      if (parsed._id) foundId = parsed._id;
+      else if (parsed.basicInfo && parsed.basicInfo._id) foundId = parsed.basicInfo._id;
+    }
+
+    const fetchWallet = async (uid) => {
+      try {
+        const walletRes = await api.get(`/api/wallet/user/${uid}/wallet`);
+        const data = walletRes.data;
+        const points = (data.totalTopup || 0) / 100; // ₹100 = 1 point
+        setUserPoints(points);
+      } catch (err) {
+        console.error("❌ Wallet fetch error:", err);
+        if (err.response?.status === 401) {
+          window.location.href = '/login';
+        }
+      }
+    };
+
+    const init = async (id) => {
+      setUserId(id);
+      await fetchWallet(id);
+      setLoading(false);
+    };
+
+    if (foundId) {
+      init(foundId);
+    } else {
+      fetchProfile()
+        .then((profile) => {
+          const id = profile?.basicInfo?._id;
+          if (id) init(id);
+        })
+        .catch((err) => {
+          console.error('❌ Failed to fetch profile:', err);
+          setLoading(false);
+        });
+    }
+  }, []);
+
+  const TierCard = ({ tier }) => {
+    const requiredPoints = tier.requiredTopup / 100;
+    const hasEnoughPoints = userPoints >= requiredPoints;
+    const progressPercentage = Math.min((userPoints / requiredPoints) * 100, 100);
+    
+    // Get benefits based on tier
+    const getBenefits = () => {
+      switch(tier.name) {
+        case 'Consumer':
+          return [`Direct bonus upto ${tier.levelDepth} level`];
+        case 'One Star':
+          return [
+            `Direct bonus upto ${tier.levelDepth} level`,
+            'Matching income upto 50:50'
+          ];
+        case 'Two Star':
+          return [
+            `Direct bonus upto ${tier.levelDepth} level`,
+            'Matching income upto 100:100',
+            'Reward upto assistant manager'
+          ];
+        case 'Three Star':
+          return [
+            `Direct bonus upto ${tier.levelDepth} level`,
+            'Matching income upto 200:200',
+            'Reward upto manager'
+          ];
+        case 'Four Star':
+          return [
+            `Direct bonus upto ${tier.levelDepth} level`,
+            'Matching income upto 1000:1000',
+            'Reward upto manager'
+          ];
+        case 'Five Star':
+          return [
+            `Direct bonus upto ${tier.levelDepth} level`,
+            'Matching income upto 3000:3000',
+            'Reward upto manager'
+          ];
+        default:
+          return [];
+      }
+    };
+
+    return (
+      <div className="col-md-6 mb-4">
+        <div 
+          className="card h-100 p-3" 
+          style={{ 
+            backgroundColor: hasEnoughPoints ? '#e8f5e9' : 'white',
+            border: hasEnoughPoints ? '2px solid #4caf50' : '1px solid #e0e0e0',
+            transition: 'all 0.3s ease'
+          }}
+        >
+          <div className="card-body">
+            <h5 
+              className="card-title mb-3" 
+              style={{ 
+                fontWeight: 'bold', 
+                fontSize: '1.25rem',
+                color: tier.color
+              }}
+            >
+              {tier.name} : {requiredPoints} points
+            </h5>
+            
+            <div className="mb-3">
+              <div className="d-flex justify-content-between mb-1">
+                <span>Points required:</span>
+                <span style={{ fontWeight: '600' }}>{requiredPoints}</span>
+              </div>
+              
+              {/* Progress Bar Container */}
+              <div className="progress-container" style={{
+                height: '20px',
+                backgroundColor: '#e9ecef',
+                borderRadius: '10px',
+                overflow: 'hidden',
+                position: 'relative',
+                marginBottom: '10px'
+              }}>
+                {/* Progress Bar Fill */}
+                <div 
+                  className="progress-fill"
+                  style={{
+                    height: '100%',
+                    width: `${progressPercentage}%`,
+                    backgroundColor: tier.color,
+                    borderRadius: '10px',
+                    transition: 'width 0.5s ease'
+                  }}
+                ></div>
+                
+                {/* Progress Text Overlay */}
+                <div style={{
+                  position: 'absolute',
+                  top: '0',
+                  left: '0',
+                  width: '100%',
+                  height: '100%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontWeight: '600',
+                  fontSize: '0.8rem',
+                  color: progressPercentage > 50 ? 'white' : 'black'
+                }}>
+                  {userPoints.toFixed(2)} / {requiredPoints}
+                </div>
+              </div>
+              
+              {/* Points Summary */}
+              <div className="d-flex justify-content-between">
+                <span>Your progress:</span>
+                <span style={{ fontWeight: '600' }}>
+                  {!hasEnoughPoints ? (
+                    <span className="text-danger">
+                      Need {(requiredPoints - userPoints).toFixed(2)} more
+                    </span>
+                  ) : (
+                    <span className="text-success">
+                      Achieved!
+                    </span>
+                  )}
+                </span>
+              </div>
+            </div>
+            
+            {/* Referral Requirements Section */}
+            {tier.requiredStatus && tier.requiredChildren > 0 && (
+              <div className="mb-3 p-3" style={{ 
+                backgroundColor: '#f8f9fa', 
+                borderRadius: '8px',
+                borderLeft: `3px solid ${tier.color}`
+              }}>
+                <div className="d-flex justify-content-between align-items-center mb-2">
+                  <span>Required Status:</span>
+                  <span className="badge" style={{ 
+                    backgroundColor: tier.color,
+                    color: 'white',
+                    fontWeight: '600'
+                  }}>
+                    {tier.requiredStatus}
+                  </span>
+                </div>
+                <div className="d-flex justify-content-between align-items-center">
+                  <span>Required Referrals:</span>
+                  <span className="badge bg-secondary" style={{ fontWeight: '600' }}>
+                    {tier.requiredChildren}
+                  </span>
+                </div>
+              </div>
+            )}
+            
+            <div className="mt-4">
+              {getBenefits().map((benefit, index) => (
+                <p 
+                  key={index} 
+                  className="mb-2 p-2" 
+                  style={{ 
+                    fontSize: '0.9rem',
+                    backgroundColor: '#f8f9fa',
+                    borderRadius: '5px',
+                    borderLeft: `3px solid ${tier.color}`
+                  }}
+                >
+                  • {benefit}
+                </p>
+              ))}
+            </div>
+          </div>
+        </div>
       </div>
-    </DashboardLayout>
+    );
+  };
+
+  if (loading) {
+    return (
+      <div className="d-flex justify-content-center align-items-center" style={{ height: '300px' }}>
+        <div className="spinner-border text-primary" role="status">
+          <span className="visually-hidden">Loading...</span>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="p-4">
+      <h2 className="mb-4" style={{ color: '#0A2463', fontWeight: '600' }}>
+        Status Overview
+      </h2>
+      
+      <div className="alert alert-info mb-4">
+        <strong>₹100 = 1 point</strong> - Your current points: {userPoints.toFixed(2)}
+      </div>
+      
+      <div className="row">
+        {STATUS_TIERS.map((tier) => (
+          <TierCard key={tier.name} tier={tier} />
+        ))}
+      </div>
+    </div>
   );
 };
 
