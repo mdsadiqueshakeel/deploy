@@ -7,6 +7,8 @@ dotenv = require("dotenv").config();
 const { generateReferralCode } = require("../utils/referralUtils");
 const { findBinaryPlacement, updateLevelTree } = require("../utils/placment");
 const { buildBinaryTree } = require("../utils/buildBinaryTree");
+const { clearUserCache } = require("../utils/cacheUtils");
+
 
 // for reset and forget password
 const sendEmail = require("../utils/sendEmail");
@@ -420,6 +422,7 @@ exports.updateProfile = async (req, res) => {
     Object.assign(user, updates);
 
     await user.save();
+    await clearUserCache(req.user.userId);
     res.json({ message: "Profile updated", user: user.toObject() });
   } catch (error) {
     res.status(500).json({ message: "Server error", error: error.message });
@@ -469,6 +472,8 @@ exports.changePassword = async (req, res) => {
 
     user.password = newPassword; // will be hashed via mongoose pre-save
     await user.save();
+    await clearUserCache(req.user.userId);
+
 
     res.json({ message: "Password changed successfully" });
   } catch (error) {

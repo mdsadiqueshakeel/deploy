@@ -2,7 +2,8 @@
 const express = require("express");
 const router = express.Router();
 const controller = require("../controllers/incomeController");
+const { cacheMiddleware } = require("../middlewares/cache");
 
-router.post("/topup-trigger", controller.handleTopupTrigger); // Call this from wallet-service after topup approval
+router.post("/topup-trigger", cacheMiddleware, controller.handleTopupTrigger); // Call this from wallet-service after topup approval
 
 module.exports = router;

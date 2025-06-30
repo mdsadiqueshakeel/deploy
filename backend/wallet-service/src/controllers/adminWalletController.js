@@ -3,6 +3,7 @@ const TopupRequest = require("../models/TopupRequest");
 const WithdrawRequest = require("../models/WithdrawRequest");
 const Wallet = require("../models/Wallet");
 const mongoose = require("mongoose");
+const { clearWalletCache } = require("../utils/clearWalletCache");
 const INCOME_SERVICE_URL = process.env.INCOME_SERVICE_URL || "http://localhost:5004";
 const USER_SERVICE_URL = process.env.USER_SERVICE_URL || "http://localhost:5001";
 
@@ -25,6 +26,7 @@ exports.approveTopupRequest = async (req, res) => {
   wallet.topupWallet += request.amount;
   wallet.totalTopup += request.amount; // Update totalTopup
   await wallet.save();
+  await clearWalletCache(request.userId);
 
   // ✅ trigger income-service!
   try {
@@ -70,9 +72,10 @@ exports.approveWithdrawRequest = async (req, res) => {
 
   wallet.incomeWallet -= request.amount;
   await wallet.save();
-
+  
   request.status = "approved";
   await request.save();
+  await clearWalletCache(request.userId);
 
   res.json({ message: "Withdraw request approved", wallet });
 };
@@ -106,6 +109,7 @@ exports.creditIncome = async (req, res) => {
     creditedBy: "system", // or adminId if manual
     comment: "System credited income",
   });
+  await clearWalletCache(userId);
 
   res.status(200).json({ message: "Income credited successfully" });
 };
@@ -200,6 +204,7 @@ exports.declineTopupRequest = async (req, res) => {
 
     request.status = "rejected";
     await request.save();
+    await clearWalletCache(request.userId); // Clear cache for this user
 
     res.json({ message: "Top-up request rejected", request });
 
@@ -222,6 +227,7 @@ exports.declineWithdrawRequest = async (req, res) => {
 
     request.status = "rejected";
     await request.save();
+    await clearWalletCache(request.userId); // Clear cache for this user
 
     res.json({ message: "Withdraw request rejected", request });
 

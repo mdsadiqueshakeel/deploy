@@ -3,6 +3,7 @@ const router = express.Router();
 const auth = require("../controllers/auth");
 const wrapAsync = require("../utils/wrapAsync");
 const jwtAuth = require("../middlewares/jwtAuth");
+const { cacheMiddleware } = require("../middlewares/cache");
 // forgotPassword and resetPassword functions are imported from the auth controller
 // to handle password reset functionality
 const { forgotPassword, resetPassword } = require("../controllers/auth");
@@ -15,6 +16,6 @@ router.put('/profile', jwtAuth, wrapAsync(auth.updateProfile));
 router.put('/change-password', jwtAuth, wrapAsync(auth.changePassword));
 
 
-router.get("/me", jwtAuth, wrapAsync(auth.getProfile));
+router.get("/me",cacheMiddleware, jwtAuth, wrapAsync(auth.getProfile));
 
 module.exports = router;

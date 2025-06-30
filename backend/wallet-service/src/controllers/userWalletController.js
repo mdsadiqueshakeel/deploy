@@ -1,6 +1,7 @@
 const WithdrawRequest = require("../models/WithdrawRequest");
 const TopupRequest = require("../models/TopupRequest");
 const Wallet = require("../models/Wallet");
+const { clearWalletCache } = require("../utils/clearWalletCache");
 
 exports.createTopupRequest = async (req, res) => {
   const { amount, note } = req.body;
@@ -15,6 +16,7 @@ exports.createTopupRequest = async (req, res) => {
     amount,
     note,
   });
+  await clearWalletCache(userId); // Clear cache for this user
 
   res.status(201).json({ message: "Top-up request created", request });
 };
@@ -38,6 +40,7 @@ exports.createWithdrawRequest = async (req, res) => {
     amount,
     note,
   });
+  await clearWalletCache(userId); // Clear cache for this user
 
   res.status(201).json({ message: "Withdraw request submitted", request });
 };

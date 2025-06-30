@@ -3,13 +3,15 @@ const { createTopupRequest, createWithdrawRequest , getTopupRequests, getWithdra
 const { extractUser, isAuthenticated } = require("../middlewares/auth");
 const router = express.Router();
 const Wallet = require("../models/Wallet");
+const {cacheMiddleware} = require("../middlewares/cacheMiddleware");
 
 // Apply extractUser middleware to all routes
 
 
 
 router.use(extractUser);
-router.get("/:id/wallet" ,isAuthenticated,async (req, res) => {
+
+router.get("/:id/wallet" , cacheMiddleware, isAuthenticated,async (req, res) => {
   try {
     const wallet = await Wallet.findOne({ userId: req.params.id });
     if (!wallet) return res.status(404).json({ error: "Wallet not found" });
@@ -22,8 +24,8 @@ router.get("/:id/wallet" ,isAuthenticated,async (req, res) => {
 
 router.post("/withdraw-request", isAuthenticated, createWithdrawRequest);
 router.post("/topup-request", isAuthenticated, createTopupRequest);
-router.get("/topup/:userId", isAuthenticated, getTopupRequests);
-router.get("/withdraw/:userId", isAuthenticated, getWithdrawRequests);
+router.get("/topup/:userId", cacheMiddleware,isAuthenticated, getTopupRequests);
+router.get("/withdraw/:userId",cacheMiddleware, isAuthenticated, getWithdrawRequests);
 // GET /user/:id/wallet
 
 

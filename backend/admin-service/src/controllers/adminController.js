@@ -2,6 +2,7 @@ const Admin = require("../models/adminModel");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 const axios = require("axios");
+const { clearAdminCache } = require("../utils/clearAdminCache");
 
 const USER_SERVICE_URL = process.env.USER_SERVICE_URL;
 
@@ -22,9 +23,8 @@ exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    if (!email || !password) {
+    if (!email || !password)
       return res.status(400).json({ message: "All fields are required" });
-    }
 
     const admin = await Admin.findOne({ email });
     if (!admin) return res.status(404).json({ message: "Admin not found" });
@@ -38,7 +38,8 @@ exports.login = async (req, res) => {
       { expiresIn: "1d" }
     );
 
-
+    // ✅ Clear cache for admin
+    await clearAdminCache(); // only clears general cache like `/me`, `/dashboard`
 
     res.json({ token });
   } catch (err) {
@@ -46,6 +47,7 @@ exports.login = async (req, res) => {
     res.status(500).json({ message: "Server error", detail: err.message });
   }
 };
+
 
 // Change Password
 // src/controllers/adminController.js
@@ -179,10 +181,12 @@ exports.deleteUser = async (req, res) => {
   try {
     const { id } = req.params;
 
-    // Call user-service to delete user
     const response = await axios.delete(`${USER_SERVICE_URL}/admin/delete-user/${id}`, {
       headers: { Authorization: req.headers.authorization }
     });
+
+    // ✅ Bust Redis cache for user list & single user
+    await clearAdminCache(id);
 
     res.status(response.status).json(response.data);
   } catch (err) {
@@ -192,3 +196,4 @@ exports.deleteUser = async (req, res) => {
     );
   }
 }
+

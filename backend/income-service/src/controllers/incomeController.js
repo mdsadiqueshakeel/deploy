@@ -2,6 +2,8 @@ const { calculateMatchingIncome } = require("../utils/calculateMatching");
 const { calculateLevelIncome } = require("../utils/calculateLevel");
 const { checkAndUpgradeStatus } = require("../utils/statusUpdater");
 const { getUserById } = require("../services/userService");
+const { clearBusinessCache } = require("../utils/clearCache");
+const {clearWalletCacheRemote} = require("../utils/triggerWalletClear");
 
 const recursivelyUpgradeParents = async (childUserId) => {
   try {
@@ -23,6 +25,8 @@ const recursivelyUpgradeParents = async (childUserId) => {
 
     // Attempt upgrade
     const newStatus = await checkAndUpgradeStatus(parentId);
+
+    await clearBusinessCache(parentId); // if parent earns income
     
     // Continue with parent's parent if exists, regardless of status change
     if (parentBefore.referredBy) {
@@ -59,6 +63,13 @@ exports.handleTopupTrigger = async (req, res) => {
       calculateMatchingIncome(userId, coins),
       calculateLevelIncome(userId, coins)
     ]);
+
+    // 5. Clear cache for this user (wallet + business report)
+await Promise.all([
+  clearBusinessCache(userId),
+  clearWalletCacheRemote(userId) // This will trigger the wallet service to clear its cache
+]);
+
 
     res.status(200).json({
       success: true,

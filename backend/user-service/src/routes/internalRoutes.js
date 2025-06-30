@@ -27,6 +27,8 @@ router.put("/update-carry/:id", async (req, res) => {
     if (!user) return res.status(404).json({ message: "User not found" });
 
     res.json({ message: "Carry updated", user });
+    await clearUserCache(req.params.id);
+
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -38,18 +40,25 @@ router.put("/activate-user/:id", async (req, res) => {
       req.params.id,
       {
         isActive: true,
-        status: "Consumer", // 🆕 set default status
+        status: "Consumer", // 🆕 default status
       },
       { new: true }
     );
 
     if (!user) return res.status(404).json({ message: "User not found" });
 
-    res.json({ message: "User activated and status set to Consumer", user });
+    await clearUserCache(req.params.id); // ✅ clear first
+
+    return res.json({
+      message: "User activated and status set to Consumer",
+      user,
+    });
+
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    return res.status(500).json({ error: err.message });
   }
 });
+
 
 
 router.put("/internal/update-status", updateStatus);

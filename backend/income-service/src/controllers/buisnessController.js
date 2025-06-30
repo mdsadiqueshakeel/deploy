@@ -9,6 +9,8 @@ const LevelLog = require("../models/LevelLog");
 const MatchingLog = require("../models/MatchingLog");
 const mongoose = require("mongoose");
 const { Types } = mongoose;
+const { clearBusinessCache } = require("../utils/clearCache"); // ✅ Add this at the top
+
 
 const LEVEL_COMMISSIONS = {
   1: 10,
@@ -108,6 +110,9 @@ exports.getBusinessReport = async (req, res) => {
 
     const totalIncome = totalLevelIncome + totalMatchingIncome;
     const monthlyStats = businessDoc?.monthlyStats || [];
+    
+    // Don't clear cache on read operations
+    // await clearBusinessCache(userId);
 
     res.json({
       userId,

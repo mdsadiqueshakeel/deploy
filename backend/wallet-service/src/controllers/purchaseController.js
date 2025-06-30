@@ -2,6 +2,7 @@ const PRODUCT_LIST = require("../Constraints/ProductList");
 const Purchase = require("../models/Purchase");
 const { getWalletByUserId, deductFromWallet } = require("../utils/WalletService");
 const mongoose = require("mongoose");
+const { clearWalletCache } = require("../utils/clearWalletCache");
 
 // 📦 USER: Request product
 exports.requestProduct = async (req, res) => {
@@ -111,6 +112,7 @@ exports.approvePurchase = async (req, res, next) => {
     purchase.status = "approved";
     purchase.approvedAt = new Date();
     await purchase.save();
+    await clearWalletCache(purchase.userId);
 
     res.json({ message: "Purchase approved", purchase });
   } catch (err) {

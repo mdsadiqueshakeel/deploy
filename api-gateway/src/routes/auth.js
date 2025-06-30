@@ -89,7 +89,7 @@ router.post("/logout", (req, res) => {
     res.clearCookie("token", {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production", // false in dev, true in prod
-      sameSite: "lax", // "lax" is good for most apps
+      sameSite: "strict", // "strict" is good for most apps
       path: "/", // important to match the path used when setting the cookie
     });
 

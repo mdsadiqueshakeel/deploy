@@ -11,6 +11,7 @@ const {
 } = require("../controllers/purchaseController");
 
 const { isAuthenticated, isAdmin, extractUser } = require("../middlewares/auth");
+const { cacheMiddleware } = require("../middlewares/cacheMiddleware");
 
 router.use(extractUser);
 
@@ -19,8 +20,8 @@ router.post("/request" ,isAuthenticated, requestProduct);
 router.get("/my-purchases", isAuthenticated, getMyPurchases);
 
 // ✅ ADMIN ROUTES
-router.get("/admin/user/:userId/pending-purchases", isAuthenticated, isAdmin, getPendingPurchasesByUser);
-router.get("/admin/user/:userId/approved-purchases", isAuthenticated, isAdmin, getApprovedPurchasesByUser);
+router.get("/admin/user/:userId/pending-purchases", cacheMiddleware, isAuthenticated, isAdmin, getPendingPurchasesByUser);
+router.get("/admin/user/:userId/approved-purchases", cacheMiddleware, isAuthenticated, isAdmin, getApprovedPurchasesByUser);
 router.patch("/admin/:purchaseId/approve", isAuthenticated, isAdmin, approvePurchase);
 router.patch("/admin/:purchaseId/reject", isAuthenticated, isAdmin, rejectPurchase);
 
