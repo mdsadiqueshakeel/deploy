@@ -1121,26 +1121,31 @@ export default function UserDetails() {
                   style={{ borderRadius: '10px', backgroundColor: 'rgba(255, 193, 7, 0.05)' }}
                 >
                   <div className="d-flex justify-content-between align-items-center mb-2">
-                    <span className="fw-bold" style={{ color: primaryDarkColor }}>Product: {request.productName}</span>
+                    <span className="fw-bold" style={{ color: primaryDarkColor }}>
+                      {request.productName} (Code: {request.productCode})
+                    </span>
                     <span className="badge bg-warning text-dark">Pending</span>
                   </div>
                   
                   <div className="mb-2">
-                    <span className="fw-medium">Amount: </span>
-                    <span>${request.amount}</span>
+                    <span className="fw-medium">Quantity: </span>
+                    <span>{request.quantity}</span>
                   </div>
                   
                   <div className="mb-2">
-                    <span className="fw-medium">Created: </span>
-                    <span>{new Date(request.createdAt).toLocaleString()}</span>
+                    <span className="fw-medium">Unit Price: </span>
+                    <span>${request.unitPrice}</span>
                   </div>
                   
-                  {request.quantity && (
-                    <div className="mb-2">
-                      <span className="fw-medium">Quantity: </span>
-                      <span>{request.quantity}</span>
-                    </div>
-                  )}
+                  <div className="mb-2">
+                    <span className="fw-medium">Total Price: </span>
+                    <span className="fw-bold" style={{ color: primaryColor }}>${request.totalPrice}</span>
+                  </div>
+                  
+                  <div className="mb-2">
+                    <span className="fw-medium">Requested At: </span>
+                    <span>{new Date(request.requestedAt).toLocaleString()}</span>
+                  </div>
                   
                   {request.shippingAddress && (
                     <div className="mb-3">
@@ -1276,10 +1281,16 @@ export default function UserDetails() {
                     {currentRequest.type === 'purchase' ? (
                       <>
                         <p className="mb-1">
-                          <strong>Product:</strong> {currentRequest.productName}
+                          <strong>Product:</strong> {currentRequest.productName} (Code: {currentRequest.productCode})
+                        </p>
+                        <p className="mb-1">
+                          <strong>Quantity:</strong> {currentRequest.quantity}
+                        </p>
+                        <p className="mb-1">
+                          <strong>Unit Price:</strong> ${currentRequest.unitPrice}
                         </p>
                         <p className="mb-0">
-                          <strong>Amount:</strong> ${currentRequest.amount}
+                          <strong>Total Price:</strong> ${currentRequest.totalPrice}
                         </p>
                       </>
                     ) : (
@@ -1385,10 +1396,16 @@ export default function UserDetails() {
                     {currentRequest.type === 'purchase' ? (
                       <>
                         <p className="mb-1">
-                          <strong>Product:</strong> {currentRequest.productName}
+                          <strong>Product:</strong> {currentRequest.productName} (Code: {currentRequest.productCode})
+                        </p>
+                        <p className="mb-1">
+                          <strong>Quantity:</strong> {currentRequest.quantity}
+                        </p>
+                        <p className="mb-1">
+                          <strong>Unit Price:</strong> ${currentRequest.unitPrice}
                         </p>
                         <p className="mb-0">
-                          <strong>Amount:</strong> ${currentRequest.amount}
+                          <strong>Total Price:</strong> ${currentRequest.totalPrice}
                         </p>
                       </>
                     ) : (

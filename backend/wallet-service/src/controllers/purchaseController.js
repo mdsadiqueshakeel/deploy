@@ -30,7 +30,7 @@ exports.requestProduct = async (req, res) => {
     productName: product.name,
     quantity,
     unitPrice: product.dp,
-    totalPrice,
+    totalPrice,success: true,
     status: "pending",
   });
 
