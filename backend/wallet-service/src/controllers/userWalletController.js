@@ -53,6 +53,7 @@ exports.getWalletByUserId = async (req, res) => {
       topupWallet: wallet.topupWallet,
       incomeWallet: wallet.incomeWallet,
       shoppingWallet: wallet.shoppingWallet,
+      totaltopup: wallet.totaltopup,
     });
   } catch (error) {
     console.error("Wallet fetch failed:", error);

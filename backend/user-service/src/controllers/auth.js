@@ -176,46 +176,7 @@ exports.login = async (req, res) => {
 
 // USER FORGOT PASSWORD -------------------------------------------------------------------------------------------
 
-// exports.forgotPassword = async (req, res) => {
-//   try {
-//     const { email } = req.body;
-//     console.log("Forgot password request for:", email);
 
-//     const user = await User.findOne({ email });
-//     if (!user) {
-//       console.log("User not found with email:", email);
-//       return res.status(404).json({ error: "User not found" });
-//     }
-
-//     // Generate reset token
-//     const resetToken = crypto.randomBytes(20).toString('hex');
-//     user.resetPasswordToken = resetToken;
-//     user.resetPasswordExpires = Date.now() + 3600000; // 1 hour
-
-//     await user.save();
-//     console.log("Reset token generated for user:", user._id);
-
-//     // Send email
-//     const resetUrl = `${process.env.CLIENT_URL}/reset-password?token=${resetToken}&id=${user._id}`;
-//     const message = `
-//       <p>You requested a password reset for your account.</p>
-//       <p>Click this link to reset your password: <a href="${resetUrl}">${resetUrl}</a></p>
-//       <p>This link will expire in 1 hour.</p>
-//     `;
-
-//     await sendEmail({
-//       email: user.email,
-//       subject: 'Password Reset Request',
-//       message
-//     });
-
-//     console.log("Password reset email sent to:", user.email);
-//     res.json({ message: "Password reset email sent" });
-//   } catch (error) {
-//     console.error("Error in forgotPassword:", error);
-//     res.status(500).json({ error: "Server error", details: error.message });
-//   }
-// };
 /**
  * Handles the forgot password process.
  *
@@ -381,6 +342,11 @@ exports.getProfile = async (req, res) => {
         leftUser: user.leftUser,
         rightUser: user.rightUser,
         isRootSponsor: user.isRootSponsor,
+      },
+      statusInfo:{
+        isActive: user.isActive,
+        status: user.status,
+        rank: user.rank,
       },
       systemInfo: {
         isAdmin: user.isAdmin,
