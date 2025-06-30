@@ -25,12 +25,23 @@
 //   {
 //     name: "Mixed Multi-Berry Capsules",
 //     benefits: "Supports overall health and well-being. Consult a healthcare professional before use.",
+//     healthBenefits: [
+//       "Skin Health",
+//       "Digestive Health",
+//       "Antibacterial Properties",
+//       "Diabetes Management",
+//       "Oral Health",
+//       "Reproductive Health",
+//       "Anti-Inflammatory Agent",
+//       "Detoxification",
+//       "Immune System Boost",
+//     ],
 //     productCode: 8014,
 //     mrp: 700,
 //     dp: 520,
 //   },
 //   {
-//     name: 'Neem Extract',
+//     name: "Aloe Vera Capsules",
 //     benefits: "Great addition to a healthy lifestyle, providing various benefits for overall health and well-being.",
 //     productCode: 1025,
 //     mrp: 500,
@@ -44,11 +55,9 @@
 //     dp: 350,
 //   },
 // ];
-
-
 const PRODUCT_LIST = [
   {
-    id: 1,
+   
     productCode: 1025,
     name: 'Neem Extract',
     dp: 350,
