@@ -94,9 +94,9 @@ router.get("/products/admin/user/:userId/approved-purchases", walletAuth, async 
 });
 
 // ✅ Approve purchase request
-router.patch("/products/admin/:purchaseId/approve", walletAuth, async (req, res) => {
+router.put("/products/admin/:purchaseId/approve", walletAuth, async (req, res) => {
   try {
-    const response = await axios.patch(`${WALLET_SERVICE_URL}/products/admin/${req.params.purchaseId}/approve`, {}, {
+    const response = await axios.put(`${WALLET_SERVICE_URL}/products/admin/${req.params.purchaseId}/approve`, {}, {
       headers: {
         Authorization: req.headers.authorization,
         Cookie: req.headers.cookie,
@@ -110,9 +110,9 @@ router.patch("/products/admin/:purchaseId/approve", walletAuth, async (req, res)
 });
 
 // ❌ Reject purchase request
-router.patch("/products/admin/:purchaseId/reject", walletAuth, async (req, res) => {
+router.put("/products/admin/:purchaseId/reject", walletAuth, async (req, res) => {
   try {
-    const response = await axios.patch(`${WALLET_SERVICE_URL}/products/admin/${req.params.purchaseId}/reject`, {}, {
+    const response = await axios.put(`${WALLET_SERVICE_URL}/products/admin/${req.params.purchaseId}/reject`, {}, {
       headers: {
         Authorization: req.headers.authorization,
         Cookie: req.headers.cookie,

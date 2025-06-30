@@ -1,4 +1,4 @@
-// patchStatus.js
+// putStatus.js
 const mongoose = require("mongoose");
 const User = require("./models/User");
 
@@ -11,9 +11,9 @@ mongoose.connect("mongodb+srv://mlmdevelopment001:NconnectionN@affilateproject.o
     user.status = null;
     user.statusUpdatedAt = null;
     await user.save();
-    console.log(`🛠 Patched user: ${user.name}`);
+    console.log(`🛠 puted user: ${user.name}`);
   }
 
-  console.log("✅ All users patched.");
+  console.log("✅ All users puted.");
   process.exit(0);
 })();
