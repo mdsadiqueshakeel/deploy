@@ -160,6 +160,9 @@ exports.register = async (req, res) => {
 exports.login = async (req, res) => {
   const { email, password } = req.body;
 
+     console.log('🔥 Login request received');
+    console.log('Login Payload:', req.body); 
+
   if (!email || !password) {
     return res.status(400).json({ message: "All fields are required" });
   }
