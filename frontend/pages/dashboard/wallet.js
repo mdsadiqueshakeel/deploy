@@ -342,7 +342,7 @@ export default function WalletPage() {
   const [withdrawStatus, setWithdrawStatus] = useState(null);
 
   useEffect(() => {
-    const savedUser = localStorage.getItem('userProfileData');
+    const savedUser = sessionStorage.getItem('userProfileData');
     let foundId = null;
 
     if (savedUser) {
@@ -354,32 +354,50 @@ export default function WalletPage() {
     const fetchIncomeData = async (uid) => {
       try {
         const incomeRes = await axios.get(`http://localhost:5000/api/income/business/${uid}`);
-        const incomeData = incomeRes.data;
+        const incomeData = incomeRes.data || {};
 
         setTotalIncome(incomeData.totalIncome || 0);
 
         const now = new Date();
         const currentMonthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
 
-        const currentMonthEntry = (incomeData.monthlyStats || []).find(
+        const currentMonthEntry = (Array.isArray(incomeData.monthlyStats) ? incomeData.monthlyStats : []).find(
           (stat) => stat.month === currentMonthKey
         );
 
         setMonthlyIncome(currentMonthEntry?.income || 0);
       } catch (err) {
         console.error('❌ Error fetching income data:', err);
+        setTotalIncome(0);
+        setMonthlyIncome(0);
+      }
+    };
+
+    const ensureWallet = async () => {
+      try {
+        console.log('Ensuring wallet exists for user...');
+        await api.post('/api/wallet/user/ensure-wallet');
+        console.log('Wallet existence verified');
+      } catch (err) {
+        console.error('❌ Error ensuring wallet exists:', err);
       }
     };
 
     const fetchWallet = async (uid) => {
       try {
+        // First ensure the wallet exists
+        await ensureWallet();
+        
         const walletRes = await api.get(`/api/wallet/user/${uid}/wallet`);
-        const data = walletRes.data;
+        const data = walletRes.data || {};
         setIncomeWallet(data.incomeWallet || 0);
         setTopupWallet(data.topupWallet || 0);
         setShoppingWallet(data.shoppingWallet || 0);
       } catch (err) {
         console.error("❌ Wallet fetch error:", err);
+        setIncomeWallet(0);
+        setTopupWallet(0);
+        setShoppingWallet(0);
         if (err.response?.status === 401) {
           window.location.href = '/login';
         }
@@ -415,6 +433,14 @@ export default function WalletPage() {
     }
 
     try {
+      // Ensure wallet exists before submitting request
+      try {
+        await api.post('/api/wallet/user/ensure-wallet');
+      } catch (err) {
+        console.error('Error ensuring wallet exists:', err);
+        // Continue anyway, as the topup-request endpoint should handle wallet creation
+      }
+      
       const res = await api.post('/api/wallet/user/topup-request', {
         amount: Number(topupAmount),
         note: "User top-up request",
@@ -425,8 +451,10 @@ export default function WalletPage() {
 
       if (userId) {
         const walletRes = await api.get(`/api/wallet/user/${userId}/wallet`);
-        const data = walletRes.data;
+        const data = walletRes.data || {};
         setTopupWallet(data.topupWallet || 0);
+        setIncomeWallet(data.incomeWallet || 0);
+        setShoppingWallet(data.shoppingWallet || 0);
       }
 
     } catch (err) {
@@ -443,6 +471,14 @@ export default function WalletPage() {
     }
 
     try {
+      // Ensure wallet exists before submitting request
+      try {
+        await api.post('/api/wallet/user/ensure-wallet');
+      } catch (err) {
+        console.error('Error ensuring wallet exists:', err);
+        // Continue anyway, as the withdraw-request endpoint should handle wallet creation
+      }
+      
       const res = await api.post('/api/wallet/user/withdraw-request', {
         amount: Number(withdrawAmount),
         note: "User withdraw request",
@@ -453,8 +489,10 @@ export default function WalletPage() {
 
       if (userId) {
         const walletRes = await api.get(`/api/wallet/user/${userId}/wallet`);
-        const data = walletRes.data;
+        const data = walletRes.data || {};
         setTopupWallet(data.topupWallet || 0);
+        setIncomeWallet(data.incomeWallet || 0);
+        setShoppingWallet(data.shoppingWallet || 0);
       }
 
     } catch (err) {

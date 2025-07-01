@@ -11,7 +11,7 @@ export default function AdminProfilePage() {
   useEffect(() => {
     const fetchAdminProfile = async () => {
       try {
-        const token = localStorage.getItem('adminToken');
+        const token = sessionStorage.getItem('adminToken');
         if (!token) {
           router.push('/admin/login');
           return;

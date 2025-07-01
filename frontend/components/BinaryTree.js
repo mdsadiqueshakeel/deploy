@@ -9,7 +9,7 @@ const BinaryTreeNode = ({ node }) => {
     api
       .get(`/api/wallet/user/${node._id}/wallet`)
       .then((res) => {
-        setWallet(res.data);
+        setWallet(res.data || null);
       })
       .catch((err) => {
         if (err.response && err.response.status === 404) {
@@ -17,6 +17,7 @@ const BinaryTreeNode = ({ node }) => {
           setWallet(null); // leave wallet as null, so "Loading wallet..." is shown or empty
         } else {
           console.error("Wallet fetch error:", err);
+          setWallet(null);
         }
       });
   }, [node._id]);
@@ -77,14 +78,21 @@ export default function BinaryTree({ userId }) {
   useEffect(() => {
     if (!userId) return;
 
-    api
-      .get(`/api/referral/binary-tree/${userId}`)
-      .then((res) => {
-        setTreeData(res.data);
-      })
-      .catch((err) => {
-        console.error("Tree fetch failed", err);
-      });
+    const fetchTreeData = async () => {
+      try {
+        setLoading(true);
+        const response = await api.get(`/api/referral/binary-tree/${userId}`);
+        setTreeData(response.data || {});
+      } catch (error) {
+        console.error('Error fetching tree data:', error);
+        setError('Failed to load referral tree. Please try again later.');
+        setTreeData({});
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTreeData();
   }, [userId]);
 
   if (!mounted) return null;

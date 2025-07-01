@@ -3,6 +3,7 @@ const express = require("express");
 const router = express.Router();
 const User = require("../models/User");
 const { updateStatus } = require("../controllers/internalController");
+const { clearUserCache } = require("../utils/cacheUtils");
 
 // GET user by ID (already used by income-service)
 router.get("/internal/user/:id", async (req, res) => {

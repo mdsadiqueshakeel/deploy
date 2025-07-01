@@ -41,8 +41,11 @@ const recursivelyUpgradeParents = async (childUserId) => {
 };
 
 exports.handleTopupTrigger = async (req, res) => {
+  console.log("💰 Topup Trigger Request Received:", req.body);
+  console.log("💰 Request Headers:", req.headers);
+  
   const { userId, coins } = req.body;
-  console.log("💰 Topup Trigger:", { userId, coins });
+  console.log("💰 Topup Trigger Processing:", { userId, coins });
 
   try {
     // 1. Get initial status

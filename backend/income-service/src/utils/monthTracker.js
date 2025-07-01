@@ -1,5 +1,7 @@
 // income-service/utils/monthTracker.js
 const TotalBusiness = require("../models/TotalBusiness");
+const { clearBusinessCache } = require("./clearCache");
+const { clearWalletCacheRemote } = require("./triggerWalletClear");
 
 const updateMonthlyStats = async (userId, income) => {
   const now = new Date();
@@ -21,6 +23,17 @@ const updateMonthlyStats = async (userId, income) => {
 
   doc.totalIncome += income; // optional: keep syncing totalIncome
   await doc.save();
+  
+  // Clear cache after updating monthly stats
+  try {
+    await Promise.all([
+      clearBusinessCache(userId),
+      clearWalletCacheRemote(userId)
+    ]);
+    console.log(`🧹 Cleared cache after updating monthly stats for user ${userId}`);
+  } catch (err) {
+    console.error(`❌ Error clearing cache for user ${userId}:`, err);
+  }
 };
 
 module.exports = { updateMonthlyStats };

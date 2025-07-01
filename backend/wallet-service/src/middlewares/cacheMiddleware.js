@@ -8,6 +8,11 @@ exports.cacheMiddleware = async (req, res, next) => {
     // Debug log to see the exact cache key format
     console.log(`🔑 Cache key format: ${key}`);
 
+    // Skip caching for write operations
+    if (req.method !== 'GET') {
+      return next();
+    }
+
     const cached = await redis.get(key);
     if (cached) {
       console.log(`✅ Redis HIT: ${key}`);
@@ -16,7 +21,9 @@ exports.cacheMiddleware = async (req, res, next) => {
 
     res.sendResponse = res.json;
     res.json = async (body) => {
-      await redis.set(key, JSON.stringify(body));
+      // Set cache with a reasonable expiration time (1 hour)
+      // This ensures that even if cache invalidation fails, data will eventually be refreshed
+      await redis.set(key, JSON.stringify(body), 'EX', 3600);
       console.log(`🧠 Redis SET: ${key}`);
       res.sendResponse(body);
     };

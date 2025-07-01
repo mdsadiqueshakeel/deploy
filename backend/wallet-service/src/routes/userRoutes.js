@@ -13,8 +13,21 @@ router.use(extractUser);
 
 router.get("/:id/wallet" , cacheMiddleware, isAuthenticated,async (req, res) => {
   try {
-    const wallet = await Wallet.findOne({ userId: req.params.id });
-    if (!wallet) return res.status(404).json({ error: "Wallet not found" });
+    let wallet = await Wallet.findOne({ userId: req.params.id });
+    
+    // If wallet doesn't exist, create a new one with default values
+    if (!wallet) {
+      console.log(`Wallet not found for user ${req.params.id}. Creating a new wallet.`);
+      wallet = await Wallet.create({
+        userId: req.params.id,
+        topupWallet: 0,
+        incomeWallet: 0,
+        shoppingWallet: 0,
+        totalTopup: 0
+      });
+      console.log(`New wallet created for user ${req.params.id}`);
+    }
+    
     res.json(wallet);
   } catch (err) {
     console.error("Wallet fetch failed:", err);
@@ -26,7 +39,36 @@ router.post("/withdraw-request", isAuthenticated, createWithdrawRequest);
 router.post("/topup-request", isAuthenticated, createTopupRequest);
 router.get("/topup/:userId", cacheMiddleware,isAuthenticated, getTopupRequests);
 router.get("/withdraw/:userId",cacheMiddleware, isAuthenticated, getWithdrawRequests);
-// GET /user/:id/wallet
-
+// Endpoint to ensure a wallet exists for a user
+router.post("/ensure-wallet", isAuthenticated, async (req, res) => {
+  try {
+    const userId = req.user._id;
+    
+    let wallet = await Wallet.findOne({ userId });
+    let created = false;
+    
+    if (!wallet) {
+      console.log(`Ensuring wallet for user ${userId} - creating new wallet`);
+      wallet = await Wallet.create({
+        userId,
+        topupWallet: 0,
+        incomeWallet: 0,
+        shoppingWallet: 0,
+        totalTopup: 0
+      });
+      created = true;
+    }
+    
+    res.json({
+      success: true,
+      walletExists: !created,
+      walletCreated: created,
+      wallet
+    });
+  } catch (err) {
+    console.error("Ensure wallet failed:", err);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
 
 module.exports = router;

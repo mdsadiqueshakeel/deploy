@@ -517,27 +517,15 @@ export default function Products({ searchQuery }) {
   const fetchPurchaseHistory = async () => {
     setLoadingHistory(true);
     try {
-      let userId = null;
-      const savedUser = localStorage.getItem('userProfileData');
-
-      if (savedUser) {
-        const parsed = JSON.parse(savedUser);
-        if (parsed._id) userId = parsed._id;
-        else if (parsed.basicInfo && parsed.basicInfo._id) userId = parsed.basicInfo._id;
-      }
-
-      if (!userId) {
-        const { fetchProfile } = await import('../../utils/profileService');
-        const profile = await fetchProfile();
-        userId = profile?.basicInfo?._id;
-      }
-
-      if (userId) {
-        const response = await api.get(`/api/purchase/products/admin/user/${userId}/approved-purchases`);
-        setPurchaseHistory(response.data);
-      }
+      // Use the user-side route for showing purchases
+      const response = await api.get('/api/purchase/products/my-purchases');
+      // Check if response.data is an object with purchases property
+      const purchasesData = response.data?.purchases || response.data;
+      setPurchaseHistory(Array.isArray(purchasesData) ? purchasesData : []);
     } catch (error) {
       console.error('Error fetching purchase history:', error);
+      // Set empty array on error and potentially show a user-friendly error message
+      setPurchaseHistory([]);
     } finally {
       setLoadingHistory(false);
     }
@@ -566,7 +554,7 @@ export default function Products({ searchQuery }) {
 
     try {
       let userId = null;
-      const savedUser = localStorage.getItem('userProfileData');
+      const savedUser = sessionStorage.getItem('userProfileData');
 
       if (savedUser) {
         const parsed = JSON.parse(savedUser);

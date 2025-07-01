@@ -36,14 +36,14 @@ const api = axios.create({  // Changed from API to api
 api.interceptors.request.use(
   (config) => {
     // First try admin token
-    const adminToken = localStorage.getItem('adminToken');
+    const adminToken = sessionStorage.getItem('adminToken');
     if (adminToken) {
       config.headers.Authorization = `Bearer ${adminToken}`;
       return config;
     }
     
     // Fall back to regular token
-    const token = localStorage.getItem('token');
+    const token = sessionStorage.getItem('token');
     console.log("Interceptor attaching token:", token);
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;

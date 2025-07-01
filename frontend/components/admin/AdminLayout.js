@@ -34,7 +34,7 @@ export default function AdminLayout({ children, title }) {
   useEffect(() => {
     const fetchAdminProfile = async () => {
       try {
-        const token = localStorage.getItem('adminToken');
+        const token = sessionStorage.getItem('adminToken');
         if (!token) return;
 
         const res = await API.get('/api/admin/profile', {

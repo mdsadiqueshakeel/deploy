@@ -15,9 +15,24 @@ app.use(cors({ origin: true, credentials: true }));
 app.use(express.json());
 app.use(cookieParser());
 
+// Add request logging middleware
+app.use((req, res, next) => {
+  console.log(`📝 ${new Date().toISOString()} - ${req.method} ${req.originalUrl}`);
+  console.log(`📝 Request Body:`, req.body);
+  next();
+});
+
+// Mount routes
 app.use("/", require("./routes/businessRoutes"));
 app.use("/api/income", require("./routes/incomeRoutes"));
-app.use('/test', require('./routes/testRoutes')); // ✅ add this line to use test routes
+app.use('/test', require('./routes/testRoutes')); // Test routes
+
+// Add a direct route for topup-trigger for testing
+const { handleTopupTrigger } = require('./controllers/incomeController');
+app.post('/direct-topup-trigger', (req, res) => {
+  console.log('🔄 Direct topup-trigger route hit');
+  handleTopupTrigger(req, res);
+});
 
 app.get("/ping", (req, res) => res.send("💸 Income Service is Alive"));
 

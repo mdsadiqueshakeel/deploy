@@ -149,7 +149,7 @@ const ProfileCard = ({ user: propUser }) => {
         const updatedUser = { ...user, avatar: reader.result };
         setUser(updatedUser);
         setFormData((prev) => ({ ...prev, avatar: reader.result }));
-        localStorage.setItem("userProfileData", JSON.stringify(updatedUser));
+        sessionStorage.setItem("userProfileData", JSON.stringify(updatedUser));
       };
       reader.onerror = () => {
         alert("Error reading the image file.");
@@ -163,7 +163,7 @@ const ProfileCard = ({ user: propUser }) => {
     const updatedUser = { ...user, avatar: null };
     setUser(updatedUser);
     setFormData((prev) => ({ ...prev, avatar: null }));
-    localStorage.setItem("userProfileData", JSON.stringify(updatedUser));
+    sessionStorage.setItem("userProfileData", JSON.stringify(updatedUser));
   };
 
   // Trigger file input click

@@ -16,7 +16,7 @@ export default function BusinessPage() {
   const [activeView, setActiveView] = useState('direct');
 
   useEffect(() => {
-    const savedUser = localStorage.getItem('userProfileData');
+    const savedUser = sessionStorage.getItem('userProfileData');
     let foundId = null;
 
     if (savedUser) {
@@ -28,9 +28,9 @@ export default function BusinessPage() {
     const fetchBusinessReport = async (uid) => {
       try {
         const res = await axios.get(`http://localhost:5000/api/income/business/${uid}`);
-        const data = res.data;
+        const data = res.data || {};
 
-        setLevelStats(data.levelStats || []);
+        setLevelStats(Array.isArray(data.levelStats) ? data.levelStats : []);
         setLeftTeam(data.totalLeftUsers || 0);
         setRightTeam(data.totalRightUsers || 0);
         setLeftBusiness(data.totalLeftCarry || 0);

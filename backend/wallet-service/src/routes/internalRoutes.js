@@ -15,6 +15,13 @@ router.post("/internal/credit-income",cacheMiddleware, async (req, res) => {
   const incomeAmount = amount * 0.9;
   const shoppingAmount = amount * 0.1;
 
+  // The upsert:true option already creates a wallet if it doesn't exist
+  // Adding logging for clarity
+  const wallet = await Wallet.findOne({ userId });
+  if (!wallet) {
+    console.log(`Creating wallet for user ${userId} during income credit`);
+  }
+  
   await Wallet.findOneAndUpdate(
     { userId },
     {
@@ -43,8 +50,20 @@ router.get("/internal/wallet/:userId", cacheMiddleware, async (req, res) => {
 
   if (!userId) return res.status(400).json({ message: "userId required" });
   try {
-    const wallet = await Wallet.findOne({ userId });
-    if (!wallet) return res.status(404).json({ message: "Wallet not found" });
+    let wallet = await Wallet.findOne({ userId });
+    
+    // If wallet doesn't exist, create a new one with default values
+    if (!wallet) {
+      console.log(`Internal API: Wallet not found for user ${userId}. Creating a new wallet.`);
+      wallet = await Wallet.create({
+        userId,
+        topupWallet: 0,
+        incomeWallet: 0,
+        shoppingWallet: 0,
+        totalTopup: 0
+      });
+      console.log(`Internal API: New wallet created for user ${userId}`);
+    }
 
     res.status(200).json(wallet);
   } catch (err) {

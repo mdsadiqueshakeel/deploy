@@ -280,12 +280,12 @@ function AdminDashboard() {
           api.get('/api/wallet/admin/pending-requests')
         ]);
 
-        setPendingRequests(pendingRes.data);
+        setPendingRequests(pendingRes.data || { topup: { count: 0 }, withdraw: { count: 0 } });
 
         let productCount = 0;
 
         const enrichedUsers = await Promise.all(
-          usersRes.data.map(async (user) => {
+          (Array.isArray(usersRes.data) ? usersRes.data : []).map(async (user) => {
             try {
               const [detailsRes, topupRes, withdrawRes, productRes] = await Promise.all([
                 api.get(`/api/admin/user/${user._id}`),
@@ -294,15 +294,15 @@ function AdminDashboard() {
                 api.get(`/api/purchase/products/admin/user/${user._id}/pending-purchases`)
               ]);
 
-              const hasPendingTopup = topupRes.data.length > 0;
-              const hasPendingWithdraw = withdrawRes.data.length > 0;
-              const hasPendingProduct = productRes.data.length > 0;
+              const hasPendingTopup = Array.isArray(topupRes.data) && topupRes.data.length > 0;
+              const hasPendingWithdraw = Array.isArray(withdrawRes.data) && withdrawRes.data.length > 0;
+              const hasPendingProduct = Array.isArray(productRes.data) && productRes.data.length > 0;
 
               if (hasPendingProduct) productCount += productRes.data.length;
 
               return {
                 ...user,
-                ...detailsRes.data,
+                ...(detailsRes.data || {}),
                 hasPending: hasPendingTopup || hasPendingWithdraw || hasPendingProduct
               };
             } catch (error) {

@@ -11,6 +11,19 @@ exports.createTopupRequest = async (req, res) => {
     return res.status(400).json({ message: "Invalid amount" });
   }
 
+  // Check if wallet exists, if not create one
+  let wallet = await Wallet.findOne({ userId });
+  if (!wallet) {
+    console.log(`Creating wallet for user ${userId} during topup request`);
+    wallet = await Wallet.create({
+      userId,
+      topupWallet: 0,
+      incomeWallet: 0,
+      shoppingWallet: 0,
+      totalTopup: 0
+    });
+  }
+
   const request = await TopupRequest.create({
     userId,
     amount,
@@ -30,8 +43,21 @@ exports.createWithdrawRequest = async (req, res) => {
     return res.status(400).json({ message: "Invalid amount" });
   }
 
-  const wallet = await Wallet.findOne({ userId });
-  if (!wallet || wallet.incomeWallet < amount) {
+  // Check if wallet exists, if not create one
+  let wallet = await Wallet.findOne({ userId });
+  if (!wallet) {
+    console.log(`Creating wallet for user ${userId} during withdraw request`);
+    wallet = await Wallet.create({
+      userId,
+      topupWallet: 0,
+      incomeWallet: 0,
+      shoppingWallet: 0,
+      totalTopup: 0
+    });
+  }
+  
+  // Check if there's sufficient balance
+  if (wallet.incomeWallet < amount) {
     return res.status(400).json({ message: "Insufficient income wallet balance" });
   }
 

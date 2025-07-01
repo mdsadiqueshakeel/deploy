@@ -1058,9 +1058,10 @@ export default function UserDetails() {
     setLoadingApprovedPurchases(true);
     try {
       const response = await api.get(`/api/purchase/products/admin/user/${userId}/approved-purchases`);
-      setApprovedPurchases(response.data);
+      setApprovedPurchases(Array.isArray(response.data) ? response.data : []);
     } catch (error) {
       console.error('Error fetching approved purchases:', error);
+      setApprovedPurchases([]);
     } finally {
       setLoadingApprovedPurchases(false);
     }

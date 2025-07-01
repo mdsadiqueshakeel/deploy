@@ -163,7 +163,7 @@ export default function Dashboard({ initialUser }) {
 
   useEffect(() => {
     try {
-      const savedUser = localStorage.getItem('userProfileData');
+      const savedUser = sessionStorage.getItem('userProfileData');
       if (savedUser) {
         setUser(JSON.parse(savedUser));
       }

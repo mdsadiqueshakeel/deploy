@@ -16,6 +16,22 @@ router.use((req, res, next) => {
 // 🧾 USER ROUTES
 //
 
+// Ensure wallet exists for user
+router.post("/user/ensure-wallet", walletAuth, async (req, res) => {
+  try {
+    const response = await axios.post(`${WALLET_SERVICE_URL}/user/ensure-wallet`, req.body, {
+      headers: {
+        Authorization: req.headers.authorization,
+        Cookie: req.headers.cookie,
+      },
+    });
+    res.status(response.status).json(response.data);
+  } catch (err) {
+    console.error("Ensure wallet error:", err.response?.data || err.message);
+    res.status(err.response?.status || 500).json(err.response?.data || { error: "Service error" });
+  }
+});
+
 // Top-up Request
 router.post("/user/topup-request", walletAuth, async (req, res) => {
   try {

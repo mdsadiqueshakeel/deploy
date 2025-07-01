@@ -2,6 +2,8 @@
 const { getUserById, updateUserStatus } = require("../services/userService");
 const { getWalletData } = require("../services/walletService");
 const STATUS_TIERS = require("../constants/statusTier");
+const { clearBusinessCache } = require("./clearCache");
+const { clearWalletCacheRemote } = require("./triggerWalletClear");
 
 const checkAndUpgradeStatus = async (userId) => {
   try {
@@ -70,6 +72,18 @@ const checkAndUpgradeStatus = async (userId) => {
 
         if (response.changed) {
           console.log(`🎉 Successfully upgraded to ${tier.name}`);
+          
+          // Clear cache after status update
+          try {
+            await Promise.all([
+              clearBusinessCache(userId),
+              clearWalletCacheRemote(userId)
+            ]);
+            console.log(`🧹 Cleared cache after status upgrade for user ${userId}`);
+          } catch (err) {
+            console.error(`❌ Error clearing cache for user ${userId}:`, err);
+          }
+          
           return tier.name;
         } else {
           console.log(`ℹ️ Already at ${tier.name} status`);

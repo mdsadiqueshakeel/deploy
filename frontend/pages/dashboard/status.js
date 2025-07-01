@@ -63,7 +63,7 @@ const [nextStatus, setNextStatus] = useState(null);        // ✅ added
 
 
   useEffect(() => {
-    const savedUser = localStorage.getItem("userProfileData");
+    const savedUser = sessionStorage.getItem("userProfileData");
     let foundId = null;
     let userStatusFromDB = null;
 
@@ -80,7 +80,7 @@ const [nextStatus, setNextStatus] = useState(null);        // ✅ added
     const fetchWallet = async (uid, status) => {
       try {
         const walletRes = await api.get(`/api/wallet/user/${uid}/wallet`);
-        const data = walletRes.data;
+        const data = walletRes.data || {};
         const points = (data.totalTopup || 0) / 100; // ₹100 = 1 point
         setUserPoints(points);
 
@@ -99,6 +99,9 @@ const [nextStatus, setNextStatus] = useState(null);        // ✅ added
         setNextStatus(next);
       } catch (err) {
         console.error("❌ Wallet fetch error:", err);
+        setUserPoints(0);
+        setCurrentStatus(STATUS_TIERS[0]);
+        setNextStatus(STATUS_TIERS[1]);
         if (err.response?.status === 401) {
           window.location.href = "/login";
         }

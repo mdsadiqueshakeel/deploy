@@ -38,6 +38,9 @@ exports.clearWalletCache = async (userId) => {
       `cache:*user/${userId}*`, // Match user-specific routes
       `cache:*products*${userId}*`, // Match product routes with userId
       `cache:*purchases*${userId}*`, // Match purchase routes with userId
+      `cache:*/admin/pending-requests*`, // Match admin pending requests summary
+      `cache:*/admin/user/*/pending-topup-requests*`, // Match admin pending topup requests
+      `cache:*/admin/user/*/pending-withdraw-requests*`, // Match admin pending withdraw requests
     ];
     
     let allKeys = [];

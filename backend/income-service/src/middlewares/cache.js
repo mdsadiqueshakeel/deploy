@@ -2,38 +2,37 @@
 const redis = require("../utils/redisClient");
 
 exports.cacheMiddleware = async (req, res, next) => {
-  const userId = req.params.userId || req.user?._id;
-  if (!userId) return next(); // Skip caching if no userId is available
+  try {
+    const userId = req.params.userId || req.user?._id;
+    if (!userId) return next(); // Skip caching if no userId is available
 
-  const key = `cache:${req.originalUrl}`;
-
-  const cached = await redis.get(key);
-  if (cached) {
-    console.log(`✅ Redis HIT: ${key}`);
-    return res.json(JSON.parse(cached));
-  }
-
-  const originalJson = res.json.bind(res);
-
-  // 🔒 Hold response body to cache it later
-  let responseBody;
-  res.json = (body) => {
-    responseBody = body;
-    return originalJson(body);
-  };
-
-  // ✅ Listen when response is done being sent
-  res.once("finish", async () => {
-    try {
-      if (responseBody) {
-        // Store in Redis without expiration - will be cleared only when data changes
-        await redis.set(key, JSON.stringify(responseBody));
-        console.log(`🧠 Redis SET: ${key}`);
-      }
-    } catch (err) {
-      console.error("⚠️ Redis cache set failed:", err.message);
+    // Skip caching for write operations
+    if (req.method !== 'GET') {
+      return next();
     }
-  });
 
-  next();
+    const key = `cache:${req.originalUrl}:${userId}`; // Add userId to make cache key more specific
+    
+    // Debug log to see the exact cache key format
+    console.log(`🔑 Cache key format: ${key}`);
+
+    const cached = await redis.get(key);
+    if (cached) {
+      console.log(`✅ Redis HIT: ${key}`);
+      return res.json(JSON.parse(cached));
+    }
+
+    res.sendResponse = res.json;
+    res.json = async (body) => {
+      // Store in Redis with expiration - ensures data will eventually be refreshed
+      await redis.set(key, JSON.stringify(body), 'EX', 3600); // 1 hour expiration
+      console.log(`🧠 Redis SET: ${key}`);
+      res.sendResponse(body);
+    };
+
+    next();
+  } catch (err) {
+    console.error("❌ Redis cache middleware error:", err.message);
+    next(); // Don't break the route if cache fails
+  }
 };

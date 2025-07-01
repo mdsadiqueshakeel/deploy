@@ -246,7 +246,7 @@ export default function AdminLogin() {
     setError('');
     try {
       const response = await api.post('/api/admin/login', { email, password });
-      localStorage.setItem('adminToken', response.data.token);
+      sessionStorage.setItem('adminToken', response.data.token);
       router.push('/admin/dashboard');
     } catch (error) {
       setError(error.response?.data?.message || 'Login failed. Please try again.');

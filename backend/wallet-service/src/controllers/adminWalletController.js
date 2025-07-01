@@ -30,16 +30,88 @@ exports.approveTopupRequest = async (req, res) => {
 
   // ✅ trigger income-service!
   try {
+    console.log(`🔄 Activating user at: ${USER_SERVICE_URL}/activate-user/${request.userId}`);
     await axios.put(
       `${USER_SERVICE_URL}/activate-user/${request.userId}`
     );
+    
     // ✅ Mark user as active after top-up
-    await axios.post(`${INCOME_SERVICE_URL}/api/income/topup-trigger`, {
+    // Try different URL formats to ensure we hit the correct endpoint
+    const baseUrl = INCOME_SERVICE_URL.startsWith('http') ? INCOME_SERVICE_URL : `http://${INCOME_SERVICE_URL}`;
+    
+    // Try both with and without the /api prefix
+    const incomeServiceUrl1 = `${baseUrl}/api/income/topup-trigger`;
+    const incomeServiceUrl2 = `${baseUrl}/income/topup-trigger`;
+    
+    console.log(`🔄 INCOME_SERVICE_URL env value: ${INCOME_SERVICE_URL}`);
+    console.log(`🔄 Constructed base URL: ${baseUrl}`);
+    
+    const payload = {
       userId: request.userId,
-      coins: request.amount, // coins = topup
-    });
+      coins: request.amount // coins = topup
+    };
+    
+    const axiosConfig = {
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    };
+    
+    // Try the first URL format
+    try {
+      console.log(`🔄 Trying first URL format: ${incomeServiceUrl1}`);
+      console.log(`🔄 Payload:`, payload);
+      
+      const response = await axios.post(incomeServiceUrl1, payload, axiosConfig);
+      console.log(`✅ Income service response (first URL):`, response.data);
+    } catch (firstUrlError) {
+      console.error(`❌ First URL format failed:`, firstUrlError.message);
+      console.error(`❌ Error details:`, firstUrlError.response?.data || "No response data");
+      
+      // Try the second URL format if the first one fails
+       try {
+         console.log(`🔄 Trying second URL format: ${incomeServiceUrl2}`);
+         console.log(`🔄 Payload:`, payload);
+         
+         const response = await axios.post(incomeServiceUrl2, payload, axiosConfig);
+         console.log(`✅ Income service response (second URL):`, response.data);
+       } catch (secondUrlError) {
+         console.error(`❌ Second URL format also failed:`, secondUrlError.message);
+         console.error(`❌ Error details:`, secondUrlError.response?.data || "No response data");
+         
+         // Try the test route as a last resort
+          try {
+            const testUrl = `${baseUrl}/test/test-topup-trigger`;
+            console.log(`🔄 Trying test route as last resort: ${testUrl}`);
+            console.log(`🔄 Payload:`, payload);
+            
+            const response = await axios.post(testUrl, payload, axiosConfig);
+            console.log(`✅ Income service test route response:`, response.data);
+          } catch (testRouteError) {
+            console.error(`❌ Test route also failed:`, testRouteError.message);
+            console.error(`❌ Error details:`, testRouteError.response?.data || "No response data");
+            
+            // Try the direct route as a final attempt
+            try {
+              const directUrl = `${baseUrl}/direct-topup-trigger`;
+              console.log(`🔄 Trying direct route as final attempt: ${directUrl}`);
+              console.log(`🔄 Payload:`, payload);
+              
+              const response = await axios.post(directUrl, payload, axiosConfig);
+              console.log(`✅ Income service direct route response:`, response.data);
+            } catch (directRouteError) {
+              console.error(`❌ Direct route also failed:`, directRouteError.message);
+              console.error(`❌ Error details:`, directRouteError.response?.data || "No response data");
+              throw new Error(`All URL formats failed to reach income service`);
+            }
+          }
+       }
+    }
   } catch (err) {
-    console.error("Failed to trigger income-service:", err.message);
+    console.error("❌ Failed to trigger income-service:", err.message);
+    console.error("❌ Error details:", err.response?.data || "No response data");
+    console.error("❌ Request URL:", err.config?.url || "Unknown URL");
+    console.error("❌ Request method:", err.config?.method || "Unknown method");
   }
 
   res.json({ message: "Top-up request approved", wallet });

@@ -512,9 +512,9 @@ const DashboardPage = () => {
 
         // ✅ Get wallet
         const walletRes = await api.get(`/api/wallet/user/${userId}/wallet`);
-        setWallet(walletRes.data);
+        setWallet(walletRes.data || { incomeWallet: 0, totalTopup: 0 });
 
-        const userPoints = (walletRes.data.totalTopup || 0) / 100;
+        const userPoints = (walletRes.data?.totalTopup || 0) / 100;
 
         // ✅ Instead of calculating status — get it from DB
         const userStatusName = profileData.statusInfo?.status || "Inactive";
@@ -547,6 +547,9 @@ const DashboardPage = () => {
       } catch (err) {
         console.error("Dashboard data fetch error:", err);
         setError(err.message || "Failed to load dashboard data");
+        // Set default values in case of error
+        setCurrentStatus(STATUS_TIERS[0]);
+        setNextStatus(STATUS_TIERS[1]);
       } finally {
         setLoading(false);
       }

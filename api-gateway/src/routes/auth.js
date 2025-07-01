@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const axios = require("axios");
-
+const jwt = require("jsonwebtoken");
 
 const jwtAuth = require("../middlewares/jwtAuth");
 
@@ -130,7 +130,38 @@ router.get("/me", jwtAuth, async (req, res) => {
   }
 });
 
-router.put("/change-password", async (req, res) => {
+// Check Auth Route
+router.get("/check-auth", async (req, res) => {
+  try {
+    const token = req.cookies?.token;
+    
+    if (!token) {
+      return res.json({ authenticated: false });
+    }
+    
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      
+      // Get user data from user service
+      const response = await axios.get(`${USER_SERVICE_URL}/api/auth/me`, {
+        headers: {
+          Cookie: `token=${token}`, // Forward token as cookie
+        },
+      });
+      
+      return res.json({ authenticated: true, user: response.data });
+    } catch (error) {
+      // Invalid token
+      res.clearCookie("token");
+      return res.json({ authenticated: false });
+    }
+  } catch (error) {
+    console.error("Check auth error:", error);
+    return res.status(500).json({ error: "Server error" });
+  }
+});
+
+router.put("/change-password", jwtAuth, async (req, res) => {
   try {
     const response = await axios.put(`${USER_SERVICE_URL}/api/auth/change-password`, req.body, {
       headers: {
@@ -150,7 +181,7 @@ router.put("/profile", jwtAuth, async (req, res) => {
         Cookie: req.headers.cookie, // Pass token cookie along
       },
     });
-    resRI.status(response.status).json(response.data);
+    res.status(response.status).json(response.data);
   } catch (err) {
     res.status(err.response?.status || 500).json(err.response?.data || { error: "Service error" });
   }
