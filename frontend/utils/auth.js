@@ -25,9 +25,9 @@ export const logout = async () => {
   try {
     await api.post('/api/auth/logout');
     // Clear any client-side state
-    localStorage.removeItem('adminToken'); // Remove admin token from localStorage
+    localStorage.removeItem('token'); // Remove admin token from localStorage
   } catch (error) {
     // Handle error if needed
-    localStorage.removeItem('adminToken'); // Remove admin token even if API call fails
+    localStorage.removeItem('token'); // Remove admin token even if API call fails
   }
 };

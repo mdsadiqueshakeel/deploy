@@ -2,7 +2,7 @@ const redis = require("../utils/redisClient");
 
 exports.cacheMiddleware = async (req, res, next) => {
   // Extract userId from params or user object
-  const userId = req.params.userId || req.user?._id || "public";
+  const userId = req.params.id || req.admin?.adminId || "public";
   const key = `cache:${req.originalUrl}`;
   
   const cached = await redis.get(key);

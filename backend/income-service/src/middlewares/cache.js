@@ -3,7 +3,7 @@ const redis = require("../utils/redisClient");
 
 exports.cacheMiddleware = async (req, res, next) => {
   const userId = req.params.userId || req.user?._id;
-  if (!userId) return next();
+  if (!userId) return next(); // Skip caching if no userId is available
 
   const key = `cache:${req.originalUrl}`;
 

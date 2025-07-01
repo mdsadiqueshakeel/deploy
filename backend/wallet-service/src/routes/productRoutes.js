@@ -17,7 +17,7 @@ router.use(extractUser);
 
 // ✅ USER ROUTES
 router.post("/request" ,isAuthenticated, requestProduct);
-router.get("/my-purchases", isAuthenticated, getMyPurchases);
+router.get("/my-purchases", isAuthenticated, cacheMiddleware, getMyPurchases);
 
 // ✅ ADMIN ROUTES
 router.get("/admin/user/:userId/pending-purchases", cacheMiddleware, isAuthenticated, isAdmin, getPendingPurchasesByUser);

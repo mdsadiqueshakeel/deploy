@@ -111,8 +111,7 @@ exports.getBusinessReport = async (req, res) => {
     const totalIncome = totalLevelIncome + totalMatchingIncome;
     const monthlyStats = businessDoc?.monthlyStats || [];
     
-    // Don't clear cache on read operations
-    // await clearBusinessCache(userId);
+    // Don't clear cache on read operations - this is correct behavior
 
     res.json({
       userId,

@@ -31,9 +31,12 @@ exports.requestProduct = async (req, res) => {
     productName: product.name,
     quantity,
     unitPrice: product.dp,
-    totalPrice,success: true,
+    totalPrice,
     status: "pending",
   });
+
+  // Clear cache after creating a new purchase request
+  await clearWalletCache(userId);
 
   res.status(201).json({ message: "Product request submitted", purchase });
 };
@@ -134,6 +137,7 @@ exports.rejectPurchase = async (req, res, next) => {
     purchase.status = "rejected";
     purchase.rejectedAt = new Date();
     await purchase.save();
+    await clearWalletCache(purchase.userId);
 
     res.json({ message: "Purchase request rejected", purchase });
   } catch (err) {

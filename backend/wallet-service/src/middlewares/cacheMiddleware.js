@@ -4,6 +4,9 @@ exports.cacheMiddleware = async (req, res, next) => {
   try {
     const userId = req.params.userId || req.user?._id || req.admin?.adminId || "public";
     const key = `cache:${req.originalUrl}:${userId}`; // 🔥 Add identity to the cache key
+    
+    // Debug log to see the exact cache key format
+    console.log(`🔑 Cache key format: ${key}`);
 
     const cached = await redis.get(key);
     if (cached) {

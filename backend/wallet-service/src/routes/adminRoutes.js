@@ -13,7 +13,7 @@ router.put("/topup-request/:id/decline", isAuthenticated, isAdmin, declineTopupR
 router.put("/withdraw-request/:id/decline", isAuthenticated, isAdmin, declineWithdrawRequest);
 router.post("/credit-income", isAuthenticated, isAdmin, creditIncome);
 router.get("/pending-requests", cacheMiddleware, getPendingRequestsSummary); // OK to cache
-router.get("/user/:userId/pending-topup-requests", isAuthenticated, isAdmin, getPendingTopupRequestsByUser); // 🔥 REMOVE cacheMiddleware
-router.get("/user/:userId/pending-withdraw-requests", isAuthenticated, isAdmin, getPendingWithdrawRequestsByUser); // 🔥 REMOVE cacheMiddleware
+router.get("/user/:userId/pending-topup-requests", isAuthenticated, isAdmin, cacheMiddleware, getPendingTopupRequestsByUser);
+router.get("/user/:userId/pending-withdraw-requests", isAuthenticated, isAdmin, cacheMiddleware, getPendingWithdrawRequestsByUser);
 
 module.exports = router;
