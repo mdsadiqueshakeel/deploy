@@ -329,6 +329,10 @@ import axios from 'axios';
 import { useEffect, useState } from "react";
 import api from '../../utils/api';
 import { fetchProfile } from '../../utils/profileService';
+import dotenv from 'dotenv'; 
+dotenv.config();
+
+const NEXT_PUBLIC_API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 export default function WalletPage() {
   const [userId, setUserId] = useState(null);
@@ -367,7 +371,7 @@ export default function WalletPage() {
 
     const fetchIncomeData = async (uid) => {
       try {
-        const incomeRes = await axios.get(`http://localhost:5000/api/income/business/${uid}`);
+        const incomeRes = await axios.get(`${NEXT_PUBLIC_API_URL}/api/income/business/${uid}`);
         const incomeData = incomeRes.data || {};
 
         setTotalIncome(incomeData.totalIncome || 0);

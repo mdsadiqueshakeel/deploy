@@ -2,8 +2,10 @@
 const express = require("express");
 const router = express.Router();
 const { createProxyMiddleware } = require("http-proxy-middleware");
+dotenv = require("dotenv");
+dotenv.config();
 
-const INCOME_SERVICE_URL = process.env.INCOME_SERVICE_URL || "http://localhost:5004";
+const INCOME_SERVICE_URL = process.env.INCOME_SERVICE_URL ;
 
 // ✅ Remove "/api/income" here and just use "/"
 router.use(

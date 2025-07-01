@@ -7,8 +7,7 @@ const jwtAuth = require("../middlewares/jwtAuth");
 
 //sameer changed
 const USER_SERVICE_URL = process.env.USER_SERVICE_URL;
-const INCOME_SERVICE_URL = process.env.INCOME_SERVICE_URL || "http://localhost:5004";
-// const USER_SERVICE_URL = process.env.USER_SERVICE_URL || "http://localhost:5001";
+const INCOME_SERVICE_URL = process.env.INCOME_SERVICE_URL;
 
 // Add this for better error logging
 router.use((req, res, next) => {

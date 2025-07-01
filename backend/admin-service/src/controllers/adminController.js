@@ -3,6 +3,8 @@ const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 const axios = require("axios");
 const { clearAdminCache } = require("../utils/clearAdminCache");
+const dotenv = require("dotenv");
+dotenv.config();
 
 const USER_SERVICE_URL = process.env.USER_SERVICE_URL;
 
@@ -125,7 +127,7 @@ exports.getAllUsers = async (req, res) => {
 };
 
 // Get Single User Full Info
-const WALLET_SERVICE_URL = process.env.WALLET_SERVICE_URL || "http://localhost:5003";
+const WALLET_SERVICE_URL = process.env.WALLET_SERVICE_URL;
 
 exports.getSingleUser = async (req, res) => {
   try {

@@ -2,8 +2,10 @@ const express = require("express");
 const router = express.Router();
 const axios = require("axios");
 const walletAuth = require("../middlewares/walletAuth");
+dotenv = require("dotenv");
+dotenv.config();
 
-const WALLET_SERVICE_URL = process.env.WALLET_SERVICE_URL || "http://localhost:5003";
+const WALLET_SERVICE_URL = process.env.WALLET_SERVICE_URL;
 
 // -------------------------
 // 🧾 USER ROUTES

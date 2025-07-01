@@ -1,10 +1,12 @@
 const express = require("express");
 const router = express.Router();
 const axios = require("axios");
+dotenv = require("dotenv");
+dotenv.config();
 
 const adminAuth = require('../middlewares/adminAuth');
-const ADMIN_SERVICE_URL = process.env.ADMIN_SERVICE_URL || "http://localhost:5002";
-const USER_SERVICE_URL = process.env.USER_SERVICE_URL || "http://localhost:5001";
+const ADMIN_SERVICE_URL = process.env.ADMIN_SERVICE_URL;
+const USER_SERVICE_URL = process.env.USER_SERVICE_URL;
 
 //sameer
 router.get("/verify", async (req, res) => {
@@ -173,7 +175,7 @@ router.post("/logout", (req, res) => {
     res.clearCookie("adminToken", {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
+      sameSite: "Strict", // Use Strict for better security
       path: "/",
       domain: "localhost", // Ensure it matches the domain used in login
     });

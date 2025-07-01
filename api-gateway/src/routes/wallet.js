@@ -5,7 +5,7 @@ const walletAuth = require("../middlewares/walletAuth");
 const { createProxyMiddleware } = require("http-proxy-middleware");
  // same as used in /me route
 
-const WALLET_SERVICE_URL = process.env.WALLET_SERVICE_URL || "http://localhost:5003";
+const WALLET_SERVICE_URL = process.env.WALLET_SERVICE_URL;
 
 // Logger
 router.use((req, res, next) => {
@@ -169,7 +169,7 @@ router.put("/admin/withdraw-request/:id/decline", walletAuth, async (req, res) =
 // Wallet Info by User ID
 router.use(
   createProxyMiddleware({
-    target: "http://localhost:5003", // or use Docker name like 'http://wallet-service:5003' if using Docker Compose
+    target: WALLET_SERVICE_URL, // or use Docker name like 'http://wallet-service:5003' if using Docker Compose
     changeOrigin: true,
     pathRewrite: {
       "^/wallet": "", // remove /wallet prefix before forwarding

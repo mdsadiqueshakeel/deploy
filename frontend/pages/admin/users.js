@@ -3,6 +3,10 @@ import { useState, useEffect } from 'react';
 import api from '../../services/api';
 import { useRouter } from 'next/router';
 import axios from 'axios';
+import dotenv from 'dotenv';
+dotenv.config();
+
+const NEXT_PUBLIC_API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 export default function UserManagement() {
   const [users, setUsers] = useState([]);
@@ -20,7 +24,7 @@ export default function UserManagement() {
           response.data.map(async (user) => {
             try {
               const details = await api.get(`/api/admin/user/${user._id}`);
-              const incomeRes = await axios.get(`http://localhost:5000/api/income/business/${user._id}`);
+              const incomeRes = await axios.get(`${NEXT_PUBLIC_API_URL}/api/income/business/${user._id}`);
               const totalIncome = incomeRes.data?.totalIncome || 0;
               return { ...user, ...details.data, balance: totalIncome };
             } catch (err) {

@@ -1,10 +1,12 @@
+const dotenv = require("dotenv");
+dotenv.config();
 const express = require("express");
 const { approveTopupRequest, approveWithdrawRequest, creditIncome,getPendingRequestsSummary,getPendingTopupRequestsByUser, getPendingWithdrawRequestsByUser, declineTopupRequest, declineWithdrawRequest } = require("../controllers/adminWalletController");
 const { extractUser, isAuthenticated, isAdmin } = require("../middlewares/auth.js");
 const { cacheMiddleware } = require("../middlewares/cacheMiddleware.js");
 const router = express.Router();
 const axios = require("axios");
-const INCOME_SERVICE_URL = process.env.INCOME_SERVICE_URL || "http://localhost:5004";
+const INCOME_SERVICE_URL = process.env.INCOME_SERVICE_URL;
 
 // Apply extractUser middleware to all routes
 router.use(extractUser);

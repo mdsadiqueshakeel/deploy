@@ -1,14 +1,14 @@
 // src/utils/redisClient.js
 const Redis = require("ioredis");
 
-const redisClient = new Redis(process.env.REDIS_URL || "redis://127.0.0.1:6379");
+const redisClient = new Redis(process.env.REDIS_URL);
 
 redisClient.on("connect", () => {
-  console.log("✅ Redis connected");
+  console.log("✅ Redis connected (user-service)");
 });
 
 redisClient.on("error", (err) => {
-  console.error("❌ Redis error:", err);
+  console.error("❌ Redis error (user-service):", err);
 });
 
 module.exports = redisClient;
