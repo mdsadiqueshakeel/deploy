@@ -7,33 +7,60 @@ This service is part of the **MLM-System** backend. It handles user authenticati
 ## 📁 Directory Structure
 
 ```
-user-service/
+MLM-System/
 │
-├── .env                # Environment variables (not committed)
-├── .env.example        # Example environment variables
-├── Dockerfile          # Docker build file
-├── index.js            # Main entry point (legacy, use src/index.js)
-├── package.json        # NPM dependencies and scripts
-├── seed.js             # Script to seed admin users
-└── src/
-    ├── controllers/
-    │   ├── auth.js         # User authentication, registration, profile, password logic
-    │   ├── admin.js        # Admin-specific logic
-    │   └── referral.js     # Referral tree and validation logic
-    ├── middlewares/
-    │   ├── jwtAuth.js      # JWT authentication middleware
-    │   └── ...             # Other custom middlewares
-    ├── models/
-    │   └── User.js         # Mongoose User schema
-    ├── routes/
-    │   ├── auth.js         # Auth/user-related API routes
-    │   ├── adminRoutes.js  # Admin API routes
-    │   └── referral.js     # Referral API routes
-    ├── utils/
-    │   ├── referralUtils.js # Referral code generation, tree helpers
-    │   ├── sendEmail.js     # Email sending utility (nodemailer)
-    │   └── wrapAsync.js     # Async error wrapper for routes
-    └── index.js            # Main Express app entry point
+├── backend/
+│   ├── api-gateway/           # Main entrypoint for all frontend/backend API calls
+│   │   ├── .env
+│   │   ├── Dockerfile
+│   │   ├── package.json
+│   │   └── src/
+│   │       ├── index.js
+│   │       ├── middlewares/
+│   │       ├── routes/
+│   │       └── utils/
+│   ├── user-service/          # Handles user, auth, and referral logic
+│   │   ├── .env
+│   │   ├── .env.example
+│   │   ├── Dockerfile
+│   │   ├── index.js           # Main entry point (legacy, use src/index.js)
+│   │   ├── package.json
+│   │   ├── seed.js
+│   │   └── src/
+│   │       ├── controllers/
+│   │       │   ├── auth.js         # User authentication, registration, profile, password logic
+│   │       │   ├── admin.js        # Admin-specific logic
+│   │       │   └── referral.js     # Referral tree and validation logic
+│   │       ├── middlewares/
+│   │       │   ├── jwtAuth.js      # JWT authentication middleware
+│   │       │   └── ...             # Other custom middlewares
+│   │       ├── models/
+│   │       │   └── User.js         # Mongoose User schema
+│   │       ├── routes/
+│   │       │   ├── auth.js         # Auth/user-related API routes
+│   │       │   ├── adminRoutes.js  # Admin API routes
+│   │       │   └── referral.js     # Referral API routes
+│   │       ├── utils/
+│   │       │   ├── referralUtils.js # Referral code generation, tree helpers
+│   │       │   ├── sendEmail.js     # Email sending utility (nodemailer)
+│   │       │   └── wrapAsync.js     # Async error wrapper for routes
+│   │       └── index.js            # Main Express app entry point
+│   ├── wallet-service/         # Wallet management (top-up, withdrawal, transactions)
+│   ├── income-service/         # Income/commission logic
+│   └── admin-service/          # Admin authentication and management
+│
+├── frontend/                   # Next.js frontend
+│   ├── .env.local
+│   ├── Dockerfile
+│   ├── package.json
+│   ├── next.config.mjs
+│   ├── eslint.config.mjs
+│   ├── components/
+│   ├── pages/
+│   ├── public/
+│   └── utils/
+│
+└── readme.md                   # This file
 ```
 
 ---
@@ -78,7 +105,7 @@ user-service/
 
 ## 🛣️ Routes Overview
 
-### `/api/auth` (see [`src/routes/auth.js`](src/routes/auth.js))
+### `/api/auth` (see [`src/routes/auth.js`](backend/user-service/src/routes/auth.js))
 
 | Method | Endpoint                | Description                        | Middleware      |
 |--------|-------------------------|------------------------------------|-----------------|
@@ -90,7 +117,7 @@ user-service/
 | PUT    | `/change-password`      | Change password                    | `jwtAuth`       |
 | GET    | `/me`                   | Get current user profile           | `jwtAuth`       |
 
-### `/api/admin` (see [`src/routes/adminRoutes.js`](src/routes/adminRoutes.js))
+### `/api/admin` (see [`src/routes/adminRoutes.js`](backend/user-service/src/routes/adminRoutes.js))
 
 | Method | Endpoint                | Description                        | Middleware      |
 |--------|-------------------------|------------------------------------|-----------------|
@@ -98,7 +125,7 @@ user-service/
 | GET    | `/users`                | List all users                     | `jwtAuth` (admin only) |
 | ...    | ...                     | Other admin operations             |                 |
 
-### `/api/referral` (see [`src/routes/referral.js`](src/routes/referral.js))
+### `/api/referral` (see [`src/routes/referral.js`](backend/user-service/src/routes/referral.js))
 
 | Method | Endpoint                | Description                        | Middleware      |
 |--------|-------------------------|------------------------------------|-----------------|
@@ -140,17 +167,17 @@ user-service/
 
 ## 🧩 Key Files
 
-- [`src/controllers/auth.js`](src/controllers/auth.js):  
+- [`src/controllers/auth.js`](backend/user-service/src/controllers/auth.js):  
   All user authentication, registration, profile, and password logic.
-- [`src/controllers/referral.js`](src/controllers/referral.js):  
+- [`src/controllers/referral.js`](backend/user-service/src/controllers/referral.js):  
   Referral validation and tree logic.
-- [`src/models/User.js`](src/models/User.js):  
+- [`src/models/User.js`](backend/user-service/src/models/User.js):  
   Mongoose schema for users, including referral fields.
-- [`src/middlewares/jwtAuth.js`](src/middlewares/jwtAuth.js):  
+- [`src/middlewares/jwtAuth.js`](backend/user-service/src/middlewares/jwtAuth.js):  
   JWT authentication middleware.
-- [`src/utils/sendEmail.js`](src/utils/sendEmail.js):  
+- [`src/utils/sendEmail.js`](backend/user-service/src/utils/sendEmail.js):  
   Utility for sending emails (e.g., password reset).
-- [`src/utils/referralUtils.js`](src/utils/referralUtils.js):  
+- [`src/utils/referralUtils.js`](backend/user-service/src/utils/referralUtils.js):  
   Referral code generation and helpers.
 
 ---
@@ -202,8 +229,8 @@ docker run --env-file .env -p 5001:5001 user-service
 
 ## 📚 See Also
 
-- [API Gateway README](../api-gateway/README.md)
-- [Frontend README](../../frontend/README.md)
+- [API Gateway README](backend/api-gateway/README.md)
+- [Frontend README](frontend/README.md)
 
 ---
 
@@ -219,14 +246,14 @@ docker run --env-file .env -p 5001:5001 user-service
 - **Routes:** `/api/auth/*`, `/api/referral/*`
 - **Referral Placement:** On registration, users are placed in a binary tree structure under a sponsor.
 
-### 3. **Wallet Service** (NEW)
+### 3. **Wallet Service**
 - **Role:** Manages user wallets, top-up requests, withdrawal requests, and wallet transactions.
 - **Routes:** `/user/topup-request`, `/user/withdraw-request`, `/user/:id/wallet`, `/admin/topup-request/:id/approve`, `/admin/withdraw-request/:id/approve`
 - **Integration:** 
   - When a top-up is approved, the wallet is credited and a trigger is sent to the income-service for commission distribution.
   - Withdrawal requests are validated against wallet balance.
 
-### 4. **Income Service** (NEW)
+### 4. **Income Service**
 - **Role:** Handles income distribution, commission logic, and business volume calculations.
 - **Routes:** `/api/income/topup-trigger`, `/api/income/...`
 - **Integration:** Receives triggers from wallet-service after top-up approval and distributes income up the referral tree.

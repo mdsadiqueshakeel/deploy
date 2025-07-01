@@ -1,22 +1,28 @@
 // pages/dashboard/rank.js
 
-import DashboardLayout from '@components/DashboardLayout'; // Assuming this layout is used for dashboard pages
+import Head from 'next/head';
 
-/**
- * RankRewardsPage component
- * This is a placeholder component for the user's rank and rewards section.
- * It provides a basic structure within the DashboardLayout.
- */
-const RankRewardsPage = () => {
+export default function RankPage() {
   return (
-    <DashboardLayout>
-      <div className="container-fluid py-4">
-        <h2 className="fw-bold mb-4" style={{ color: '#1E293B' }}>Rank & Rewards</h2>
-        <p>This page will display your current rank, progress, and available rewards.</p>
-        {/* Add more rank and rewards content and components here */}
-      </div>
-    </DashboardLayout>
-  );
-};
+    <>
+      <Head>
+        <title>Rank & Rewards - GROWTHAFFINITY</title>
+        <meta name="description" content="Your current rank and reward progress" />
+      </Head>
 
-export default RankRewardsPage;
+      <div
+        style={{
+          padding: '40px 20px',
+          minHeight: '100vh',
+          backgroundColor: '#FFFFFF',
+          backgroundImage: 'radial-gradient(circle at 10% 20%, rgba(58, 134, 255, 0.1) 0%, rgba(10, 36, 99, 0.1) 90%)',
+        }}
+      >
+        <div className="container text-center">
+          <h2 className="fw-bold mb-3" style={{ color: '#1E293B' }}>Rank & Rewards</h2>
+          <p style={{ fontSize: '18px' }}>This page is coming soon............!!!!!!!!!!</p>
+        </div>
+      </div>
+    </>
+  );
+}
