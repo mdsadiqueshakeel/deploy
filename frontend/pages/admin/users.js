@@ -2,6 +2,7 @@ import AdminLayout from '../../components/admin/AdminLayout';
 import { useState, useEffect } from 'react';
 import api from '../../services/api';
 import { useRouter } from 'next/router';
+import axios from 'axios';
 
 export default function UserManagement() {
   const [users, setUsers] = useState([]);
@@ -19,9 +20,12 @@ export default function UserManagement() {
           response.data.map(async (user) => {
             try {
               const details = await api.get(`/api/admin/user/${user._id}`);
-              return { ...user, ...details.data };
-            } catch {
-              return user;
+              const incomeRes = await axios.get(`http://localhost:5000/api/income/business/${user._id}`);
+              const totalIncome = incomeRes.data?.totalIncome || 0;
+              return { ...user, ...details.data, balance: totalIncome };
+            } catch (err) {
+              console.error(`Error enriching user ${user._id}:`, err);
+              return { ...user, balance: 0 };
             }
           })
         );
@@ -143,7 +147,6 @@ export default function UserManagement() {
                 <table className="table table-hover mb-0">
                   <thead style={{ background: 'linear-gradient(135deg, #3A86FF 0%, #0A2463 100%)', color: 'white' }}>
                     <tr>
-                      {/* Removed <th>ID</th> */}
                       <th>Name</th>
                       <th>Email</th>
                       <th>Join Date</th>
@@ -156,41 +159,25 @@ export default function UserManagement() {
                   <tbody>
                     {filteredUsers.map(user => (
                       <tr key={user._id}>
-                        {/* Removed <td>ID</td> */}
                         <td style={{ color: '#0A2463' }}>{user.name}</td>
                         <td style={{ color: '#0A2463' }}>{user.email}</td>
                         <td style={{ color: '#0A2463' }}>{formatDate(user.createdAt)}</td>
                         <td>
                           {user.isActive ?
-                            <span className="badge" style={{
-                              background: '#28a745',
-                              padding: '5px 10px',
-                              borderRadius: '20px',
-                              color: 'white'
-                            }}>Active</span> :
-                            <span className="badge" style={{
-                              background: '#FF5252',
-                              padding: '5px 10px',
-                              borderRadius: '20px',
-                              color: 'white'
-                            }}>Inactive</span>
+                            <span className="badge" style={{ background: '#28a745', padding: '5px 10px', borderRadius: '20px', color: 'white' }}>Active</span> :
+                            <span className="badge" style={{ background: '#FF5252', padding: '5px 10px', borderRadius: '20px', color: 'white' }}>Inactive</span>
                           }
                         </td>
-                        <td style={{ color: '#0A2463' }}>₹{user.balance?.toFixed(2) || '0.00'}</td>
+                        <td style={{ color: '#0A2463' }}>₹{user.balance?.toFixed(2)}</td>
                         <td style={{ color: '#0A2463' }}>{user.rank || 'Member'}</td>
                         <td>
                           <button
                             className="btn btn-sm me-1"
                             onClick={() => viewUserDetails(user._id)}
-                            style={{
-                              border: '1px solid #3A86FF',
-                              color: '#3A86FF',
-                              borderRadius: '8px'
-                            }}
+                            style={{ border: '1px solid #3A86FF', color: '#3A86FF', borderRadius: '8px' }}
                           >
                             <i className="bi bi-eye"></i>
                           </button>
-
                           {canDeleteUser(user) && (
                             <button
                               className="btn btn-sm"
@@ -198,11 +185,7 @@ export default function UserManagement() {
                                 setDeleteTarget(user);
                                 setConfirming(true);
                               }}
-                              style={{
-                                border: '1px solid #FF5252',
-                                color: '#FF5252',
-                                borderRadius: '8px'
-                              }}
+                              style={{ border: '1px solid #FF5252', color: '#FF5252', borderRadius: '8px' }}
                             >
                               <i className="bi bi-trash"></i>
                             </button>
@@ -240,4 +223,5 @@ export default function UserManagement() {
     </AdminLayout>
   );
 }
+
 
