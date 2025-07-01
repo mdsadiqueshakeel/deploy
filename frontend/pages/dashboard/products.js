@@ -72,27 +72,15 @@
 //   const fetchPurchaseHistory = async () => {
 //     setLoadingHistory(true);
 //     try {
-//       let userId = null;
-//       const savedUser = localStorage.getItem('userProfileData');
-
-//       if (savedUser) {
-//         const parsed = JSON.parse(savedUser);
-//         if (parsed._id) userId = parsed._id;
-//         else if (parsed.basicInfo && parsed.basicInfo._id) userId = parsed.basicInfo._id;
-//       }
-
-//       if (!userId) {
-//         const { fetchProfile } = await import('../../utils/profileService');
-//         const profile = await fetchProfile();
-//         userId = profile?.basicInfo?._id;
-//       }
-
-//       if (userId) {
-//         const response = await api.get(`/api/purchase/products/admin/user/${userId}/approved-purchases`);
-//         setPurchaseHistory(response.data);
-//       }
+//       // Use the user-side route for showing purchases
+//       const response = await api.get('/api/purchase/products/my-purchases');
+//       // Check if response.data is an object with purchases property
+//       const purchasesData = response.data?.purchases || response.data;
+//       setPurchaseHistory(Array.isArray(purchasesData) ? purchasesData : []);
 //     } catch (error) {
 //       console.error('Error fetching purchase history:', error);
+//       // Set empty array on error and potentially show a user-friendly error message
+//       setPurchaseHistory([]);
 //     } finally {
 //       setLoadingHistory(false);
 //     }
@@ -121,7 +109,7 @@
 
 //     try {
 //       let userId = null;
-//       const savedUser = localStorage.getItem('userProfileData');
+//       const savedUser = sessionStorage.getItem('userProfileData');
 
 //       if (savedUser) {
 //         const parsed = JSON.parse(savedUser);
@@ -314,7 +302,7 @@
 //       {filteredProducts.length > 0 ? (
 //         <div className="row g-3 g-md-4">
 //           {filteredProducts.map((product) => (
-//             <div key={product.productCode} className="col-12 col-sm-6 col-md-4 col-lg-3 col-xl-2">
+//             <div key={product.productCode} className="col-12 col-sm-6 col-lg-4">
 //               <div className={`card h-100 ${styles.productCard}`}
 //                 style={{
 //                   backgroundColor: '#F5F5F5',
@@ -333,7 +321,7 @@
 //                       objectFit: 'cover',
 //                       borderRadius: '15px 15px 0 0',
 //                     }}
-//                     sizes="(max-width: 576px) 100vw, (max-width: 768px) 50vw, (max-width: 992px) 33vw, (max-width: 1200px) 25vw, 20vw"
+//                     sizes="(max-width: 576px) 100vw, (max-width: 768px) 50vw, (max-width: 992px) 33vw, 25vw"
 //                   />
 //                 </div>
 //                 <div className="card-body d-flex flex-column p-3 p-sm-4">
@@ -503,6 +491,18 @@ export default function Products({ searchQuery }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [purchaseHistory, setPurchaseHistory] = useState([]);
   const [loadingHistory, setLoadingHistory] = useState(false);
+  const [userName, setUserName] = useState('');
+
+  // WhatsApp notification helper function
+  const openWhatsAppNotification = (product, quantity, totalAmount) => {
+    const phone = "9155649575"; // Admin's WhatsApp number
+    const userDisplayName = userName || 'A valued customer';
+    
+    const message = `Hey Admin! ${userDisplayName} just requested to purchase ${quantity} ${product.name} (Product Code: ${product.productCode}). Total amount: ₹${totalAmount}. Please approve it so they can receive the product. 😊`;
+    
+    const whatsappUrl = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+    window.open(whatsappUrl, '_blank');
+  };
 
   useEffect(() => {
     const cards = document.querySelectorAll(`.${styles.productCard}`);
@@ -510,6 +510,19 @@ export default function Products({ searchQuery }) {
       card.style.animationDelay = `${index * 0.1}s`;
       card.classList.add(styles.fadeInUp);
     });
+
+    // Fetch user's name from session storage
+    const savedUser = sessionStorage.getItem('userProfileData');
+    if (savedUser) {
+      try {
+        const parsed = JSON.parse(savedUser);
+        if (parsed.basicInfo && parsed.basicInfo.fullName) {
+          setUserName(parsed.basicInfo.fullName);
+        }
+      } catch (e) {
+        console.error('Error parsing user data:', e);
+      }
+    }
 
     fetchPurchaseHistory();
   }, [searchQuery]);
@@ -588,6 +601,10 @@ export default function Products({ searchQuery }) {
       if (response.status === 201) {
         const successMessage = response.data?.message || 'Purchase request submitted successfully';
         setPurchaseSuccess(successMessage);
+        
+        // Send WhatsApp notification to admin
+        openWhatsAppNotification(selectedProduct, quantity, totalAmount);
+        
         await fetchPurchaseHistory();
         setTimeout(() => {
           setPurchaseSuccess('');
