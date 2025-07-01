@@ -15,7 +15,7 @@ export default function ErrorPage({ statusCode }) {
       try {
         const userData = typeof window !== 'undefined' && 
           (sessionStorage.getItem('userProfileData') || 
-          localStorage.getItem('userProfileData');
+          localStorage.getItem('userProfileData'));
         
         if (userData) {
           const parsedData = JSON.parse(userData);

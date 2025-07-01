@@ -12,7 +12,6 @@ const { clearUserCache } = require("../utils/cacheUtils");
 
 // for reset and forget password
 const sendEmail = require("../utils/sendEmail");
-const { clear } = require("console");
 
 exports.getBinaryTree = async (req, res) => {
   try {
@@ -131,7 +130,6 @@ exports.register = async (req, res) => {
     const levelDepth = await updateLevelTree(sponsor._id, newUser._id);
     newUser.levelDepth = levelDepth;
     await newUser.save();
-    clearUserCache(newUser._id);
 
     res
       .status(201)

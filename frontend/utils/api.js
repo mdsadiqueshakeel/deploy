@@ -26,11 +26,11 @@ api.interceptors.request.use(
   (config) => {
     // Get the user's general authentication token
     // This is the token typically received after a standard user login.
-    const userToken = sessionStorage.getItem('token'); 
+    const userToken = localStorage.getItem('token'); 
 
     // Get the admin-specific authentication token
     // This token might be used for routes exclusively for administrators.
-    const adminToken = sessionStorage.getItem('adminToken');
+    const adminToken = localStorage.getItem('adminToken');
 
     // Logic to decide which token to send:
     // If the request URL includes '/admin/' AND an adminToken exists, use the adminToken.
