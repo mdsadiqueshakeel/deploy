@@ -1,6 +1,10 @@
 import { useEffect, useState } from 'react';
 import { fetchProfile } from '../../utils/profileService';
 import axios from 'axios';
+import dotenv from 'dotenv';
+dotenv.config();  
+
+const NEXT_PUBLIC_API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 export default function BusinessPage() {
   const [userId, setUserId] = useState(null);
@@ -27,7 +31,7 @@ export default function BusinessPage() {
 
     const fetchBusinessReport = async (uid) => {
       try {
-        const res = await axios.get(`http://localhost:5000/api/income/business/${uid}`);
+        const res = await axios.get(`${NEXT_PUBLIC_API_URL}/api/income/business/${uid}`);
         const data = res.data || {};
 
         setLevelStats(Array.isArray(data.levelStats) ? data.levelStats : []);

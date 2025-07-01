@@ -1,8 +1,10 @@
 const express = require("express");
 const router = express.Router();
 const axios = require("axios");
+const dotenv = require("dotenv");
+dotenv.config();
 
-const USER_SERVICE_URL = process.env.USER_SERVICE_URL || "http://localhost:5001";
+const USER_SERVICE_URL = process.env.USER_SERVICE_URL;
 
 // Proxy GET /referral/validate/:referralCode
 router.get("/validate/:referralCode", async (req, res) => {
