@@ -331,6 +331,17 @@ const Topbar = ({ toggleSidebar, searchQuery, setSearchQuery }) => {
   const coinRef = useRef(null);
   const [topupWallet, setTopupWallet] = useState(0);
   const [loadingWallet, setLoadingWallet] = useState(true);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    
+    handleResize(); // Set initial value
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const handleLogout = async () => {
     await logout();
@@ -352,13 +363,9 @@ const Topbar = ({ toggleSidebar, searchQuery, setSearchQuery }) => {
   useEffect(() => {
     const fetchTopupWallet = async () => {
       try {
-        // Get user ID
         const profileData = await fetchProfile();
         const userId = profileData.basicInfo?._id;
-        
         if (!userId) return;
-        
-        // Fetch wallet data
         const walletRes = await api.get(`/api/wallet/user/${userId}/wallet`);
         setTopupWallet(walletRes.data.topupWallet || 0);
       } catch (err) {
@@ -374,19 +381,17 @@ const Topbar = ({ toggleSidebar, searchQuery, setSearchQuery }) => {
   // Effect to trigger coin update animation
   useEffect(() => {
     const currentRef = coinRef.current;
-    
     if (currentRef) {
       currentRef.classList.add('coin-update-animation');
       const handler = () => {
         currentRef.classList.remove('coin-update-animation');
       };
       currentRef.addEventListener('animationend', handler);
-      
       return () => {
         currentRef.removeEventListener('animationend', handler);
       };
     }
-  }, [topupWallet]); // Trigger animation when topupWallet changes
+  }, [topupWallet]);
 
   return (
     <nav
@@ -428,12 +433,6 @@ const Topbar = ({ toggleSidebar, searchQuery, setSearchQuery }) => {
               const lines = e.currentTarget.querySelectorAll('.hamburger-line');
               lines.forEach((line) => (line.style.backgroundColor = baseLineColor));
             }}
-            onFocus={(e) => {
-              e.currentTarget.style.boxShadow = '0 0 0 2px rgba(58, 134, 255, 0.5)';
-            }}
-            onBlur={(e) => {
-              e.currentTarget.style.boxShadow = 'none';
-            }}
           >
             {[...Array(3)].map((_, i) => (
               <div
@@ -454,7 +453,7 @@ const Topbar = ({ toggleSidebar, searchQuery, setSearchQuery }) => {
           <div
             className="input-group flex-grow-1 position-relative"
             style={{
-              maxWidth: '300px',
+              maxWidth: isMobile ? '150px' : '300px',
               borderRadius: '12px',
               background: 'linear-gradient(135deg, #F5F5F5 0%, #E8EEFF 100%)',
               boxShadow: '0 2px 8px rgba(58, 134, 255, 0.2)',
@@ -475,7 +474,7 @@ const Topbar = ({ toggleSidebar, searchQuery, setSearchQuery }) => {
             <input
               className="form-control"
               type="search"
-              placeholder="Search products..."
+              placeholder={isMobile ? 'Search...' : 'Search products...'}
               value={searchQuery}
               onChange={handleSearchChange}
               style={{
@@ -484,24 +483,10 @@ const Topbar = ({ toggleSidebar, searchQuery, setSearchQuery }) => {
                 borderRadius: '12px',
                 color: '#0A2463',
                 backgroundColor: 'transparent',
-                fontSize: '0.95rem',
-                padding: '10px 12px',
-                paddingRight: searchQuery ? '30px' : '12px',
+                fontSize: isMobile ? '0.85rem' : '0.95rem',
+                padding: isMobile ? '6px 8px' : '10px 12px',
+                paddingRight: searchQuery ? (isMobile ? '24px' : '30px') : (isMobile ? '8px' : '12px'),
                 transition: 'all 0.3s ease',
-              }}
-              onFocus={(e) => {
-                e.target.parentElement.style.border = '2px solid #3A86FF';
-                e.target.parentElement.style.boxShadow = '0 0 0 0.2rem rgba(58, 134, 255, 0.3)';
-                const icon = e.target.parentElement.querySelector('.bi-search');
-                icon.style.color = '#0A2463';
-                icon.style.transform = 'scale(1.1)';
-              }}
-              onBlur={(e) => {
-                e.target.parentElement.style.border = 'none';
-                e.target.parentElement.style.boxShadow = '0 2px 8px rgba(58, 134, 255, 0.2)';
-                const icon = e.target.parentElement.querySelector('.bi-search');
-                icon.style.color = '#3A86FF';
-                icon.style.transform = 'scale(1)';
               }}
             />
             {searchQuery && (
@@ -509,7 +494,7 @@ const Topbar = ({ toggleSidebar, searchQuery, setSearchQuery }) => {
                 className="position-absolute"
                 onClick={handleClearSearch}
                 style={{
-                  right: '10px',
+                  right: isMobile ? '6px' : '10px',
                   top: '50%',
                   transform: 'translateY(-50%)',
                   background: 'none',
@@ -517,14 +502,8 @@ const Topbar = ({ toggleSidebar, searchQuery, setSearchQuery }) => {
                   color: '#0A2463',
                   cursor: 'pointer',
                   padding: '0',
-                  fontSize: '0.9rem',
+                  fontSize: isMobile ? '0.8rem' : '0.9rem',
                   zIndex: 2,
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.color = '#3A86FF';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.color = '#0A2463';
                 }}
               >
                 <i className="bi-x-lg"></i>
@@ -532,30 +511,33 @@ const Topbar = ({ toggleSidebar, searchQuery, setSearchQuery }) => {
             )}
           </div>
 
-          {/* Top-up Wallet Display */}
+          {/* Top-up Wallet Display - Now more compact on mobile */}
           <div
             ref={coinRef}
-            className="d-flex align-items-center me-3 ms-3"
+            className="d-flex align-items-center me-2 ms-2"
             style={{
               background: 'linear-gradient(135deg, #FFF3B0 0%, #FFD700 100%)',
               boxShadow: '0 2px 8px rgba(255, 215, 0, 0.3)',
               borderRadius: '50px',
-              padding: '8px 15px',
+              padding: isMobile ? '6px 10px' : '8px 15px',
+              minWidth: isMobile ? '80px' : 'auto',
             }}
           >
-            <i className="bi-wallet2 me-2" style={{ color: '#0A2463', fontSize: '1.2rem' }}></i>
-            <span className="fw-bold" style={{ color: '#0A2463' }}>
+            {!isMobile && (
+              <i className="bi-wallet2 me-2" style={{ color: '#0A2463', fontSize: '1.2rem' }}></i>
+            )}
+            <span className="fw-bold" style={{ color: '#0A2463', fontSize: isMobile ? '0.85rem' : '1rem' }}>
               {loadingWallet ? (
                 <div className="spinner-border spinner-border-sm" role="status">
                   <span className="visually-hidden">Loading...</span>
                 </div>
               ) : (
-                `₹ ${topupWallet.toFixed(2)}`
+                isMobile ? `₹${topupWallet.toFixed(0)}` : `₹ ${topupWallet.toFixed(2)}`
               )}
             </span>
           </div>
 
-          {/* Logout button */}
+          {/* Logout button - Now icon-only on mobile */}
           <div className="ms-auto">
             <button
               onClick={handleLogout}
@@ -567,20 +549,19 @@ const Topbar = ({ toggleSidebar, searchQuery, setSearchQuery }) => {
                 fontWeight: '600',
                 border: 'none',
                 boxShadow: '0 2px 8px rgba(58, 134, 255, 0.3)',
-                fontSize: '0.9rem',
+                fontSize: isMobile ? '0.85rem' : '0.9rem',
+                padding: isMobile ? '6px 8px' : '8px 12px',
                 transition: 'all 0.3s',
               }}
-              onMouseEnter={(e) => {
-                e.target.style.boxShadow = '0 4px 12px rgba(58, 134, 255, 0.5)';
-                e.target.style.transform = 'translateY(-1px)';
-              }}
-              onMouseLeave={(e) => {
-                e.target.style.boxShadow = '0 2px 8px rgba(58, 134, 255, 0.3)';
-                e.target.style.transform = 'translateY(0)';
-              }}
             >
-              <i className="bi-box-arrow-right me-1"></i>
-              Logout
+              {isMobile ? (
+                <i className="bi-box-arrow-right"></i>
+              ) : (
+                <>
+                  <i className="bi-box-arrow-right me-1"></i>
+                  Logout
+                </>
+              )}
             </button>
           </div>
         </div>
@@ -597,7 +578,6 @@ const Topbar = ({ toggleSidebar, searchQuery, setSearchQuery }) => {
           font-style: italic;
         }
 
-        /* Coin update animation */
         @keyframes coinUpdate {
           0% { transform: scale(1); box-shadow: 0 2px 8px rgba(255, 215, 0, 0.3); }
           25% { transform: scale(1.1); box-shadow: 0 0 15px #FFD700; }
@@ -617,55 +597,24 @@ const Topbar = ({ toggleSidebar, searchQuery, setSearchQuery }) => {
             padding-left: 12px !important;
             padding-right: 12px !important;
           }
-          .input-group {
-            maxWidth: 200px !important;
-            padding: 8px !important;
-          }
-          .form-control {
-            fontSize: 0.85rem !important;
-            padding: 8px 10px !important;
-            paddingRight: 8px !important;
-          }
-          .input-group-text {
-            padding: 0 8px !important;
-          }
-          .bi-search {
-            fontSize: 0.9rem !important;
-          }
-          .btn {
-            padding: 0.3rem 0.6rem !important;
-            fontSize: 0.85rem !important;
-          }
         }
 
         @media (max-width: 576px) {
+          .navbar {
+            height: 50px;
+          }
           .input-group {
-            maxWidth: 150px !important;
-            padding: 6px !important;
+            max-width: 120px !important;
           }
           .form-control {
-            fontSize: 0.8rem !important;
+            font-size: 0.8rem !important;
             padding: 6px 8px !important;
-            paddingRight: 6px !important;
           }
           .input-group-text {
             padding: 0 6px !important;
           }
           .bi-search {
-            fontSize: 0.85rem !important;
-          }
-          .btn {
-            padding: 0.2rem 0.5rem !important;
-            fontSize: 0.8rem !important;
-          }
-          .navbar-toggler-icon-custom {
-            width: 30px !important;
-            height: 30px !important;
-            gap: 3px !important;
-          }
-          .navbar-toggler-icon-custom .hamburger-line {
-            width: 16px !important;
-            height: 2px !important;
+            font-size: 0.85rem !important;
           }
         }
       `}</style>

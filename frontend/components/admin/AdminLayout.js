@@ -69,8 +69,8 @@ export default function AdminLayout({ children, title }) {
   const navItems = [
     { path: '/admin/dashboard', icon: 'speedometer2', label: 'Dashboard' },
     { path: '/admin/users', icon: 'people', label: 'User Management' },
-    { path: '/admin/transactions', icon: 'cash-coin', label: 'Transactions' },
-    { path: '/admin/reports', icon: 'graph-up', label: 'Reports' },
+    // { path: '/admin/transactions', icon: 'cash-coin', label: 'Transactions' },
+    // { path: '/admin/reports', icon: 'graph-up', label: 'Reports' },
   ];
 
   return (

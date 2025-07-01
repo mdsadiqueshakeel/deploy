@@ -22,7 +22,7 @@ router.get("/my-purchases", isAuthenticated, getMyPurchases);
 // ✅ ADMIN ROUTES
 router.get("/admin/user/:userId/pending-purchases", cacheMiddleware, isAuthenticated, isAdmin, getPendingPurchasesByUser);
 router.get("/admin/user/:userId/approved-purchases", cacheMiddleware, isAuthenticated, isAdmin, getApprovedPurchasesByUser);
-router.patch("/admin/:purchaseId/approve", isAuthenticated, isAdmin, approvePurchase);
-router.patch("/admin/:purchaseId/reject", isAuthenticated, isAdmin, rejectPurchase);
+router.put("/admin/:purchaseId/approve", isAuthenticated, isAdmin, approvePurchase);
+router.put("/admin/:purchaseId/reject", isAuthenticated, isAdmin, rejectPurchase);
 
 module.exports = router;

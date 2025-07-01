@@ -176,7 +176,7 @@ export default function UserManagement() {
                             }}>Inactive</span>
                           }
                         </td>
-                        <td style={{ color: '#0A2463' }}>${user.balance?.toFixed(2) || '0.00'}</td>
+                        <td style={{ color: '#0A2463' }}>₹{user.balance?.toFixed(2) || '0.00'}</td>
                         <td style={{ color: '#0A2463' }}>{user.rank || 'Member'}</td>
                         <td>
                           <button
