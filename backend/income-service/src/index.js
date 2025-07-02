@@ -1,7 +1,9 @@
 // src/index.js
+const dotenv = require("dotenv");
+// Load the default .env file directly
+dotenv.config();
 const express = require("express");
 const mongoose = require("mongoose");
-const dotenv = require("dotenv");
 const cors = require("cors");
 // income-service/index.js
 const cookieParser = require("cookie-parser");
