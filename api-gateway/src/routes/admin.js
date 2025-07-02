@@ -174,10 +174,10 @@ router.post("/logout", (req, res) => {
   try {
     res.clearCookie("adminToken", {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "Strict", // Use Strict for better security
+      secure: true, // 🔥 Railway is HTTPS so this MUST be true
+        sameSite: "None", // Use Strict for better security
       path: "/",
-      domain: "localhost", // Ensure it matches the domain used in login
+      // Ensure it matches the domain used in login
     });
 
     res.status(200).json({ message: "Admin logged out successfully" });
