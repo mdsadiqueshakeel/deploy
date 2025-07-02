@@ -1,16 +1,16 @@
 // pages/dashboard/index.js
-import { useState, useEffect } from 'react';
-import Head from 'next/head';
-import Topbar from '@components/Topbar';
-import Sidebar from '@components/Sidebar';
 import ProfileCard from '@components/ProfileCard';
+import Sidebar from '@components/Sidebar';
+import Topbar from '@components/Topbar';
 import Products from '@pages/dashboard/products';
-import BusinessPage from './business';
-import WalletPage from './wallet';
+import Head from 'next/head';
+import { useEffect, useState } from 'react';
 import DashboardPage from '../../components/DashboardPage';
-import StatusPage from './status';
+import BusinessPage from './business';
 import RankRewards from './rank';
+import StatusPage from './status';
 import Support from './support';
+import WalletPage from './wallet';
 
 
 
@@ -28,7 +28,7 @@ export default function Dashboard({ initialUser }) {
         setUser(JSON.parse(savedUser));
       }
     } catch (error) {
-      console.error('Error loading user data from localStorage:', error);
+      console.error('Error loading user data from sessionStorage:', error);
     }
   }, []);
 

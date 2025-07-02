@@ -54,7 +54,7 @@ router.post("/login", async (req, res) => {
       .status(200)
       .json({ 
         message: "Admin logged in successfully",
-        token: token // Include token in response for localStorage
+        token: token // Include token in response for sessionStorage
       });
   } catch (err) {
     res

@@ -21,7 +21,7 @@
 //   setError('');
 //   try {
 //     const response = await api.post('/api/admin/login', { email, password });
-//     localStorage.setItem('adminToken', response.data.token); // Store token in localStorage
+//     sessionStorage.setItem('adminToken', response.data.token); // Store token in sessionStorage
 //     router.push('/admin/dashboard');
 //   } catch (error) {
 //     setError(error.response?.data?.message || 'Login failed. Please try again.');
