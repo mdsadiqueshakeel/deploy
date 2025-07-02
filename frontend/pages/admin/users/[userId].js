@@ -1555,16 +1555,16 @@ export default function UserDetails() {
                           <strong>Quantity:</strong> {currentRequest.quantity}
                         </p>
                         <p className="mb-1">
-                          <strong>Unit Price:</strong> ${currentRequest.unitPrice}
+                          <strong>Unit Price:</strong> ₹{currentRequest.unitPrice}
                         </p>
                         <p className="mb-0">
-                          <strong>Total Price:</strong> ${currentRequest.totalPrice}
+                          <strong>Total Price:</strong> ₹{currentRequest.totalPrice}
                         </p>
                       </>
                     ) : (
                       <>
                         <p className="mb-1">
-                          <strong>Amount:</strong> ${currentRequest.amount}
+                          <strong>Amount:</strong> ₹{currentRequest.amount}
                         </p>
                         <p className="mb-0">
                           <strong>Type:</strong> {currentRequest.type === 'topup' ? 'Top-up' : 'Withdrawal'}
@@ -1670,16 +1670,16 @@ export default function UserDetails() {
                           <strong>Quantity:</strong> {currentRequest.quantity}
                         </p>
                         <p className="mb-1">
-                          <strong>Unit Price:</strong> ${currentRequest.unitPrice}
+                          <strong>Unit Price:</strong> ₹{currentRequest.unitPrice}
                         </p>
                         <p className="mb-0">
-                          <strong>Total Price:</strong> ${currentRequest.totalPrice}
+                          <strong>Total Price:</strong> ₹{currentRequest.totalPrice}
                         </p>
                       </>
                     ) : (
                       <>
                         <p className="mb-1">
-                          <strong>Amount:</strong> ${currentRequest.amount}
+                          <strong>Amount:</strong> ₹{currentRequest.amount}
                         </p>
                         <p className="mb-0">
                           <strong>Type:</strong> {currentRequest.type === 'topup' ? 'Top-up' : 'Withdrawal'}

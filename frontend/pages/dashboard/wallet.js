@@ -326,10 +326,10 @@
 //   );
 // }
 import axios from 'axios';
+import dotenv from 'dotenv';
 import { useEffect, useState } from "react";
 import api from '../../utils/api';
 import { fetchProfile } from '../../utils/profileService';
-import dotenv from 'dotenv'; 
 dotenv.config();
 
 const NEXT_PUBLIC_API_URL = process.env.NEXT_PUBLIC_API_URL;
@@ -349,7 +349,7 @@ export default function WalletPage() {
 
   // WhatsApp notification helper function
   const openWhatsAppNotification = (amount, type) => {
-    const phone = "9155649575"; // Admin's WhatsApp number
+    const phone = "7859086070"; // Admin's WhatsApp number
     const action = type === 'topup' ? 'requested' : 'requested a withdrawal of';
     const walletType = type === 'topup' ? 'top-up' : 'income wallet';
     
