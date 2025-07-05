@@ -325,11 +325,9 @@ export default function Login() {
       if (response.data && response.data.token) {
         console.log('User token received, storing in browser storage');
         // Use the enhanced storage function with fallback
-        setToken(response.data.token);
+        const tokenSetSuccessfully = setToken(response.data.token);
         
-        // Double-check token was stored correctly
-        const storedToken = getToken();
-        if (storedToken) {
+        if (tokenSetSuccessfully) {
           console.log('User token successfully stored, redirecting to dashboard');
           router.push("/dashboard");
         } else {

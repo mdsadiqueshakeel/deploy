@@ -28,7 +28,7 @@ exports.cacheMiddleware = async (req, res, next) => {
     res.json = async (body) => {
       // Store in Redis with 1-hour expiration to ensure eventual refresh
       await redis.set(key, JSON.stringify(body), 'EX', 3600);
-      console.log(`🧠 Redis SET: ${key} (expires in 1 hour)`);
+    
       res.sendResponse(body);
     };
 

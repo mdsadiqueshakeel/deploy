@@ -15,7 +15,7 @@ exports.cacheMiddleware = async (req, res, next) => {
 
     const cached = await redis.get(key);
     if (cached) {
-      console.log(`✅ Redis HIT: ${key}`);
+    
       return res.json(JSON.parse(cached));
     }
 
@@ -24,7 +24,7 @@ exports.cacheMiddleware = async (req, res, next) => {
       // Set cache with a reasonable expiration time (1 hour)
       // This ensures that even if cache invalidation fails, data will eventually be refreshed
       await redis.set(key, JSON.stringify(body), 'EX', 3600);
-      console.log(`🧠 Redis SET: ${key}`);
+    
       res.sendResponse(body);
     };
 

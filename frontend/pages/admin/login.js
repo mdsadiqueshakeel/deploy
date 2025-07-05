@@ -253,11 +253,9 @@ export default function AdminLogin() {
       if (response.data && response.data.token) {
         console.log('Admin token received, storing in browser storage');
         // Use the enhanced storage function with fallback
-        setAdminToken(response.data.token);
+        const tokenSetSuccessfully = setAdminToken(response.data.token);
         
-        // Double-check token was stored correctly
-        const storedToken = getAdminToken();
-        if (storedToken) {
+        if (tokenSetSuccessfully) {
           console.log('Admin token successfully stored, redirecting to dashboard');
           router.push('/admin/dashboard');
         } else {

@@ -3,6 +3,7 @@ import { getBrowserInfo } from './browserDetect';
 
 // Enhanced token storage with fallback to localStorage for Safari private mode
 export const setToken = (token) => {
+  let tokenSetSuccessfully = false;
   // Check if we're in a browser environment
   if (typeof window === 'undefined') {
     console.warn('Not in browser environment, cannot set token');
@@ -24,7 +25,9 @@ export const setToken = (token) => {
     
     // If we get here, sessionStorage is working
     sessionStorage.setItem('token', token);
+    sessionStorage.setItem('token', token);
     console.log('Token set in sessionStorage');
+    tokenSetSuccessfully = true;
   } catch (error) {
     // Fallback to localStorage if sessionStorage fails
     console.warn('SessionStorage failed, using localStorage fallback:', error);
@@ -35,7 +38,9 @@ export const setToken = (token) => {
       
       // If we get here, localStorage is working
       localStorage.setItem('token', token);
+      localStorage.setItem('token', token);
       console.log('Token set in localStorage (fallback)');
+      tokenSetSuccessfully = true;
     } catch (localStorageError) {
       console.error('All storage methods failed:', localStorageError);
       
@@ -45,6 +50,7 @@ export const setToken = (token) => {
       }
     }
   }
+  return tokenSetSuccessfully;
 };
 
 export const getToken = () => {
@@ -274,6 +280,7 @@ export const getAdminToken = () => {
 
 // Helper function to set admin token with fallback
 export const setAdminToken = (token) => {
+  let tokenSetSuccessfully = false;
   // Check if we're in a browser environment
   if (typeof window === 'undefined') {
     console.warn('Not in browser environment, cannot set admin token');
@@ -295,7 +302,9 @@ export const setAdminToken = (token) => {
     
     // If we get here, sessionStorage is working
     sessionStorage.setItem('adminToken', token);
+    sessionStorage.setItem('adminToken', token);
     console.log('Admin token set in sessionStorage');
+    tokenSetSuccessfully = true;
   } catch (error) {
     // Fallback to localStorage if sessionStorage fails
     console.warn('SessionStorage failed for admin token, using localStorage fallback:', error);
@@ -306,7 +315,9 @@ export const setAdminToken = (token) => {
       
       // If we get here, localStorage is working
       localStorage.setItem('adminToken', token);
+      localStorage.setItem('adminToken', token);
       console.log('Admin token set in localStorage (fallback)');
+      tokenSetSuccessfully = true;
     } catch (localStorageError) {
       console.error('All storage methods failed for admin token:', localStorageError);
       
@@ -316,4 +327,5 @@ export const setAdminToken = (token) => {
       }
     }
   }
+  return tokenSetSuccessfully;
 };
