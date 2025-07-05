@@ -14,8 +14,7 @@ const purchaseRoutes = require("./routes/purchase");
 
 const app = express();
 
-
-// ✅✅ REDIRECT from www to non-www + force HTTPS
+// ✅ Force HTTPS + Redirect www → non-www
 app.use((req, res, next) => {
   const host = req.headers.host;
   const proto = req.headers["x-forwarded-proto"];
@@ -33,22 +32,48 @@ app.use((req, res, next) => {
   next();
 });
 
-// ✅ CORS
-
+// ✅ CORS middleware
 app.use(
   cors({
     origin: process.env.CLIENT_URL,
     credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization','X-Requested-With' ],
-    exposedHeaders: ['Access-Control-Allow-Origin', 'Set-Cookie']
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
+    exposedHeaders: ["Access-Control-Allow-Origin", "Set-Cookie"],
   })
 );
 
+// ✅ Preflight OPTIONS support (important for Safari)
+app.use((req, res, next) => {
+  if (req.method === "OPTIONS") {
+    const allowedOrigins = [
+      "https://growthaffinitymarketing.com",
+      "https://www.growthaffinitymarketing.com",
+      "http://localhost:3000"
+    ];
+
+    const origin = req.headers.origin;
+    if (allowedOrigins.includes(origin)) {
+      res.setHeader("Access-Control-Allow-Origin", origin);
+    }
+
+    res.setHeader("Access-Control-Allow-Credentials", "true");
+    res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+    res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With");
+    return res.sendStatus(204); // Safari needs this clean end
+  }
+  next();
+});
+
+
+// ✅ Add credentials header support
+app.use((req, res, next) => {
+  res.header("Access-Control-Allow-Credentials", "true");
+  next();
+});
+
 app.use(express.json());
 app.use(cookieParser());
-
-
 
 // ✅ Routes
 app.use("/api/auth", authRoutes);
@@ -66,4 +91,4 @@ app.use((err, req, res, next) => {
 
 // ✅ Start server
 const PORT = process.env.API_GATEWAY_PORT || 5000;
-app.listen(PORT, () => console.log(`API Gateway running on port ${PORT}`));
+app.listen(PORT, () => console.log(`🚀 API Gateway running on port ${PORT}`));

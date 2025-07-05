@@ -37,8 +37,8 @@ router.post("/login", async (req, res) => {
         secure: true, // 🔥 Railway is HTTPS so this MUST be true
         sameSite: "None",
         maxAge: 24 * 60 * 60 * 1000, // 1 day
-        path: "/", // Ensure cookie is available across the entire site
-        domain: process.env.NODE_ENV === 'production' ? '.growthaffinitymarketing.com' : undefined // Set domain for production
+        path: "/", // Ensure cookie is aailable across the entire site
+        domain: process.env.CLIENT_URL // Set domain for production
       })
       .status(200)
       .json({ message: "Logged in successfully", token });
@@ -92,7 +92,7 @@ router.post("/logout", (req, res) => {
       secure: true, // 🔥 Railway is HTTPS so this MUST be true
       sameSite: "None",
       path: "/", // important to match the path used when setting the cookie
-      domain: process.env.NODE_ENV === 'production' ? '.growthaffinitymarketing.com' : undefined // Match domain setting from login
+      domain: process.env.CLIENT_URL// Match domain setting from login
     });
 
     res.status(200).json({ message: "Logged out successfully" });
