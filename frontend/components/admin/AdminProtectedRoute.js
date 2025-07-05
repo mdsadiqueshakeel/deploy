@@ -11,10 +11,23 @@ const AdminProtectedRoute = ({ children }) => {
 useEffect(() => {
   const checkAuth = async () => {
     try {
-      await api.get('/api/admin/verify'); // ✅ sends cookie automatically
+      // First check if we have an admin token in sessionStorage
+      const adminToken = sessionStorage.getItem('adminToken');
+      
+      if (!adminToken) {
+        console.log('No admin token found in sessionStorage, redirecting to login');
+        router.push('/admin/login');
+        return;
+      }
+      
+      // Then verify with the server
+      await api.get('/api/admin/verify');
+      console.log('Admin authentication verified with server');
       setIsAuthenticated(true);
     } catch (error) {
-      console.error('Auth error:', error);
+      console.error('Admin auth error:', error);
+      // Clear any invalid tokens
+      sessionStorage.removeItem('adminToken');
       router.push('/admin/login');
     } finally {
       setLoading(false);

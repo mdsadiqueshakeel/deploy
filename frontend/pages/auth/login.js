@@ -317,17 +317,28 @@ export default function Login() {
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
+      console.log('Attempting user login...');
       const response = await api.post("/api/auth/login", { email, password });
       
-      // Store token in sessionStorage
+      // Ensure we have a token in the response
       if (response.data && response.data.token) {
+        console.log('User token received, storing in sessionStorage');
         sessionStorage.setItem('token', response.data.token);
+        
+        // Double-check token was stored correctly
+        const storedToken = sessionStorage.getItem('token');
+        if (storedToken) {
+          console.log('User token successfully stored, redirecting to dashboard');
+          router.push("/dashboard");
+        } else {
+          throw new Error('Failed to store user token in sessionStorage');
+        }
+      } else {
+        throw new Error('No token received from server');
       }
-      
-      router.push("/dashboard");
     } catch (error) {
       console.error('Login error:', error);
-      setError(error.response?.data?.message || "Login failed");
+      setError(error.response?.data?.message || error.message || "Login failed");
     }
   };
 

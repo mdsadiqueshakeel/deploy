@@ -32,7 +32,7 @@ app.use((req, res, next) => {
   next();
 });
 
-// ✅ CORS middleware
+// ✅ Enhanced CORS middleware for cross-browser compatibility
 app.use(
   cors({
     origin: function(origin, callback) {
@@ -41,7 +41,8 @@ app.use(
         process.env.CLIENT_URL,
         'https://growthaffinitymarketing.com',
         'https://www.growthaffinitymarketing.com',
-        'http://localhost:3000'
+        'http://localhost:3000',
+        // Add more origins if needed
       ];
       
       if (!origin || allowedOrigins.indexOf(origin) !== -1) {
@@ -52,49 +53,85 @@ app.use(
       }
     },
     credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Accept", "Cache-Control"],
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
+    allowedHeaders: [
+      "Content-Type", 
+      "Authorization", 
+      "X-Requested-With", 
+      "Accept", 
+      "Cache-Control",
+      "Pragma",
+      "Expires",
+      "X-Forwarded-Proto",
+      "X-Forwarded-For"
+    ],
     exposedHeaders: ["Access-Control-Allow-Origin", "Set-Cookie"],
+    maxAge: 86400, // 24 hours - reduce preflight requests
   })
 );
 
-// ✅ Preflight OPTIONS support (important for Safari and iOS)
+// ✅ Enhanced Preflight OPTIONS support (critical for Safari and iOS)
 app.use((req, res, next) => {
   if (req.method === "OPTIONS") {
     const allowedOrigins = [
       "https://growthaffinitymarketing.com",
       "https://www.growthaffinitymarketing.com",
-      "http://localhost:3000"
+      "http://localhost:3000",
+      // Add more origins if needed
     ];
 
     const origin = req.headers.origin;
-    if (allowedOrigins.includes(origin))  {
-      res.setHeader("Access-Control-Allow-Origin", origin);
+    if (allowedOrigins.includes(origin) || !origin)  {
+      if (origin) {
+        res.setHeader("Access-Control-Allow-Origin", origin);
+      }
     }
 
     res.setHeader("Access-Control-Allow-Credentials", "true");
-    res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
-    res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With, Accept, Cache-Control");
-    res.setHeader("Access-Control-Max-Age", "86400"); // 24 hours - reduce preflight requests for better performance
+    res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS, PATCH");
+    res.setHeader("Access-Control-Allow-Headers", 
+      "Content-Type, Authorization, X-Requested-With, Accept, Cache-Control, Pragma, Expires, X-Forwarded-Proto, X-Forwarded-For");
+    res.setHeader("Access-Control-Max-Age", "86400"); // 24 hours
+    
+    // Safari/iOS specific headers
+    const userAgent = req.headers['user-agent'] || '';
+    const isSafariOrIOS = /^((?!chrome|android).)*safari/i.test(userAgent) || /iphone|ipad|ipod/i.test(userAgent);
+    
+    if (isSafariOrIOS) {
+      res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+      res.setHeader("Pragma", "no-cache");
+      res.setHeader("Expires", "0");
+    }
+    
     return res.sendStatus(204); // Safari needs this clean end
   }
   next();
 });
 
 
-// ✅ Add credentials header support and Safari-specific headers
+// ✅ Enhanced credentials header support and browser-specific optimizations
 app.use((req, res, next) => {
   res.header("Access-Control-Allow-Credentials", "true");
   
-  // Check if the request is from Safari or iOS
+  // Check if the request is from Safari or iOS with improved detection
   const userAgent = req.headers['user-agent'] || '';
-  const isSafariOrIOS = /^((?!chrome|android).)*safari/i.test(userAgent) || /iphone|ipad|ipod/i.test(userAgent);
+  const userAgentLower = userAgent.toLowerCase();
+  const isSafari = /safari/.test(userAgentLower) && !/chrome/.test(userAgentLower);
+  const isIOS = /iphone|ipad|ipod/.test(userAgentLower);
   
-  if (isSafariOrIOS) {
+  if (isSafari || isIOS) {
     // Add Safari/iOS specific headers
     res.header("Cache-Control", "no-cache, no-store, must-revalidate");
     res.header("Pragma", "no-cache");
     res.header("Expires", "0");
+    
+    // Log Safari/iOS requests for debugging
+    console.log(`Safari/iOS request detected: ${req.method} ${req.path}`);
+  }
+  
+  // Log all authentication-related requests for debugging
+  if (req.path.includes('/login') || req.path.includes('/logout') || req.path.includes('/verify')) {
+    console.log(`Auth request: ${req.method} ${req.path} from ${userAgent}`);
   }
   
   next();

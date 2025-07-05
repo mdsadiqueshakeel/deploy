@@ -11,7 +11,7 @@ import axios from 'axios';
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 
-// Create an Axios instance
+// Create an Axios instance with enhanced cross-browser compatibility
 const api = axios.create({
   baseURL: API_URL,
   headers: {
@@ -24,16 +24,14 @@ const api = axios.create({
   xsrfHeaderName: 'X-XSRF-TOKEN', // Default CSRF header name
 });
 
-// --- Request Interceptor: Add Authorization header ---
+// --- Request Interceptor: Add Authorization header with enhanced browser compatibility ---
 // This interceptor will run before every API request.
 api.interceptors.request.use(
   (config) => {
     // Get the user's general authentication token
-    // This is the token typically received after a standard user login.
     const userToken = sessionStorage.getItem('token'); 
 
     // Get the admin-specific authentication token
-    // This token might be used for routes exclusively for administrators.
     const adminToken = sessionStorage.getItem('adminToken');
 
     // Logic to decide which token to send:
@@ -41,22 +39,27 @@ api.interceptors.request.use(
     // Otherwise, if a general userToken exists, use that.
     if (adminToken && config.url && config.url.includes('/admin/')) {
       config.headers.Authorization = `Bearer ${adminToken}`;
+      console.log('Using admin token for request');
     } else if (userToken) {
-      // For all other authenticated endpoints (including user profile fetching), use the user token.
+      // For all other authenticated endpoints, use the user token.
       config.headers.Authorization = `Bearer ${userToken}`;
+      console.log('Using user token for request');
     }
     
-    // Add Safari-specific headers for better compatibility
+    // Add browser compatibility headers
     if (typeof window !== 'undefined' && window.navigator && window.navigator.userAgent) {
-      const isSafari = /^((?!chrome|android).)*safari/i.test(window.navigator.userAgent);
-      if (isSafari) {
-        // Safari needs these explicit headers for CORS with credentials
-        config.headers['Cache-Control'] = 'no-cache';
+      const userAgent = window.navigator.userAgent.toLowerCase();
+      const isSafari = /safari/.test(userAgent) && !/chrome/.test(userAgent);
+      const isIOS = /iphone|ipad|ipod/.test(userAgent);
+      
+      if (isSafari || isIOS) {
+        // Safari/iOS specific headers for better CORS compatibility
+        config.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate';
+        config.headers['Pragma'] = 'no-cache';
+        config.headers['Expires'] = '0';
+        console.log('Added Safari/iOS compatibility headers');
       }
     }
-
-    // If no token is found (e.g., for public routes like login/register, or if user is logged out),
-    // the Authorization header will simply not be set, which is appropriate.
 
     return config;
   },
@@ -66,12 +69,20 @@ api.interceptors.request.use(
   }
 );
 
-// --- Response Interceptor: Handle Responses and Errors (e.g., 401 Unauthorized) ---
+// --- Response Interceptor: Handle Responses and Errors with enhanced token handling ---
 api.interceptors.response.use(
   (response) => {
     // Check if we received a token in the response and store it
     if (response.data && response.data.token) {
+      // Store token in sessionStorage
       sessionStorage.setItem('token', response.data.token);
+      console.log('Token stored in sessionStorage');
+      
+      // For admin login responses
+      if (response.config.url && response.config.url.includes('/admin/login')) {
+        sessionStorage.setItem('adminToken', response.data.token);
+        console.log('Admin token stored in sessionStorage');
+      }
     }
     return response;
   },
@@ -85,10 +96,10 @@ api.interceptors.response.use(
       sessionStorage.removeItem('token');
       sessionStorage.removeItem('adminToken'); 
       
-      // Redirect the user to the login page.
-      // This is important for single-page applications to enforce re-authentication.
+      // Determine the appropriate redirect based on the URL
       if (typeof window !== 'undefined') { // Ensure this runs only in the browser
-        window.location.href = '/auth/login'; // Forces a full page reload and redirect
+        const isAdminRoute = window.location.pathname.startsWith('/admin');
+        window.location.href = isAdminRoute ? '/admin/login' : '/auth/login';
       }
     }
     return Promise.reject(error); // Always reject the promise so calling code can catch it

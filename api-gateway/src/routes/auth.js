@@ -25,23 +25,30 @@ router.post("/register", async (req, res) => {
   }
 });
 
-// Login
+// Login with enhanced cross-browser compatibility
 router.post("/login", async (req, res) => {
   try {
     const response = await axios.post(`${USER_SERVICE_URL}/api/auth/login`, req.body);
     const token = response.data.token;
+    
+    // Log user agent for debugging
+    console.log(`User login attempt from: ${req.headers['user-agent']}`);
 
     res
       .cookie("token", token, {
         httpOnly: true,
-        secure: true, // 🔥 Railway is HTTPS so this MUST be true
+        secure: true, // Required for HTTPS
         sameSite: "None", // Required for cross-site cookies
         maxAge: 24 * 60 * 60 * 1000, // 1 day
         path: "/", // Ensure cookie is available across the entire site
       })
       .status(200)
-      .json({ message: "Logged in successfully", token });
+      .json({ 
+        message: "Logged in successfully", 
+        token: token // Always include token in response for sessionStorage
+      });
   } catch (err) {
+    console.error("User login error:", err.response?.data || err.message);
     res.status(err.response?.status || 500).json(err.response?.data || { error: "Service error" });
   }
 });
@@ -83,21 +90,21 @@ router.post("/reset-password", async (req, res) => {
   }
 });
 
-// Logout Route
+// Logout Route with enhanced cross-browser compatibility
 router.post("/logout", (req, res) => {
   try {
-    // Clear the token from cookies
+    // Log user agent for debugging
+    console.log(`User logout attempt from: ${req.headers['user-agent']}`);
+    
+    // Clear the token from cookies with same settings as when it was set
     res.clearCookie("token", {
       httpOnly: true,
-      secure: true, // 🔥 Railway is HTTPS so this MUST be true
+      secure: true,
       sameSite: "None",
-      path: "/", // important to match the path used when setting the cookie
+      path: "/"
     });
 
-    // Also invalidate the token on the server side
-    // This is a simple approach - in a production system you might want to use a token blacklist
-    // or implement a more sophisticated token revocation mechanism
-
+    // Return success response
     res.status(200).json({ message: "Logged out successfully" });
   } catch (error) {
     console.error("Logout error:", error);

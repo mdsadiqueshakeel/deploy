@@ -35,28 +35,32 @@ router.get("/verify", async (req, res) => {
 
 
 
-// Logger for debug
+// Admin Login with enhanced cross-browser compatibility
 router.post("/login", async (req, res) => {
   try {
     const response = await axios.post(`${ADMIN_SERVICE_URL}/api/admin/login`, req.body);
 
     const token = response.data.token;
+    
+    // Log user agent for debugging
+    console.log(`Admin login attempt from: ${req.headers['user-agent']}`);
 
-    // ✅ Set the cookie correctly for cross-origin access
+    // Set cookie with enhanced cross-browser compatibility
     res
       .cookie("adminToken", token, {
         httpOnly: true,
-        secure: true, // 🔥 Railway is HTTPS so this MUST be true
-        sameSite: "None", // 🔥 To allow cross-site cookies
+        secure: true, // Required for HTTPS
+        sameSite: "None", // Required for cross-site cookies
         path: "/",
-        maxAge: 7 * 24 * 60 * 60 * 1000, // Optional: 7 days
+        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
       })
       .status(200)
       .json({ 
         message: "Admin logged in successfully",
-        token: token // Include token in response for sessionStorage
+        token: token // Always include token in response for sessionStorage
       });
   } catch (err) {
+    console.error("Admin login error:", err.response?.data || err.message);
     res
       .status(err.response?.status || 500)
       .json(err.response?.data || { error: "Service error" });
@@ -172,16 +176,20 @@ router.delete("/delete-user/:id",adminAuth, async (req, res) => {
 
 router.post("/logout", (req, res) => {
   try {
+    // Log user agent for debugging
+    console.log(`Admin logout attempt from: ${req.headers['user-agent']}`);
+    
+    // Clear the cookie with same settings as when it was set
     res.clearCookie("adminToken", {
       httpOnly: true,
-      secure: true, // 🔥 Railway is HTTPS so this MUST be true
-        sameSite: "None", // Use Strict for better security
-      path: "/",
-      // Ensure it matches the domain used in login
+      secure: true,
+      sameSite: "None",
+      path: "/"
     });
 
     res.status(200).json({ message: "Admin logged out successfully" });
   } catch (err) {
+    console.error("Admin logout error:", err.message);
     res.status(500).json({ message: "Logout error", error: err.message });
   }
 });

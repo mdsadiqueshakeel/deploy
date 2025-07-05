@@ -245,11 +245,28 @@ export default function AdminLogin() {
     e.preventDefault();
     setError('');
     try {
+      console.log('Attempting admin login...');
       const response = await api.post('/api/admin/login', { email, password });
-      sessionStorage.setItem('adminToken', response.data.token);
-      router.push('/admin/dashboard');
+      
+      // Ensure we have a token in the response
+      if (response.data && response.data.token) {
+        console.log('Admin token received, storing in sessionStorage');
+        sessionStorage.setItem('adminToken', response.data.token);
+        
+        // Double-check token was stored correctly
+        const storedToken = sessionStorage.getItem('adminToken');
+        if (storedToken) {
+          console.log('Admin token successfully stored, redirecting to dashboard');
+          router.push('/admin/dashboard');
+        } else {
+          throw new Error('Failed to store admin token in sessionStorage');
+        }
+      } else {
+        throw new Error('No token received from server');
+      }
     } catch (error) {
-      setError(error.response?.data?.message || 'Login failed. Please try again.');
+      console.error('Admin login error:', error);
+      setError(error.response?.data?.message || error.message || 'Login failed. Please try again.');
     }
   };
 
