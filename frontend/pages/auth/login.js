@@ -321,23 +321,19 @@ export default function Login() {
       console.log('Attempting user login...');
       const response = await api.post("/api/auth/login", { email, password });
       
-      // Ensure we have a token in the response
-      if (response.data && response.data.token) {
-        console.log('User token received, storing in browser storage');
-        // Use the enhanced storage function with fallback
-        const tokenSetSuccessfully = setToken(response.data.token);
-        
-        if (tokenSetSuccessfully) {
-          console.log('User token successfully stored, redirecting to dashboard');
-          router.push("/dashboard");
-        } else {
-          throw new Error('Failed to store user token in browser storage');
+      // Verify token was stored successfully
+      const token = response.data?.token;
+      if (token) {
+        const storageSuccess = setToken(token);
+        if (!storageSuccess) {
+          throw new Error('Failed to store authentication token');
         }
-      } else {
-        throw new Error('No token received from server');
       }
+      
+      console.log("Login success:", response.data);
+      router.push("/dashboard");
     } catch (error) {
-      console.error('Login error:', error);
+      console.error("Login error:", error);
       setError(error.response?.data?.message || error.message || "Login failed");
     }
   };

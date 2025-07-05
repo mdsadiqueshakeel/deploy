@@ -3,12 +3,14 @@ import { getBrowserInfo } from './browserDetect';
 
 // Enhanced token storage with fallback to localStorage for Safari private mode
 export const setToken = (token) => {
-  let tokenSetSuccessfully = false;
   // Check if we're in a browser environment
   if (typeof window === 'undefined') {
     console.warn('Not in browser environment, cannot set token');
     return false;
   }
+  
+  // Create memory store if it doesn't exist
+  window.__tempTokenStore = window.__tempTokenStore || {};
   
   const browserInfo = getBrowserInfo();
   
@@ -28,6 +30,9 @@ export const setToken = (token) => {
     // If we get here, storage is working
     sessionStorage.setItem('token', token);
     console.log('Token set in sessionStorage');
+    
+    // Also store in memory for Safari fallback
+    window.__tempTokenStore.token = token;
     return true;
   } catch (sessionError) {
     console.warn('SessionStorage failed:', sessionError);
@@ -41,21 +46,22 @@ export const setToken = (token) => {
     
     localStorage.setItem('token', token);
     console.log('Token set in localStorage (fallback)');
+    
+    // Also store in memory for Safari fallback
+    window.__tempTokenStore.token = token;
     return true;
   } catch (localError) {
     console.warn('LocalStorage failed:', localError);
   }
   
-  // Memory fallback for browsers that block all storage
-  if (browserInfo.isSafari || browserInfo.isIOS || browserInfo.isPrivateMode) {
-    try {
-      window.__tempTokenStore = window.__tempTokenStore || {};
-      window.__tempTokenStore.token = token;
-      console.warn('Using in-memory token storage as fallback');
-      return true;
-    } catch (memError) {
-      console.error('All storage methods failed:', memError);
-    }
+  // Final memory fallback for all browsers
+  try {
+    window.__tempTokenStore.token = token;
+    console.warn('Using in-memory token storage as final fallback');
+    return true;
+  } catch (memError) {
+    console.error('All storage methods failed:', memError);
+    return false;
   }
   
   return false;

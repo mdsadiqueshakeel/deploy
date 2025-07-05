@@ -14,9 +14,15 @@ const ProtectedRoute = (WrappedComponent) => {
         const token = getToken();
         
         if (!token) {
-          console.log('No token found in any storage, redirecting to login');
-          router.replace('/auth/login');
-          return;
+          // Safari may need extra time to process cookies
+          await new Promise(resolve => setTimeout(resolve, 300));
+          const retryToken = getToken();
+          
+          if (!retryToken) {
+            console.log('No token found in any storage, redirecting to login');
+            router.replace('/auth/login');
+            return;
+          }
         }
         
         // Then verify with the server
