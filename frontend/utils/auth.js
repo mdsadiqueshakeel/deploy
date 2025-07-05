@@ -7,7 +7,7 @@ export const setToken = (token) => {
   // Check if we're in a browser environment
   if (typeof window === 'undefined') {
     console.warn('Not in browser environment, cannot set token');
-    return;
+    return false;
   }
   
   const browserInfo = getBrowserInfo();
@@ -18,41 +18,50 @@ export const setToken = (token) => {
     console.log('Private browsing mode detected');
   }
   
+  // Try sessionStorage first
   try {
-    // First try to write a test value to check if sessionStorage is actually writable
-    sessionStorage.setItem('test-write', '1');
-    sessionStorage.removeItem('test-write');
+    // Test if storage is writable
+    const testKey = `test-${Date.now()}`;
+    sessionStorage.setItem(testKey, '1');
+    sessionStorage.removeItem(testKey);
     
-    // If we get here, sessionStorage is working
+    // If we get here, storage is working
     sessionStorage.setItem('token', token);
     console.log('Token set in sessionStorage');
-    tokenSetSuccessfully = true;
-  } catch (error) {
-    // Fallback to localStorage if sessionStorage fails
-    console.warn('SessionStorage failed, using localStorage fallback:', error);
+    return true;
+  } catch (sessionError) {
+    console.warn('SessionStorage failed:', sessionError);
+  }
+  
+  // Try localStorage fallback
+  try {
+    const testKey = `test-${Date.now()}`;
+    localStorage.setItem(testKey, '1');
+    localStorage.removeItem(testKey);
+    
+    localStorage.setItem('token', token);
+    console.log('Token set in localStorage (fallback)');
+    return true;
+  } catch (localError) {
+    console.warn('LocalStorage failed:', localError);
+  }
+  
+  // Memory fallback for browsers that block all storage
+  if (browserInfo.isSafari || browserInfo.isIOS || browserInfo.isPrivateMode) {
     try {
-      // First try to write a test value to check if localStorage is actually writable
-      localStorage.setItem('test-write', '1');
-      localStorage.removeItem('test-write');
-      
-      // If we get here, localStorage is working
-      localStorage.setItem('token', token);
-      console.log('Token set in localStorage (fallback)');
-      tokenSetSuccessfully = true;
-    } catch (localStorageError) {
-      console.error('All storage methods failed:', localStorageError);
-      
-      // Log detailed error for debugging
-      if (browserInfo.isSafari || browserInfo.isIOS) {
-        console.error(`Storage failure on ${browserInfo.isIOS ? 'iOS' : 'Safari'}: `, localStorageError);
-      }
+      window.__tempTokenStore = window.__tempTokenStore || {};
+      window.__tempTokenStore.token = token;
+      console.warn('Using in-memory token storage as fallback');
+      return true;
+    } catch (memError) {
+      console.error('All storage methods failed:', memError);
     }
   }
-  return tokenSetSuccessfully;
+  
+  return false;
 };
 
 export const getToken = () => {
-  // Check if we're in a browser environment
   if (typeof window === 'undefined') {
     console.warn('Not in browser environment, cannot get token');
     return null;
@@ -62,48 +71,35 @@ export const getToken = () => {
   
   console.log(`Getting token on ${browserInfo.type}`);
   
-  if (browserInfo.isPrivateMode) {
-    console.log('Private browsing mode detected, token retrieval may be affected');
+  // Check memory storage first (for private mode fallback)
+  if (window.__tempTokenStore?.token) {
+    console.warn('Retrieving token from in-memory storage');
+    return window.__tempTokenStore.token;
   }
   
-  // Try sessionStorage first
-  let token = null;
+  // Try sessionStorage
   try {
-    token = sessionStorage.getItem('token');
+    const token = sessionStorage.getItem('token');
     if (token) {
       console.log('Token retrieved from sessionStorage');
       return token;
     }
   } catch (error) {
-    console.warn('Error accessing sessionStorage:', error);
-    
-    // Log detailed error for debugging
-    if (browserInfo.isSafari || browserInfo.isIOS) {
-      console.warn(`SessionStorage access failure on ${browserInfo.isIOS ? 'iOS' : 'Safari'}: `, error);
-    }
+    console.warn('SessionStorage access error:', error);
   }
   
-  // If not found in sessionStorage, try localStorage
+  // Try localStorage
   try {
-    token = localStorage.getItem('token');
+    const token = localStorage.getItem('token');
     if (token) {
-      console.log('Token retrieved from localStorage fallback');
+      console.log('Token retrieved from localStorage');
       return token;
     }
   } catch (error) {
-    console.warn('Error accessing localStorage:', error);
-    
-    // Log detailed error for debugging
-    if (browserInfo.isSafari || browserInfo.isIOS) {
-      console.warn(`LocalStorage access failure on ${browserInfo.isIOS ? 'iOS' : 'Safari'}: `, error);
-    }
+    console.warn('LocalStorage access error:', error);
   }
   
-  // If we get here, no token was found in either storage
-  if (browserInfo.isSafari || browserInfo.isIOS) {
-    console.warn(`No token found in any storage on ${browserInfo.isIOS ? 'iOS' : 'Safari'} device`);
-  }
-  
+  console.warn('No token found in any storage');
   return null;
 };
 

@@ -328,11 +328,8 @@ export default function Login() {
         const tokenSetSuccessfully = setToken(response.data.token);
         
         if (tokenSetSuccessfully) {
-          console.log('Token successfully stored, redirecting to dashboard');
-          router.push('/dashboard');
-        } else {
-          alert('Failed to store login token. Please check your browser settings (e.g., private browsing mode, content blockers) or try a different browser.');
-          console.error('Token storage failed. User not redirected.');
+          console.log('User token successfully stored, redirecting to dashboard');
+          router.push("/dashboard");
         } else {
           throw new Error('Failed to store user token in browser storage');
         }
