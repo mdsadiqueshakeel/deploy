@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import api from '../../services/api';
+import { getAdminToken, clearAllTokens } from '../../utils/auth';
 
 const AdminProtectedRoute = ({ children }) => {
   const router = useRouter();
@@ -11,11 +12,11 @@ const AdminProtectedRoute = ({ children }) => {
 useEffect(() => {
   const checkAuth = async () => {
     try {
-      // First check if we have an admin token in sessionStorage
-      const adminToken = sessionStorage.getItem('adminToken');
+      // First check if we have an admin token in storage (with fallback)
+      const adminToken = getAdminToken();
       
       if (!adminToken) {
-        console.log('No admin token found in sessionStorage, redirecting to login');
+        console.log('No admin token found in storage, redirecting to login');
         router.push('/admin/login');
         return;
       }
@@ -26,8 +27,8 @@ useEffect(() => {
       setIsAuthenticated(true);
     } catch (error) {
       console.error('Admin auth error:', error);
-      // Clear any invalid tokens
-      sessionStorage.removeItem('adminToken');
+      // Clear any invalid tokens from all storage types
+      clearAllTokens();
       router.push('/admin/login');
     } finally {
       setLoading(false);

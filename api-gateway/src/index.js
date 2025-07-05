@@ -45,7 +45,7 @@ app.use(
         // Add more origins if needed
       ];
       
-      if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+      if (!origin || allowedOrigins.some(allowed => origin.includes(allowed))) {
         callback(null, true);
       } else {
         console.log('CORS blocked origin:', origin);
@@ -63,7 +63,8 @@ app.use(
       "Pragma",
       "Expires",
       "X-Forwarded-Proto",
-      "X-Forwarded-For"
+      "X-Forwarded-For",
+      "Origin"
     ],
     exposedHeaders: ["Access-Control-Allow-Origin", "Set-Cookie"],
     maxAge: 86400, // 24 hours - reduce preflight requests
@@ -74,6 +75,7 @@ app.use(
 app.use((req, res, next) => {
   if (req.method === "OPTIONS") {
     const allowedOrigins = [
+      process.env.CLIENT_URL,
       "https://growthaffinitymarketing.com",
       "https://www.growthaffinitymarketing.com",
       "http://localhost:3000",
@@ -81,27 +83,22 @@ app.use((req, res, next) => {
     ];
 
     const origin = req.headers.origin;
-    if (allowedOrigins.includes(origin) || !origin)  {
-      if (origin) {
-        res.setHeader("Access-Control-Allow-Origin", origin);
-      }
+    if (origin && (allowedOrigins.some(allowed => origin.includes(allowed)) || !origin)) {
+      res.setHeader("Access-Control-Allow-Origin", origin);
+    } else if (!origin) {
+      res.setHeader("Access-Control-Allow-Origin", "*");
     }
 
     res.setHeader("Access-Control-Allow-Credentials", "true");
     res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS, PATCH");
     res.setHeader("Access-Control-Allow-Headers", 
-      "Content-Type, Authorization, X-Requested-With, Accept, Cache-Control, Pragma, Expires, X-Forwarded-Proto, X-Forwarded-For");
+      "Content-Type, Authorization, X-Requested-With, Accept, Cache-Control, Pragma, Expires, X-Forwarded-Proto, X-Forwarded-For, Origin");
     res.setHeader("Access-Control-Max-Age", "86400"); // 24 hours
     
-    // Safari/iOS specific headers
-    const userAgent = req.headers['user-agent'] || '';
-    const isSafariOrIOS = /^((?!chrome|android).)*safari/i.test(userAgent) || /iphone|ipad|ipod/i.test(userAgent);
-    
-    if (isSafariOrIOS) {
-      res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
-      res.setHeader("Pragma", "no-cache");
-      res.setHeader("Expires", "0");
-    }
+    // Safari/iOS specific headers - always apply these for OPTIONS requests
+    res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+    res.setHeader("Pragma", "no-cache");
+    res.setHeader("Expires", "0");
     
     return res.sendStatus(204); // Safari needs this clean end
   }

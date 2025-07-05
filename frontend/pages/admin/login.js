@@ -234,6 +234,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useState } from 'react';
 import api from '../../utils/api';
+import { setAdminToken, getAdminToken } from '../../utils/auth';
 
 export default function AdminLogin() {
   const router = useRouter();
@@ -250,16 +251,17 @@ export default function AdminLogin() {
       
       // Ensure we have a token in the response
       if (response.data && response.data.token) {
-        console.log('Admin token received, storing in sessionStorage');
-        sessionStorage.setItem('adminToken', response.data.token);
+        console.log('Admin token received, storing in browser storage');
+        // Use the enhanced storage function with fallback
+        setAdminToken(response.data.token);
         
         // Double-check token was stored correctly
-        const storedToken = sessionStorage.getItem('adminToken');
+        const storedToken = getAdminToken();
         if (storedToken) {
           console.log('Admin token successfully stored, redirecting to dashboard');
           router.push('/admin/dashboard');
         } else {
-          throw new Error('Failed to store admin token in sessionStorage');
+          throw new Error('Failed to store admin token in browser storage');
         }
       } else {
         throw new Error('No token received from server');

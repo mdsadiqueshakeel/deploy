@@ -307,6 +307,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useState } from 'react';
 import api from "../../utils/api";
+import { setToken, getToken } from '../../utils/auth';
 
 export default function Login() {
   const router = useRouter();
@@ -322,16 +323,17 @@ export default function Login() {
       
       // Ensure we have a token in the response
       if (response.data && response.data.token) {
-        console.log('User token received, storing in sessionStorage');
-        sessionStorage.setItem('token', response.data.token);
+        console.log('User token received, storing in browser storage');
+        // Use the enhanced storage function with fallback
+        setToken(response.data.token);
         
         // Double-check token was stored correctly
-        const storedToken = sessionStorage.getItem('token');
+        const storedToken = getToken();
         if (storedToken) {
           console.log('User token successfully stored, redirecting to dashboard');
           router.push("/dashboard");
         } else {
-          throw new Error('Failed to store user token in sessionStorage');
+          throw new Error('Failed to store user token in browser storage');
         }
       } else {
         throw new Error('No token received from server');

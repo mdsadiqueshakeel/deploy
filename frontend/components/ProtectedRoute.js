@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
-import { checkAuth, getToken } from '../utils/auth';
+import { checkAuth, getToken, clearAllTokens } from '../utils/auth';
 
 const ProtectedRoute = (WrappedComponent) => {
   const ComponentWithAuth = (props) => {
@@ -10,11 +10,11 @@ const ProtectedRoute = (WrappedComponent) => {
     useEffect(() => {
     const verifyAuth = async () => {
       try {
-        // First check if we have a token in sessionStorage
+        // First check if we have a token in storage (with fallback)
         const token = getToken();
         
         if (!token) {
-          console.log('No token found, redirecting to login');
+          console.log('No token found in any storage, redirecting to login');
           router.replace('/auth/login');
           return;
         }
@@ -23,12 +23,16 @@ const ProtectedRoute = (WrappedComponent) => {
         const user = await checkAuth();
         if (!user) {
           console.log('Token invalid or expired, redirecting to login');
+          // Clear any invalid tokens from all storage types
+          clearAllTokens();
           router.replace('/auth/login');
         } else {
           setLoading(false);
         }
       } catch (error) {
         console.error('Authentication error:', error);
+        // Clear any invalid tokens from all storage types
+        clearAllTokens();
         router.replace('/auth/login');
       }
     };

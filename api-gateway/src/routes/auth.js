@@ -32,20 +32,38 @@ router.post("/login", async (req, res) => {
     const token = response.data.token;
     
     // Log user agent for debugging
-    console.log(`User login attempt from: ${req.headers['user-agent']}`);
+    const userAgent = req.headers['user-agent'] || '';
+    console.log(`User login attempt from: ${userAgent}`);
+    
+    // Detect Safari/iOS
+    const isSafari = /safari/.test(userAgent.toLowerCase()) && !/chrome/.test(userAgent.toLowerCase());
+    const isIOS = /iphone|ipad|ipod/.test(userAgent.toLowerCase());
+    
+    // Set cookie with appropriate options
+    const cookieOptions = {
+      httpOnly: true,
+      secure: true, // Required for HTTPS
+      sameSite: "None", // Required for cross-site cookies
+      maxAge: 24 * 60 * 60 * 1000, // 1 day
+      path: "/", // Ensure cookie is available across the entire site
+    };
+    
+    // Add special handling for Safari/iOS
+    if (isSafari || isIOS) {
+      console.log('Safari/iOS detected, applying special cookie handling');
+      // Safari/iOS may need these headers
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
+    }
 
     res
-      .cookie("token", token, {
-        httpOnly: true,
-        secure: true, // Required for HTTPS
-        sameSite: "None", // Required for cross-site cookies
-        maxAge: 24 * 60 * 60 * 1000, // 1 day
-        path: "/", // Ensure cookie is available across the entire site
-      })
+      .cookie("token", token, cookieOptions)
       .status(200)
       .json({ 
         message: "Logged in successfully", 
-        token: token // Always include token in response for sessionStorage
+        token: token, // Always include token in response for sessionStorage
+        userAgent: userAgent // Include user agent for debugging
       });
   } catch (err) {
     console.error("User login error:", err.response?.data || err.message);
@@ -94,7 +112,12 @@ router.post("/reset-password", async (req, res) => {
 router.post("/logout", (req, res) => {
   try {
     // Log user agent for debugging
-    console.log(`User logout attempt from: ${req.headers['user-agent']}`);
+    const userAgent = req.headers['user-agent'] || '';
+    console.log(`User logout attempt from: ${userAgent}`);
+    
+    // Detect Safari/iOS
+    const isSafari = /safari/.test(userAgent.toLowerCase()) && !/chrome/.test(userAgent.toLowerCase());
+    const isIOS = /iphone|ipad|ipod/.test(userAgent.toLowerCase());
     
     // Clear the token from cookies with same settings as when it was set
     res.clearCookie("token", {
@@ -103,9 +126,21 @@ router.post("/logout", (req, res) => {
       sameSite: "None",
       path: "/"
     });
+    
+    // Add special handling for Safari/iOS
+    if (isSafari || isIOS) {
+      console.log('Safari/iOS detected, applying special headers for logout');
+      // Safari/iOS may need these headers
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
+    }
 
     // Return success response
-    res.status(200).json({ message: "Logged out successfully" });
+    res.status(200).json({ 
+      message: "Logged out successfully",
+      userAgent: userAgent // Include user agent for debugging
+    });
   } catch (error) {
     console.error("Logout error:", error);
     res.status(500).json({ message: "Server error" });
@@ -143,9 +178,26 @@ router.get("/me", jwtAuth, async (req, res) => {
   }
 });
 
-// Check Auth Route
+// Check Auth Route with enhanced cross-browser compatibility
 router.get("/check-auth", async (req, res) => {
   try {
+    // Log user agent for debugging
+    const userAgent = req.headers['user-agent'] || '';
+    console.log(`Check auth attempt from: ${userAgent}`);
+    
+    // Detect Safari/iOS
+    const isSafari = /safari/.test(userAgent.toLowerCase()) && !/chrome/.test(userAgent.toLowerCase());
+    const isIOS = /iphone|ipad|ipod/.test(userAgent.toLowerCase());
+    
+    // Add special handling for Safari/iOS
+    if (isSafari || isIOS) {
+      console.log('Safari/iOS detected, applying special headers for check-auth');
+      // Safari/iOS may need these headers
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
+    }
+    
     const token = req.cookies?.token;
     
     if (!token) {
@@ -159,13 +211,23 @@ router.get("/check-auth", async (req, res) => {
       const response = await axios.get(`${USER_SERVICE_URL}/api/auth/me`, {
         headers: {
           Cookie: `token=${token}`, // Forward token as cookie
+          'User-Agent': userAgent, // Forward user agent for consistent handling
         },
       });
       
-      return res.json({ authenticated: true, user: response.data });
+      return res.json({ 
+        authenticated: true, 
+        user: response.data,
+        userAgent: userAgent // Include user agent for debugging
+      });
     } catch (error) {
       // Invalid token
-      res.clearCookie("token");
+      res.clearCookie("token", {
+        httpOnly: true,
+        secure: true,
+        sameSite: "None",
+        path: "/"
+      });
       return res.json({ authenticated: false });
     }
   } catch (error) {
