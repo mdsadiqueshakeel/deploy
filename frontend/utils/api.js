@@ -16,8 +16,11 @@ const api = axios.create({
   baseURL: API_URL,
   headers: {
     'Content-Type': 'application/json',
+    'X-Requested-With': 'XMLHttpRequest', // Helps with CORS in Safari
   },
-  withCredentials: true, // Necessary for sending cookies/session tokens if your backend uses them
+  withCredentials: true, // Necessary for sending cookies/session tokens
+  xsrfCookieName: 'XSRF-TOKEN', // Default CSRF cookie name
+  xsrfHeaderName: 'X-XSRF-TOKEN', // Default CSRF header name
 });
 
 // --- Request Interceptor: Add Authorization header ---

@@ -37,16 +37,27 @@ app.use((req, res, next) => {
 // ✅ CORS
 app.use(
   cors({
-    origin: process.env.CLIENT_URL,
+    origin: process.env.NODE_ENV === 'production' 
+      ? ['https://growthaffinitymarketing.com', 'https://www.growthaffinitymarketing.com']
+      : process.env.CLIENT_URL,
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
-    exposedHeaders: ['Access-Control-Allow-Origin']
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+    exposedHeaders: ['Access-Control-Allow-Origin', 'Set-Cookie']
   })
 );
 
 app.use(express.json());
 app.use(cookieParser());
+
+// Handle OPTIONS preflight requests for Safari
+app.options('*', cors());
+
+// Add specific headers for Safari cookie support
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Credentials', 'true');
+  next();
+});
 
 // ✅ Routes
 app.use("/api/auth", authRoutes);
