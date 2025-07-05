@@ -1,15 +1,15 @@
 import api from './api';
 
 // export const setToken = (token) => {
-//   localStorage.setItem('token', token);
+//   sessionStorage.setItem('token', token);
 // };
 
 // export const getToken = () => {
-//   return localStorage.getItem('token');
+//   return sessionStorage.getItem('token');
 // };
 
 // export const removeToken = () => {
-//   localStorage.removeItem('token');
+//   sessionStorage.removeItem('token');
 // };
 
 export const checkAuth = async () => {
@@ -25,9 +25,9 @@ export const logout = async () => {
   try {
     await api.post('/api/auth/logout');
     // Clear any client-side state
-    localStorage.removeItem('token'); // Remove admin token from localStorage
+    sessionStorage.removeItem('token'); // Remove admin token from sessionStorage
   } catch (error) {
     // Handle error if needed
-    localStorage.removeItem('token'); // Remove admin token even if API call fails
+    sessionStorage.removeItem('token'); // Remove admin token even if API call fails
   }
 };

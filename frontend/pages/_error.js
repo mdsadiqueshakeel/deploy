@@ -1,8 +1,8 @@
 // pages/_error.js
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/router';
 import Head from 'next/head';
 import Link from 'next/link';
+import { useRouter } from 'next/router';
+import { useEffect, useState } from 'react';
 
 export default function ErrorPage({ statusCode }) {
   const router = useRouter();
@@ -15,7 +15,7 @@ export default function ErrorPage({ statusCode }) {
       try {
         const userData = typeof window !== 'undefined' && 
           (sessionStorage.getItem('userProfileData') || 
-           localStorage.getItem('userProfileData'));
+           sessionStorage.getItem('userProfileData'));
         
         if (userData) {
           const parsedData = JSON.parse(userData);

@@ -12,7 +12,7 @@
 
 // // Add request interceptor to include admin token
 // API.interceptors.request.use(config => {
-//   const adminToken = localStorage.getItem('adminToken');
+//   const adminToken = sessionStorage.getItem('adminToken');
 //   if (adminToken) {
 //     config.headers.Authorization = `Bearer ${adminToken}`;
 //   }

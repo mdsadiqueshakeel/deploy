@@ -425,7 +425,7 @@ export default StatusPage;
 //   const [nextStatus, setNextStatus] = useState(null);
 
 //   useEffect(() => {
-//     const savedUser = localStorage.getItem("userProfileData");
+//     const savedUser = sessionStorage.getItem("userProfileData");
 //     let foundId = null;
 //     let userStatusFromDB = null;
 

@@ -495,7 +495,7 @@ export default function Products({ searchQuery }) {
 
   // WhatsApp notification helper function
   const openWhatsAppNotification = (product, quantity, totalAmount) => {
-    const phone = "9155649575"; // Admin's WhatsApp number
+    const phone = "7859086070"; // Admin's WhatsApp number
     const userDisplayName = userName || 'A valued customer';
     
     const message = `Hey Admin! ${userDisplayName} just requested to purchase ${quantity} ${product.name} (Product Code: ${product.productCode}). Total amount: ₹${totalAmount}. Please approve it so they can receive the product. 😊`;

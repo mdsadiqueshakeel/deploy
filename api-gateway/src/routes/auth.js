@@ -34,8 +34,8 @@ router.post("/login", async (req, res) => {
     res
       .cookie("token", token, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
+       secure: true, // 🔥 Railway is HTTPS so this MUST be true
+        sameSite: "None",
         maxAge: 24 * 60 * 60 * 1000, // 1 day
       })
       .status(200)
@@ -87,8 +87,8 @@ router.post("/logout", (req, res) => {
   try {
     res.clearCookie("token", {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production", // false in dev, true in prod
-      sameSite: "strict", // "strict" is good for most apps
+      secure: true, // 🔥 Railway is HTTPS so this MUST be true
+        sameSite: "None", // "strict" is good for most apps
       path: "/", // important to match the path used when setting the cookie
     });
 

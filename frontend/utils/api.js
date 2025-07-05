@@ -67,9 +67,9 @@ api.interceptors.response.use(
     // If the error response exists and its status is 401 (Unauthorized)
     if (error.response && error.response.status === 401) {
       console.warn('Unauthorized request detected. Clearing tokens and redirecting to login...');
-      // Clear all potential authentication tokens from localStorage
-      localStorage.removeItem('token');
-      localStorage.removeItem('adminToken'); 
+      // Clear all potential authentication tokens from sessionStorage
+      sessionStorage.removeItem('token');
+      sessionStorage.removeItem('adminToken'); 
       
       // Redirect the user to the login page.
       // This is important for single-page applications to enforce re-authentication.
