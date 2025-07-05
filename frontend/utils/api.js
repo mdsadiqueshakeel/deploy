@@ -1,6 +1,7 @@
 // utils/api.js - This will be your single, comprehensive Axios instance for all API calls.
 
 import axios from 'axios';
+import { getToken, getAdminToken, setToken, setAdminToken, clearAllTokens } from './auth';
 
 // Determine the API base URL.
 // It tries to use NEXT_PUBLIC_API_URL from environment variables first.
@@ -10,24 +11,16 @@ import axios from 'axios';
 // - From frontend container to API Gateway container: http://api-gateway:5000 (using Docker's internal DNS resolution)
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
-// Create a function to detect Safari/iOS browsers
-const isSafariOrIOS = () => {
-  if (typeof window === 'undefined') return false;
-  
-  const userAgent = window.navigator.userAgent.toLowerCase();
-  const isSafari = /safari/.test(userAgent) && !/chrome/.test(userAgent);
-  const isIOS = /iphone|ipad|ipod/.test(userAgent);
-  
-  return isSafari || isIOS;
-};
+// Import browser detection utilities
+import { getBrowserInfo, getRequestHeaders } from './browserDetect';
+
+// We now use the comprehensive browser detection utility instead of the old function
 
 // Create an Axios instance with enhanced cross-browser compatibility
 const api = axios.create({
   baseURL: API_URL,
   headers: {
-    'Content-Type': 'application/json',
-    'X-Requested-With': 'XMLHttpRequest', // Helps with CORS in Safari
-    'Accept': 'application/json', // Explicitly set Accept header for better compatibility
+    ...getRequestHeaders(), // Use our browser-specific headers
   },
   withCredentials: true, // Necessary for sending cookies/session tokens
   xsrfCookieName: 'XSRF-TOKEN', // Default CSRF cookie name
@@ -38,23 +31,9 @@ const api = axios.create({
 // This interceptor will run before every API request.
 api.interceptors.request.use(
   (config) => {
-    // Get the user's general authentication token
-    const userToken = sessionStorage.getItem('token'); 
-
-    // Get the admin-specific authentication token
-    const adminToken = sessionStorage.getItem('adminToken');
-
-    // Try localStorage as fallback if sessionStorage fails (for Safari private mode)
-    let finalUserToken = userToken;
-    let finalAdminToken = adminToken;
-    
-    if (!finalUserToken && typeof localStorage !== 'undefined') {
-      finalUserToken = localStorage.getItem('token');
-    }
-    
-    if (!finalAdminToken && typeof localStorage !== 'undefined') {
-      finalAdminToken = localStorage.getItem('adminToken');
-    }
+    // Get tokens using the enhanced getter functions with fallbacks
+    const finalUserToken = getToken();
+    const finalAdminToken = getAdminToken();
 
     // Logic to decide which token to send:
     // If the request URL includes '/admin/' AND an adminToken exists, use the adminToken.
@@ -69,15 +48,22 @@ api.interceptors.request.use(
     }
     
     // Add comprehensive browser compatibility headers
-    if (isSafariOrIOS()) {
-      // Safari/iOS specific headers for better CORS compatibility
-      config.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate';
-      config.headers['Pragma'] = 'no-cache';
-      config.headers['Expires'] = '0';
-      // Add additional headers for Safari
-      config.headers['Accept'] = 'application/json, text/plain, */*';
-      config.headers['X-Requested-With'] = 'XMLHttpRequest';
-      console.log('Added Safari/iOS compatibility headers');
+    const browserInfo = getBrowserInfo();
+    
+    // Log browser/device info for debugging
+    console.log(`Making request from ${browserInfo.type} browser`);
+    
+    // Apply browser-specific headers using our utility function
+    const browserHeaders = getRequestHeaders();
+    Object.keys(browserHeaders).forEach(key => {
+      config.headers[key] = browserHeaders[key];
+    });
+    
+    console.log('Added browser-specific compatibility headers');
+    
+    // Check for private browsing mode
+    if (browserInfo.isPrivateMode) {
+      console.log('Request being made in private browsing mode - storage may be limited');
     }
 
     return config;
@@ -93,31 +79,15 @@ api.interceptors.response.use(
   (response) => {
     // Check if we received a token in the response and store it
     if (response.data && response.data.token) {
-      try {
-        // Try to store in sessionStorage first
-        sessionStorage.setItem('token', response.data.token);
-        console.log('Token stored in sessionStorage');
-        
-        // For admin login responses
-        if (response.config.url && response.config.url.includes('/admin/login')) {
-          sessionStorage.setItem('adminToken', response.data.token);
-          console.log('Admin token stored in sessionStorage');
-        }
-      } catch (storageError) {
-        // Fallback to localStorage if sessionStorage fails (Safari private mode)
-        console.warn('SessionStorage failed, using localStorage as fallback:', storageError);
-        try {
-          localStorage.setItem('token', response.data.token);
-          console.log('Token stored in localStorage (fallback)');
-          
-          // For admin login responses
-          if (response.config.url && response.config.url.includes('/admin/login')) {
-            localStorage.setItem('adminToken', response.data.token);
-            console.log('Admin token stored in localStorage (fallback)');
-          }
-        } catch (localStorageError) {
-          console.error('All storage methods failed:', localStorageError);
-        }
+      // For admin login responses
+      if (response.config.url && response.config.url.includes('/admin/login')) {
+        // Use the enhanced setter function with fallback
+        setAdminToken(response.data.token);
+        console.log('Admin token stored with fallback mechanism');
+      } else {
+        // Use the enhanced setter function with fallback for regular user token
+        setToken(response.data.token);
+        console.log('User token stored with fallback mechanism');
       }
     }
     return response;
@@ -128,16 +98,9 @@ api.interceptors.response.use(
     // If the error response exists and its status is 401 (Unauthorized)
     if (error.response && error.response.status === 401) {
       console.warn('Unauthorized request detected. Clearing tokens and redirecting to login...');
-      // Clear all potential authentication tokens from both storage types
-      try {
-        sessionStorage.removeItem('token');
-        sessionStorage.removeItem('adminToken');
-      } catch (e) { console.warn('Error clearing sessionStorage:', e); }
       
-      try {
-        localStorage.removeItem('token');
-        localStorage.removeItem('adminToken');
-      } catch (e) { console.warn('Error clearing localStorage:', e); }
+      // Use the enhanced function to clear all tokens from all storage types
+      clearAllTokens();
       
       // Determine the appropriate redirect based on the URL
       if (typeof window !== 'undefined') { // Ensure this runs only in the browser
