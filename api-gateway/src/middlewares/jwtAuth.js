@@ -9,14 +9,21 @@ module.exports = (req, res, next) => {
   const isSafari = /safari/.test(userAgent.toLowerCase()) && !/chrome/.test(userAgent.toLowerCase());
   const isIOS = /iphone|ipad|ipod/.test(userAgent.toLowerCase());
   
-  // Get token from cookie or Authorization header
+  // Get token from cookie, Authorization header, or X-Token-Fallback header
   let token = req.cookies?.token;
   const authHeader = req.headers.authorization;
+  const fallbackToken = req.headers['x-token-fallback'];
   
   // If token not in cookie but in Authorization header, use that instead
   if (!token && authHeader) {
     token = authHeader.split(" ")[1];
     console.log('Token not found in cookie, using Authorization header');
+  }
+  
+  // If still no token but we have a fallback token (for Safari/iOS), use that
+  if (!token && fallbackToken) {
+    token = fallbackToken;
+    console.log('Using X-Token-Fallback header for Safari/iOS compatibility');
   }
   
   if (!token) {

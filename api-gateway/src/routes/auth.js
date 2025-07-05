@@ -55,15 +55,23 @@ router.post("/login", async (req, res) => {
       res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
       res.setHeader('Pragma', 'no-cache');
       res.setHeader('Expires', '0');
+      
+      // For Safari/iOS, set the cookie twice to ensure it's properly set
+      res.cookie("token", token, cookieOptions);
+      
+      // Small delay to ensure cookie is set properly
+      await new Promise(resolve => setTimeout(resolve, 50));
     }
 
+    // Set the cookie (again for Safari/iOS)
     res
       .cookie("token", token, cookieOptions)
       .status(200)
       .json({ 
         message: "Logged in successfully", 
         token: token, // Always include token in response for sessionStorage
-        userAgent: userAgent // Include user agent for debugging
+        userAgent: userAgent, // Include user agent for debugging
+        isSafari: isSafari || isIOS // Include Safari/iOS flag for client-side handling
       });
   } catch (err) {
     console.error("User login error:", err.response?.data || err.message);
@@ -198,14 +206,21 @@ router.get("/check-auth", async (req, res) => {
       res.setHeader('Expires', '0');
     }
     
-    // Get token from cookie or Authorization header
+    // Get token from cookie, Authorization header, or X-Token-Fallback header
     let token = req.cookies?.token;
     const authHeader = req.headers.authorization;
+    const fallbackToken = req.headers['x-token-fallback'];
     
     // If token not in cookie but in Authorization header, use that instead
     if (!token && authHeader) {
       token = authHeader.split(" ")[1];
       console.log('Token not found in cookie, using Authorization header');
+    }
+    
+    // If still no token but we have a fallback token (for Safari/iOS), use that
+    if (!token && fallbackToken) {
+      token = fallbackToken;
+      console.log('Using X-Token-Fallback header for Safari/iOS compatibility');
     }
     
     if (!token) {

@@ -349,7 +349,25 @@ export default function Login() {
       // For Safari/iOS, add a small delay before redirecting to ensure cookie is properly set
       if (isSafari || isIOS) {
         console.log('Safari/iOS detected, adding delay before redirect');
+        setError('Finalizing login... Please wait.');
+        
+        // First delay to ensure cookie is set
         await new Promise(resolve => setTimeout(resolve, 300));
+        
+        // Verify token is accessible
+        const verifyToken = getToken();
+        if (!verifyToken) {
+          console.warn('Token verification failed after delay, retrying...');
+          await new Promise(resolve => setTimeout(resolve, 500));
+          
+          // Final check
+          const finalToken = getToken();
+          if (!finalToken) {
+            throw new Error('Unable to verify authentication token on Safari/iOS');
+          }
+        }
+        
+        setError('');
       }
       
       router.push("/dashboard");

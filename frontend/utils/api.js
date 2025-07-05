@@ -31,6 +31,12 @@ const api = axios.create({
 // This interceptor will run before every API request.
 api.interceptors.request.use(
   (config) => {
+    // Get browser info first for better decision making
+    const browserInfo = getBrowserInfo();
+    
+    // Log browser/device info for debugging
+    console.log(`Making request from ${browserInfo.type} browser to ${config.url}`);
+    
     // Get tokens using the enhanced getter functions with fallbacks
     const finalUserToken = getToken();
     const finalAdminToken = getAdminToken();
@@ -47,11 +53,16 @@ api.interceptors.request.use(
       console.log('Using user token for request');
     }
     
-    // Add comprehensive browser compatibility headers
-    const browserInfo = getBrowserInfo();
-    
-    // Log browser/device info for debugging
-    console.log(`Making request from ${browserInfo.type} browser`);
+    // For Safari/iOS, ensure we're sending the token in both header and cookie
+    if ((browserInfo.isSafari || browserInfo.isIOS) && (finalUserToken || finalAdminToken)) {
+      console.log('Safari/iOS detected, ensuring token is sent in both header and cookie');
+      
+      // Add special headers for Safari/iOS
+      config.headers['X-Token-Fallback'] = finalUserToken || finalAdminToken;
+      
+      // Ensure withCredentials is true for Safari/iOS
+      config.withCredentials = true;
+    }
     
     // Apply browser-specific headers using our utility function
     const browserHeaders = getRequestHeaders();

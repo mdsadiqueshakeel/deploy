@@ -125,9 +125,35 @@ export const removeToken = () => {
 
 export const checkAuth = async () => {
   try {
-    const response = await api.get('/api/auth/check-auth');
-    return response.data.authenticated ? response.data.user : null;
+    // Get browser info for debugging
+    const browserInfo = getBrowserInfo();
+    console.log(`Checking auth on ${browserInfo.type} browser`);
+    
+    // Add retry mechanism for Safari/iOS
+    const makeRequest = async (attempt = 1) => {
+      try {
+        const response = await api.get('/api/auth/check-auth');
+        console.log('Auth check response:', response.status, response.data.authenticated);
+        return response.data.authenticated ? response.data.user : null;
+      } catch (error) {
+        console.error(`Auth check error (attempt ${attempt}):`, error.response?.status, error.message);
+        
+        // If Safari/iOS and 401 error, retry once with delay
+        if ((browserInfo.isSafari || browserInfo.isIOS) && 
+            error.response?.status === 401 && 
+            attempt === 1) {
+          console.log('Safari/iOS 401 error detected, retrying after delay');
+          await new Promise(resolve => setTimeout(resolve, 500));
+          return makeRequest(2);
+        }
+        
+        return null;
+      }
+    };
+    
+    return await makeRequest();
   } catch (error) {
+    console.error('Unexpected error in checkAuth:', error);
     return null;
   }
 };

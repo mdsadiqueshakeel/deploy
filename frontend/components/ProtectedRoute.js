@@ -81,8 +81,17 @@ const ProtectedRoute = (WrappedComponent) => {
   }, [router]);
 
     if (loading) {
-      // Optionally, show a spinner or nothing while checking auth
-      return null;
+      // Show a loading message for better user experience
+      return (
+        <div className="d-flex justify-content-center align-items-center" style={{ height: '100vh' }}>
+          <div className="text-center">
+            <div className="spinner-border text-primary mb-3" role="status">
+              <span className="visually-hidden">Loading...</span>
+            </div>
+            <p className="text-muted">Verifying your authentication...</p>
+          </div>
+        </div>
+      );
     }
 
     return <WrappedComponent {...props} />;
