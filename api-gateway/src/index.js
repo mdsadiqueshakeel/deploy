@@ -35,10 +35,11 @@ app.use((req, res, next) => {
 
 
 // ✅ CORS
+// ✅ CORS comes first
 app.use(
   cors({
     origin: process.env.NODE_ENV === 'production' 
-      ? ['https://growthaffinitymarketing.com', 'https://www.growthaffinitymarketing.com']
+      ? ['https://growthaffinitymarketing.com']
       : process.env.CLIENT_URL,
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
@@ -50,14 +51,14 @@ app.use(
 app.use(express.json());
 app.use(cookieParser());
 
-// Handle OPTIONS preflight requests for Safari
+// ✅ OPTIONS handler must come BEFORE route redirects
 app.options('*', cors());
 
-// Add specific headers for Safari cookie support
 app.use((req, res, next) => {
   res.header('Access-Control-Allow-Credentials', 'true');
   next();
 });
+
 
 // ✅ Routes
 app.use("/api/auth", authRoutes);
