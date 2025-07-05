@@ -259,6 +259,9 @@ export default function AdminLogin() {
           console.log('Admin token successfully stored, redirecting to dashboard');
           router.push('/admin/dashboard');
         } else {
+          alert('Failed to store admin token. Please check your browser settings (e.g., private browsing mode, content blockers) or try a different browser.');
+          console.error('Admin token storage failed. Admin not redirected.');
+        } else {
           throw new Error('Failed to store admin token in browser storage');
         }
       } else {

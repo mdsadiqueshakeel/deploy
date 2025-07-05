@@ -25,7 +25,6 @@ export const setToken = (token) => {
     
     // If we get here, sessionStorage is working
     sessionStorage.setItem('token', token);
-    sessionStorage.setItem('token', token);
     console.log('Token set in sessionStorage');
     tokenSetSuccessfully = true;
   } catch (error) {
@@ -37,7 +36,6 @@ export const setToken = (token) => {
       localStorage.removeItem('test-write');
       
       // If we get here, localStorage is working
-      localStorage.setItem('token', token);
       localStorage.setItem('token', token);
       console.log('Token set in localStorage (fallback)');
       tokenSetSuccessfully = true;
@@ -302,7 +300,6 @@ export const setAdminToken = (token) => {
     
     // If we get here, sessionStorage is working
     sessionStorage.setItem('adminToken', token);
-    sessionStorage.setItem('adminToken', token);
     console.log('Admin token set in sessionStorage');
     tokenSetSuccessfully = true;
   } catch (error) {
@@ -314,7 +311,6 @@ export const setAdminToken = (token) => {
       localStorage.removeItem('test-write');
       
       // If we get here, localStorage is working
-      localStorage.setItem('adminToken', token);
       localStorage.setItem('adminToken', token);
       console.log('Admin token set in localStorage (fallback)');
       tokenSetSuccessfully = true;
