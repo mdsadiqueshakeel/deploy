@@ -318,8 +318,15 @@ export default function Login() {
     e.preventDefault();
     try {
       const response = await api.post("/api/auth/login", { email, password });
+      
+      // Store token in sessionStorage
+      if (response.data && response.data.token) {
+        sessionStorage.setItem('token', response.data.token);
+      }
+      
       router.push("/dashboard");
     } catch (error) {
+      console.error('Login error:', error);
       setError(error.response?.data?.message || "Login failed");
     }
   };

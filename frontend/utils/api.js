@@ -17,6 +17,7 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
     'X-Requested-With': 'XMLHttpRequest', // Helps with CORS in Safari
+    'Accept': 'application/json', // Explicitly set Accept header for better compatibility
   },
   withCredentials: true, // Necessary for sending cookies/session tokens
   xsrfCookieName: 'XSRF-TOKEN', // Default CSRF cookie name
@@ -38,7 +39,6 @@ api.interceptors.request.use(
     // Logic to decide which token to send:
     // If the request URL includes '/admin/' AND an adminToken exists, use the adminToken.
     // Otherwise, if a general userToken exists, use that.
-    // Adjust the `config.url.includes('/admin/')` condition based on your backend's actual URL structure for admin endpoints.
     if (adminToken && config.url && config.url.includes('/admin/')) {
       config.headers.Authorization = `Bearer ${adminToken}`;
     } else if (userToken) {
@@ -46,10 +46,18 @@ api.interceptors.request.use(
       config.headers.Authorization = `Bearer ${userToken}`;
     }
     
+    // Add Safari-specific headers for better compatibility
+    if (typeof window !== 'undefined' && window.navigator && window.navigator.userAgent) {
+      const isSafari = /^((?!chrome|android).)*safari/i.test(window.navigator.userAgent);
+      if (isSafari) {
+        // Safari needs these explicit headers for CORS with credentials
+        config.headers['Cache-Control'] = 'no-cache';
+      }
+    }
+
     // If no token is found (e.g., for public routes like login/register, or if user is logged out),
     // the Authorization header will simply not be set, which is appropriate.
 
-    console.log('Starting Request:', config.method?.toUpperCase(), config.url, 'Headers:', config.headers); // Log for debugging
     return config;
   },
   (error) => {
@@ -61,7 +69,10 @@ api.interceptors.request.use(
 // --- Response Interceptor: Handle Responses and Errors (e.g., 401 Unauthorized) ---
 api.interceptors.response.use(
   (response) => {
-    console.log('API Response:', response.status, response.config.url); // Log for debugging
+    // Check if we received a token in the response and store it
+    if (response.data && response.data.token) {
+      sessionStorage.setItem('token', response.data.token);
+    }
     return response;
   },
   (error) => {

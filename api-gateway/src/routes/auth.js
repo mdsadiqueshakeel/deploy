@@ -35,10 +35,9 @@ router.post("/login", async (req, res) => {
       .cookie("token", token, {
         httpOnly: true,
         secure: true, // 🔥 Railway is HTTPS so this MUST be true
-        sameSite: "None",
+        sameSite: "None", // Required for cross-site cookies
         maxAge: 24 * 60 * 60 * 1000, // 1 day
-        path: "/", // Ensure cookie is aailable across the entire site
-        domain: process.env.CLIENT_URL // Set domain for production
+        path: "/", // Ensure cookie is available across the entire site
       })
       .status(200)
       .json({ message: "Logged in successfully", token });
@@ -87,16 +86,21 @@ router.post("/reset-password", async (req, res) => {
 // Logout Route
 router.post("/logout", (req, res) => {
   try {
+    // Clear the token from cookies
     res.clearCookie("token", {
       httpOnly: true,
       secure: true, // 🔥 Railway is HTTPS so this MUST be true
       sameSite: "None",
       path: "/", // important to match the path used when setting the cookie
-      domain: process.env.CLIENT_URL// Match domain setting from login
     });
+
+    // Also invalidate the token on the server side
+    // This is a simple approach - in a production system you might want to use a token blacklist
+    // or implement a more sophisticated token revocation mechanism
 
     res.status(200).json({ message: "Logged out successfully" });
   } catch (error) {
+    console.error("Logout error:", error);
     res.status(500).json({ message: "Server error" });
   }
 });
