@@ -18,7 +18,7 @@ const protect = async (req, res, next) => {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
     req.user = {
-      id: decoded.id,
+      id: decoded.userId || decoded.id, // Handle both userId and id formats
       isAdmin: decoded.isAdmin || false, // assuming this is included in token payload
     };
 

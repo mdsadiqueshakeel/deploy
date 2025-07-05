@@ -235,6 +235,12 @@ router.get("/check-auth", async (req, res) => {
     try {
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
       
+      // Normalize the user object to handle both userId and id formats
+      const normalizedUser = {
+        ...decoded,
+        id: decoded.userId || decoded.id, // Ensure id is always available
+      };
+      
       // Get user data from user service
       const response = await axios.get(`${USER_SERVICE_URL}/api/auth/me`, {
         headers: {

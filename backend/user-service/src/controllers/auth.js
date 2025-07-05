@@ -317,7 +317,10 @@ exports.resetPassword = async (req, res) => {
 // User Service
 exports.getProfile = async (req, res) => {
   try {
-    const user = await User.findById(req.user.userId)
+    // Handle both userId and id formats
+    const userId = req.user.userId || req.user.id;
+    
+    const user = await User.findById(userId)
       .select("-password -resetPasswordToken -resetPasswordExpires")
       .populate("parentId", "name email")
       .populate("leftUser rightUser", "name email")
@@ -405,7 +408,10 @@ exports.updateProfile = async (req, res) => {
     // Prevent overwriting restricted fields
     forbiddenFields.forEach((field) => delete updates[field]);
 
-    const user = await User.findById(req.user.userId);
+    // Handle both userId and id formats
+    const userId = req.user.userId || req.user.id;
+    
+    const user = await User.findById(userId);
     if (!user) return res.status(404).json({ message: "User not found" });
 
     if ("password" in req.body) {
@@ -458,7 +464,10 @@ exports.changePassword = async (req, res) => {
       return res.status(400).json({ message: "Passwords do not match" });
     }
 
-    const user = await User.findById(req.user.userId);
+    // Handle both userId and id formats
+    const userId = req.user.userId || req.user.id;
+    
+    const user = await User.findById(userId);
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }

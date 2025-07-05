@@ -37,7 +37,11 @@ module.exports = (req, res, next) => {
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = decoded;
+    // Normalize the user object to handle both userId and id formats
+    req.user = {
+      ...decoded,
+      id: decoded.userId || decoded.id, // Ensure id is always available
+    };
     
     // For Safari/iOS, refresh the cookie to prevent expiration issues
     if (isSafari || isIOS) {
