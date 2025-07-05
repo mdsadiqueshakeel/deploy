@@ -5,11 +5,22 @@ const nextConfig = {
     domains: ['images.unsplash.com'],
   },
   eslint: {
-    // 👇 This allows production build to pass even with ESLint errors
     ignoreDuringBuilds: true,
   },
   async redirects() {
     return [
+      {
+        // 👇 redirect www → non-www
+        source: '/:path*',
+        has: [
+          {
+            type: 'host',
+            value: 'www.growthaffinitymarketing.com',
+          },
+        ],
+        permanent: true,
+        destination: 'https://growthaffinitymarketing.com/:path*',
+      },
       {
         source: '/',
         destination: '/dashboard',
