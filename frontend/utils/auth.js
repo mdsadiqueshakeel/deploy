@@ -223,7 +223,6 @@ export const clearAllTokens = () => {
 
 // Helper function to get admin token with fallback
 export const getAdminToken = () => {
-  // Check if we're in a browser environment
   if (typeof window === 'undefined') {
     console.warn('Not in browser environment, cannot get admin token');
     return null;
@@ -233,59 +232,48 @@ export const getAdminToken = () => {
   
   console.log(`Getting admin token on ${browserInfo.type}`);
   
-  if (browserInfo.isPrivateMode) {
-    console.log('Private browsing mode detected, token retrieval may be affected');
+  // Check memory storage first (for private mode fallback)
+  if (window.__tempTokenStore?.adminToken) {
+    console.warn('Retrieving admin token from in-memory storage');
+    return window.__tempTokenStore.adminToken;
   }
   
-  // Try sessionStorage first
-  let token = null;
+  // Try sessionStorage
   try {
-    token = sessionStorage.getItem('adminToken');
+    const token = sessionStorage.getItem('adminToken');
     if (token) {
       console.log('Admin token retrieved from sessionStorage');
       return token;
     }
   } catch (error) {
-    console.warn('Error accessing sessionStorage for admin token:', error);
-    
-    // Log detailed error for debugging
-    if (browserInfo.isSafari || browserInfo.isIOS) {
-      console.warn(`SessionStorage access failure on ${browserInfo.isIOS ? 'iOS' : 'Safari'} for admin token: `, error);
-    }
+    console.warn('SessionStorage access error for admin token:', error);
   }
   
-  // If not found in sessionStorage, try localStorage
+  // Try localStorage
   try {
-    token = localStorage.getItem('adminToken');
+    const token = localStorage.getItem('adminToken');
     if (token) {
-      console.log('Admin token retrieved from localStorage fallback');
+      console.log('Admin token retrieved from localStorage');
       return token;
     }
   } catch (error) {
-    console.warn('Error accessing localStorage for admin token:', error);
-    
-    // Log detailed error for debugging
-    if (browserInfo.isSafari || browserInfo.isIOS) {
-      console.warn(`LocalStorage access failure on ${browserInfo.isIOS ? 'iOS' : 'Safari'} for admin token: `, error);
-    }
+    console.warn('LocalStorage access error for admin token:', error);
   }
   
-  // If we get here, no token was found in either storage
-  if (browserInfo.isSafari || browserInfo.isIOS) {
-    console.warn(`No admin token found in any storage on ${browserInfo.isIOS ? 'iOS' : 'Safari'} device`);
-  }
-  
+  console.warn('No admin token found in any storage');
   return null;
 };
 
 // Helper function to set admin token with fallback
 export const setAdminToken = (token) => {
-  let tokenSetSuccessfully = false;
   // Check if we're in a browser environment
   if (typeof window === 'undefined') {
     console.warn('Not in browser environment, cannot set admin token');
-    return;
+    return false;
   }
+  
+  // Create memory store if it doesn't exist
+  window.__tempTokenStore = window.__tempTokenStore || {};
   
   const browserInfo = getBrowserInfo();
   
@@ -295,35 +283,47 @@ export const setAdminToken = (token) => {
     console.log('Private browsing mode detected');
   }
   
+  // Try sessionStorage first
   try {
-    // First try to write a test value to check if sessionStorage is actually writable
-    sessionStorage.setItem('test-write', '1');
-    sessionStorage.removeItem('test-write');
+    // Test if storage is writable
+    const testKey = `test-${Date.now()}`;
+    sessionStorage.setItem(testKey, '1');
+    sessionStorage.removeItem(testKey);
     
-    // If we get here, sessionStorage is working
+    // If we get here, storage is working
     sessionStorage.setItem('adminToken', token);
     console.log('Admin token set in sessionStorage');
-    tokenSetSuccessfully = true;
-  } catch (error) {
-    // Fallback to localStorage if sessionStorage fails
-    console.warn('SessionStorage failed for admin token, using localStorage fallback:', error);
-    try {
-      // First try to write a test value to check if localStorage is actually writable
-      localStorage.setItem('test-write', '1');
-      localStorage.removeItem('test-write');
-      
-      // If we get here, localStorage is working
-      localStorage.setItem('adminToken', token);
-      console.log('Admin token set in localStorage (fallback)');
-      tokenSetSuccessfully = true;
-    } catch (localStorageError) {
-      console.error('All storage methods failed for admin token:', localStorageError);
-      
-      // Log detailed error for debugging
-      if (browserInfo.isSafari || browserInfo.isIOS) {
-        console.error(`Storage failure on ${browserInfo.isIOS ? 'iOS' : 'Safari'} for admin token: `, localStorageError);
-      }
-    }
+    
+    // Also store in memory for Safari fallback
+    window.__tempTokenStore.adminToken = token;
+    return true;
+  } catch (sessionError) {
+    console.warn('SessionStorage failed for admin token:', sessionError);
   }
-  return tokenSetSuccessfully;
+  
+  // Try localStorage fallback
+  try {
+    const testKey = `test-${Date.now()}`;
+    localStorage.setItem(testKey, '1');
+    localStorage.removeItem(testKey);
+    
+    localStorage.setItem('adminToken', token);
+    console.log('Admin token set in localStorage (fallback)');
+    
+    // Also store in memory for Safari fallback
+    window.__tempTokenStore.adminToken = token;
+    return true;
+  } catch (localError) {
+    console.warn('LocalStorage failed for admin token:', localError);
+  }
+  
+  // Final memory fallback for all browsers
+  try {
+    window.__tempTokenStore.adminToken = token;
+    console.warn('Using in-memory token storage as final fallback for admin token');
+    return true;
+  } catch (memError) {
+    console.error('All storage methods failed for admin token:', memError);
+    return false;
+  }
 };

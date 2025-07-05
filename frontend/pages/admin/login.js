@@ -252,16 +252,33 @@ export default function AdminLogin() {
       // Ensure we have a token in the response
       if (response.data && response.data.token) {
         console.log('Admin token received, storing in browser storage');
+        
+        // Get browser info for Safari-specific handling
+        const browserInfo = window.navigator.userAgent;
+        const isSafari = /safari/.test(browserInfo.toLowerCase()) && !/chrome/.test(browserInfo.toLowerCase());
+        const isIOS = /iphone|ipad|ipod/.test(browserInfo.toLowerCase());
+        
         // Use the enhanced storage function with fallback
-        setAdminToken(response.data.token);
+        const tokenStored = setAdminToken(response.data.token);
+        
+        if (!tokenStored) {
+          throw new Error('Failed to store admin token in browser storage');
+        }
         
         // Double-check token was stored correctly
         const storedToken = getAdminToken();
         if (storedToken) {
           console.log('Admin token successfully stored, redirecting to dashboard');
+          
+          // For Safari/iOS, add a small delay before redirecting to ensure cookie processing
+          if (isSafari || isIOS) {
+            console.log('Safari/iOS detected, adding delay before redirect');
+            await new Promise(resolve => setTimeout(resolve, 300));
+          }
+          
           router.push('/admin/dashboard');
         } else {
-          throw new Error('Failed to store admin token in browser storage');
+          throw new Error('Failed to verify admin token storage');
         }
       } else {
         throw new Error('No token received from server');

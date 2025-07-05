@@ -28,9 +28,21 @@ router.get("/verify", async (req, res) => {
       res.setHeader('Expires', '0');
     }
     
-    const token = req.cookies.adminToken;
+    // Check for token in cookies or Authorization header
+    let token = req.cookies.adminToken;
+    
+    // If no token in cookies, check Authorization header
+    if (!token && req.headers.authorization && req.headers.authorization.startsWith('Bearer ')) {
+      token = req.headers.authorization.split(' ')[1];
+      console.log('Using token from Authorization header instead of cookie');
+    }
+    
     if (!token) {
-      return res.status(401).json({ message: "No token available to forward" });
+      return res.status(401).json({ 
+        message: "No token available to forward",
+        userAgent: userAgent,
+        isSafari: isSafari || isIOS
+      });
     }
 
     const response = await axios.get(`${ADMIN_SERVICE_URL}/api/admin/verify`, {
@@ -41,9 +53,22 @@ router.get("/verify", async (req, res) => {
       withCredentials: true
     });
 
+    // For Safari/iOS, set the cookie again to refresh it
+    if ((isSafari || isIOS) && token) {
+      console.log('Safari/iOS detected, refreshing admin token cookie');
+      res.cookie("adminToken", token, {
+        httpOnly: true,
+        secure: true,
+        sameSite: "None",
+        path: "/",
+        maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+      });
+    }
+
     res.status(response.status).json({
       ...response.data,
-      userAgent: userAgent // Include user agent for debugging
+      userAgent: userAgent, // Include user agent for debugging
+      isSafari: isSafari || isIOS
     });
   } catch (err) {
     console.error("VERIFY ERROR:", err?.response?.data || err.message);
