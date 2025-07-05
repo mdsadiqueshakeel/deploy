@@ -321,6 +321,13 @@ export default function Login() {
       console.log('Attempting user login...');
       const response = await api.post("/api/auth/login", { email, password });
       
+      // Detect Safari/iOS
+      const userAgent = window.navigator.userAgent.toLowerCase();
+      const isSafari = /safari/.test(userAgent) && !/chrome/.test(userAgent);
+      const isIOS = /iphone|ipad|ipod/.test(userAgent);
+      
+      console.log(`Login from browser: ${isSafari ? 'Safari' : isIOS ? 'iOS' : 'Other'}`);
+      
       // Verify token was stored successfully
       const token = response.data?.token;
       if (token) {
@@ -328,9 +335,23 @@ export default function Login() {
         if (!storageSuccess) {
           throw new Error('Failed to store authentication token');
         }
+        
+        // Verify token was actually stored
+        const storedToken = getToken();
+        if (!storedToken) {
+          console.warn('Token storage verification failed');
+          throw new Error('Token storage verification failed');
+        }
       }
       
       console.log("Login success:", response.data);
+      
+      // For Safari/iOS, add a small delay before redirecting to ensure cookie is properly set
+      if (isSafari || isIOS) {
+        console.log('Safari/iOS detected, adding delay before redirect');
+        await new Promise(resolve => setTimeout(resolve, 300));
+      }
+      
       router.push("/dashboard");
     } catch (error) {
       console.error("Login error:", error);

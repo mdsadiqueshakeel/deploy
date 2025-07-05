@@ -198,10 +198,23 @@ router.get("/check-auth", async (req, res) => {
       res.setHeader('Expires', '0');
     }
     
-    const token = req.cookies?.token;
+    // Get token from cookie or Authorization header
+    let token = req.cookies?.token;
+    const authHeader = req.headers.authorization;
+    
+    // If token not in cookie but in Authorization header, use that instead
+    if (!token && authHeader) {
+      token = authHeader.split(" ")[1];
+      console.log('Token not found in cookie, using Authorization header');
+    }
     
     if (!token) {
-      return res.json({ authenticated: false });
+      console.log('No token found in cookies or Authorization header');
+      return res.json({ 
+        authenticated: false,
+        userAgent: userAgent,
+        isSafari: isSafari || isIOS
+      });
     }
     
     try {
@@ -211,9 +224,24 @@ router.get("/check-auth", async (req, res) => {
       const response = await axios.get(`${USER_SERVICE_URL}/api/auth/me`, {
         headers: {
           Cookie: `token=${token}`, // Forward token as cookie
+          Authorization: `Bearer ${token}`, // Also forward as Authorization header
           'User-Agent': userAgent, // Forward user agent for consistent handling
         },
       });
+      
+      // For Safari/iOS, refresh the cookie to prevent expiration issues
+      if (isSafari || isIOS) {
+        console.log('Safari/iOS detected, refreshing token cookie after successful verification');
+        
+        // Re-set the cookie with the same token to refresh it
+        res.cookie("token", token, {
+          httpOnly: true,
+          secure: true,
+          sameSite: "None",
+          maxAge: 24 * 60 * 60 * 1000, // 1 day
+          path: "/"
+        });
+      }
       
       return res.json({ 
         authenticated: true, 
@@ -221,6 +249,7 @@ router.get("/check-auth", async (req, res) => {
         userAgent: userAgent // Include user agent for debugging
       });
     } catch (error) {
+      console.error('Token verification failed:', error.message);
       // Invalid token
       res.clearCookie("token", {
         httpOnly: true,
@@ -228,7 +257,12 @@ router.get("/check-auth", async (req, res) => {
         sameSite: "None",
         path: "/"
       });
-      return res.json({ authenticated: false });
+      return res.json({ 
+        authenticated: false,
+        userAgent: userAgent,
+        isSafari: isSafari || isIOS,
+        error: error.message
+      });
     }
   } catch (error) {
     console.error("Check auth error:", error);
