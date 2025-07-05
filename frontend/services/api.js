@@ -24,6 +24,7 @@
 // export default API;
 import axios from 'axios';
 import { getToken, getAdminToken } from '../utils/auth';
+import { getBrowserInfo } from '../utils/browserDetect';
 
 const api = axios.create({  // Changed from API to api
   baseURL: process.env.NEXT_PUBLIC_API_URL,
@@ -50,13 +51,11 @@ api.interceptors.request.use(
       config.headers.Authorization = `Bearer ${token}`;
     }
     
-    // Add Safari/iOS specific headers
-    if (typeof window !== 'undefined' && window.navigator) {
-      const userAgent = window.navigator.userAgent.toLowerCase();
-      const isSafari = /safari/.test(userAgent) && !/chrome/.test(userAgent);
-      const isIOS = /iphone|ipad|ipod/.test(userAgent);
+    // Add browser-specific headers using the browserDetect utility
+    if (typeof window !== 'undefined') {
+      const browserInfo = getBrowserInfo();
       
-      if (isSafari || isIOS) {
+      if (browserInfo.isSafari || browserInfo.isIOS) {
         config.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate';
         config.headers['Pragma'] = 'no-cache';
         config.headers['Expires'] = '0';

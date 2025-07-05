@@ -40,8 +40,8 @@ export const setToken = (token) => {
       console.error('All storage methods failed:', localStorageError);
       
       // Log detailed error for debugging
-      if (isSafari || isIOS) {
-        console.error(`Storage failure on ${isIOS ? 'iOS' : 'Safari'}: `, localStorageError);
+      if (browserInfo.isSafari || browserInfo.isIOS) {
+        console.error(`Storage failure on ${browserInfo.isIOS ? 'iOS' : 'Safari'}: `, localStorageError);
       }
     }
   }
@@ -74,8 +74,8 @@ export const getToken = () => {
     console.warn('Error accessing sessionStorage:', error);
     
     // Log detailed error for debugging
-    if (isSafari || isIOS) {
-      console.warn(`SessionStorage access failure on ${isIOS ? 'iOS' : 'Safari'}: `, error);
+    if (browserInfo.isSafari || browserInfo.isIOS) {
+      console.warn(`SessionStorage access failure on ${browserInfo.isIOS ? 'iOS' : 'Safari'}: `, error);
     }
   }
   
@@ -90,14 +90,14 @@ export const getToken = () => {
     console.warn('Error accessing localStorage:', error);
     
     // Log detailed error for debugging
-    if (isSafari || isIOS) {
-      console.warn(`LocalStorage access failure on ${isIOS ? 'iOS' : 'Safari'}: `, error);
+    if (browserInfo.isSafari || browserInfo.isIOS) {
+      console.warn(`LocalStorage access failure on ${browserInfo.isIOS ? 'iOS' : 'Safari'}: `, error);
     }
   }
   
   // If we get here, no token was found in either storage
-  if (isSafari || isIOS) {
-    console.warn(`No token found in any storage on ${isIOS ? 'iOS' : 'Safari'} device`);
+  if (browserInfo.isSafari || browserInfo.isIOS) {
+    console.warn(`No token found in any storage on ${browserInfo.isIOS ? 'iOS' : 'Safari'} device`);
   }
   
   return null;
@@ -174,8 +174,8 @@ export const clearAllTokens = () => {
     console.warn('Error clearing sessionStorage:', error);
     
     // Log detailed error for debugging
-    if (isSafari || isIOS) {
-      console.warn(`SessionStorage clear failure on ${isIOS ? 'iOS' : 'Safari'}: `, error);
+    if (browserInfo.isSafari || browserInfo.isIOS) {
+      console.warn(`SessionStorage clear failure on ${browserInfo.isIOS ? 'iOS' : 'Safari'}: `, error);
     }
   }
   
@@ -188,8 +188,8 @@ export const clearAllTokens = () => {
     console.warn('Error clearing localStorage:', error);
     
     // Log detailed error for debugging
-    if (isSafari || isIOS) {
-      console.warn(`LocalStorage clear failure on ${isIOS ? 'iOS' : 'Safari'}: `, error);
+    if (browserInfo.isSafari || browserInfo.isIOS) {
+      console.warn(`LocalStorage clear failure on ${browserInfo.isIOS ? 'iOS' : 'Safari'}: `, error);
     }
   }
   
@@ -207,8 +207,8 @@ export const clearAllTokens = () => {
   
   if (sessionTokenRemains || localTokenRemains) {
     console.warn('Failed to clear all tokens from storage');
-    if (isSafari || isIOS) {
-      console.warn(`Token clearing verification failed on ${isIOS ? 'iOS' : 'Safari'} device`);
+    if (browserInfo.isSafari || browserInfo.isIOS) {
+      console.warn(`Token clearing verification failed on ${browserInfo.isIOS ? 'iOS' : 'Safari'} device`);
     }
   } else {
     console.log('All tokens successfully cleared from all storage types');
@@ -243,8 +243,8 @@ export const getAdminToken = () => {
     console.warn('Error accessing sessionStorage for admin token:', error);
     
     // Log detailed error for debugging
-    if (isSafari || isIOS) {
-      console.warn(`SessionStorage access failure on ${isIOS ? 'iOS' : 'Safari'} for admin token: `, error);
+    if (browserInfo.isSafari || browserInfo.isIOS) {
+      console.warn(`SessionStorage access failure on ${browserInfo.isIOS ? 'iOS' : 'Safari'} for admin token: `, error);
     }
   }
   
@@ -259,14 +259,14 @@ export const getAdminToken = () => {
     console.warn('Error accessing localStorage for admin token:', error);
     
     // Log detailed error for debugging
-    if (isSafari || isIOS) {
-      console.warn(`LocalStorage access failure on ${isIOS ? 'iOS' : 'Safari'} for admin token: `, error);
+    if (browserInfo.isSafari || browserInfo.isIOS) {
+      console.warn(`LocalStorage access failure on ${browserInfo.isIOS ? 'iOS' : 'Safari'} for admin token: `, error);
     }
   }
   
-  // If we get here, no admin token was found in either storage
-  if (isSafari || isIOS) {
-    console.warn(`No admin token found in any storage on ${isIOS ? 'iOS' : 'Safari'} device`);
+  // If we get here, no token was found in either storage
+  if (browserInfo.isSafari || browserInfo.isIOS) {
+    console.warn(`No admin token found in any storage on ${browserInfo.isIOS ? 'iOS' : 'Safari'} device`);
   }
   
   return null;
@@ -311,8 +311,8 @@ export const setAdminToken = (token) => {
       console.error('All storage methods failed for admin token:', localStorageError);
       
       // Log detailed error for debugging
-      if (isSafari || isIOS) {
-        console.error(`Storage failure on ${isIOS ? 'iOS' : 'Safari'} for admin token: `, localStorageError);
+      if (browserInfo.isSafari || browserInfo.isIOS) {
+        console.error(`Storage failure on ${browserInfo.isIOS ? 'iOS' : 'Safari'} for admin token: `, localStorageError);
       }
     }
   }
