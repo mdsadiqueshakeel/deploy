@@ -1,8 +1,20 @@
 const jwt = require("jsonwebtoken");
 
 module.exports = (req, res, next) => {
-  const token =
-    req.cookies?.token || req.headers.authorization?.split(" ")[1];
+  // Get token from Authorization header, cookie, or X-Token-Fallback header (in that order of priority)
+  let token = null;
+  const authHeader = req.headers.authorization;
+  
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    token = authHeader.split(" ")[1];
+    console.log('Using token from Authorization header');
+  } else if (req.cookies?.token) {
+    token = req.cookies.token;
+    console.log('Using token from cookie');
+  } else if (req.headers['x-token-fallback']) {
+    token = req.headers['x-token-fallback'];
+    console.log('Using token from X-Token-Fallback header');
+  }
 
   if (!token) {
     return res.status(401).json({ error: "Token missing" });

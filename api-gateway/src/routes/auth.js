@@ -25,19 +25,14 @@ router.post("/register", async (req, res) => {
   }
 });
 
-// Login with enhanced cross-browser compatibility
+// Login with standardized authentication
 router.post("/login", async (req, res) => {
   try {
     const response = await axios.post(`${USER_SERVICE_URL}/api/auth/login`, req.body);
     const token = response.data.token;
     
-    // Log user agent for debugging
-    const userAgent = req.headers['user-agent'] || '';
-    console.log(`User login attempt from: ${userAgent}`);
-    
-    // Detect Safari/iOS
-    const isSafari = /safari/.test(userAgent.toLowerCase()) && !/chrome/.test(userAgent.toLowerCase());
-    const isIOS = /iphone|ipad|ipod/.test(userAgent.toLowerCase());
+    // Log login attempt for debugging
+    console.log(`User login attempt processed`);
     
     // Set cookie with appropriate options
     const cookieOptions = {
@@ -47,31 +42,14 @@ router.post("/login", async (req, res) => {
       maxAge: 24 * 60 * 60 * 1000, // 1 day
       path: "/", // Ensure cookie is available across the entire site
     };
-    
-    // Add special handling for Safari/iOS
-    if (isSafari || isIOS) {
-      console.log('Safari/iOS detected, applying special cookie handling');
-      // Safari/iOS may need these headers
-      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-      res.setHeader('Pragma', 'no-cache');
-      res.setHeader('Expires', '0');
-      
-      // For Safari/iOS, set the cookie twice to ensure it's properly set
-      res.cookie("token", token, cookieOptions);
-      
-      // Small delay to ensure cookie is set properly
-      await new Promise(resolve => setTimeout(resolve, 50));
-    }
 
-    // Set the cookie (again for Safari/iOS)
+    // Set the cookie and return the token in the response
     res
       .cookie("token", token, cookieOptions)
       .status(200)
       .json({ 
         message: "Logged in successfully", 
-        token: token, // Always include token in response for sessionStorage
-        userAgent: userAgent, // Include user agent for debugging
-        isSafari: isSafari || isIOS // Include Safari/iOS flag for client-side handling
+        token: token // Always include token in response for client-side storage
       });
   } catch (err) {
     console.error("User login error:", err.response?.data || err.message);
@@ -116,16 +94,11 @@ router.post("/reset-password", async (req, res) => {
   }
 });
 
-// Logout Route with enhanced cross-browser compatibility
+// Standardized Logout Route
 router.post("/logout", (req, res) => {
   try {
-    // Log user agent for debugging
-    const userAgent = req.headers['user-agent'] || '';
-    console.log(`User logout attempt from: ${userAgent}`);
-    
-    // Detect Safari/iOS
-    const isSafari = /safari/.test(userAgent.toLowerCase()) && !/chrome/.test(userAgent.toLowerCase());
-    const isIOS = /iphone|ipad|ipod/.test(userAgent.toLowerCase());
+    // Log logout attempt for debugging
+    console.log(`User logout attempt processed`);
     
     // Clear the token from cookies with same settings as when it was set
     res.clearCookie("token", {
@@ -134,20 +107,10 @@ router.post("/logout", (req, res) => {
       sameSite: "None",
       path: "/"
     });
-    
-    // Add special handling for Safari/iOS
-    if (isSafari || isIOS) {
-      console.log('Safari/iOS detected, applying special headers for logout');
-      // Safari/iOS may need these headers
-      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-      res.setHeader('Pragma', 'no-cache');
-      res.setHeader('Expires', '0');
-    }
 
     // Return success response
     res.status(200).json({ 
-      message: "Logged out successfully",
-      userAgent: userAgent // Include user agent for debugging
+      message: "Logged out successfully"
     });
   } catch (error) {
     console.error("Logout error:", error);
@@ -172,9 +135,12 @@ router.get("/referral/validate/:code", async (req, res) => {
 // api-gateway/routes/auth.js
 router.get("/me", jwtAuth, async (req, res) => {
   try {
+    // Get token from req.user which is set by jwtAuth middleware
+    const token = req.user ? req.headers.authorization : null;
+    
     const response = await axios.get(`${USER_SERVICE_URL}/api/auth/me`, {
       headers: {
-        Cookie: req.headers.cookie, // ✅ forward full cookie string to user-service
+        Authorization: token, // Forward token as Authorization header
       },
     });
 
@@ -186,49 +152,30 @@ router.get("/me", jwtAuth, async (req, res) => {
   }
 });
 
-// Check Auth Route with enhanced cross-browser compatibility
+// Standardized Check Auth Route
 router.get("/check-auth", async (req, res) => {
   try {
-    // Log user agent for debugging
-    const userAgent = req.headers['user-agent'] || '';
-    console.log(`Check auth attempt from: ${userAgent}`);
+    console.log(`Check auth attempt processed`);
     
-    // Detect Safari/iOS
-    const isSafari = /safari/.test(userAgent.toLowerCase()) && !/chrome/.test(userAgent.toLowerCase());
-    const isIOS = /iphone|ipad|ipod/.test(userAgent.toLowerCase());
-    
-    // Add special handling for Safari/iOS
-    if (isSafari || isIOS) {
-      console.log('Safari/iOS detected, applying special headers for check-auth');
-      // Safari/iOS may need these headers
-      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-      res.setHeader('Pragma', 'no-cache');
-      res.setHeader('Expires', '0');
-    }
-    
-    // Get token from cookie, Authorization header, or X-Token-Fallback header
-    let token = req.cookies?.token;
+    // Get token from Authorization header, cookie, or X-Token-Fallback header (in that order of priority)
+    let token = null;
     const authHeader = req.headers.authorization;
-    const fallbackToken = req.headers['x-token-fallback'];
     
-    // If token not in cookie but in Authorization header, use that instead
-    if (!token && authHeader) {
+    if (authHeader && authHeader.startsWith('Bearer ')) {
       token = authHeader.split(" ")[1];
-      console.log('Token not found in cookie, using Authorization header');
-    }
-    
-    // If still no token but we have a fallback token (for Safari/iOS), use that
-    if (!token && fallbackToken) {
-      token = fallbackToken;
-      console.log('Using X-Token-Fallback header for Safari/iOS compatibility');
+      console.log('Using token from Authorization header');
+    } else if (req.cookies?.token) {
+      token = req.cookies.token;
+      console.log('Using token from cookie');
+    } else if (req.headers['x-token-fallback']) {
+      token = req.headers['x-token-fallback'];
+      console.log('Using token from X-Token-Fallback header');
     }
     
     if (!token) {
-      console.log('No token found in cookies or Authorization header');
+      console.log('No token found');
       return res.json({ 
-        authenticated: false,
-        userAgent: userAgent,
-        isSafari: isSafari || isIOS
+        authenticated: false
       });
     }
     
@@ -244,30 +191,22 @@ router.get("/check-auth", async (req, res) => {
       // Get user data from user service
       const response = await axios.get(`${USER_SERVICE_URL}/api/auth/me`, {
         headers: {
-          Cookie: `token=${token}`, // Forward token as cookie
-          Authorization: `Bearer ${token}`, // Also forward as Authorization header
-          'User-Agent': userAgent, // Forward user agent for consistent handling
+          Authorization: `Bearer ${token}` // Forward token as Authorization header
         },
       });
       
-      // For Safari/iOS, refresh the cookie to prevent expiration issues
-      if (isSafari || isIOS) {
-        console.log('Safari/iOS detected, refreshing token cookie after successful verification');
-        
-        // Re-set the cookie with the same token to refresh it
-        res.cookie("token", token, {
-          httpOnly: true,
-          secure: true,
-          sameSite: "None",
-          maxAge: 24 * 60 * 60 * 1000, // 1 day
-          path: "/"
-        });
-      }
+      // Always refresh the cookie to maintain session
+      res.cookie("token", token, {
+        httpOnly: true,
+        secure: true,
+        sameSite: "None",
+        maxAge: 24 * 60 * 60 * 1000, // 1 day
+        path: "/"
+      });
       
       return res.json({ 
         authenticated: true, 
-        user: response.data,
-        userAgent: userAgent // Include user agent for debugging
+        user: response.data
       });
     } catch (error) {
       console.error('Token verification failed:', error.message);
@@ -280,8 +219,6 @@ router.get("/check-auth", async (req, res) => {
       });
       return res.json({ 
         authenticated: false,
-        userAgent: userAgent,
-        isSafari: isSafari || isIOS,
         error: error.message
       });
     }
@@ -293,9 +230,12 @@ router.get("/check-auth", async (req, res) => {
 
 router.put("/change-password", jwtAuth, async (req, res) => {
   try {
+    // Get token from req.user which is set by jwtAuth middleware
+    const token = req.user ? req.headers.authorization : null;
+    
     const response = await axios.put(`${USER_SERVICE_URL}/api/auth/change-password`, req.body, {
       headers: {
-        Cookie: req.headers.cookie, // Pass token cookie along
+        Authorization: token, // Forward token as Authorization header
       },
     });
     res.status(response.status).json(response.data);
@@ -306,9 +246,12 @@ router.put("/change-password", jwtAuth, async (req, res) => {
 
 router.put("/profile", jwtAuth, async (req, res) => {
   try {
+    // Get token from req.user which is set by jwtAuth middleware
+    const token = req.user ? req.headers.authorization : null;
+    
     const response = await axios.put(`${USER_SERVICE_URL}/api/auth/profile`, req.body, {
       headers: {
-        Cookie: req.headers.cookie, // Pass token cookie along
+        Authorization: token, // Forward token as Authorization header
       },
     });
     res.status(response.status).json(response.data);
@@ -319,9 +262,12 @@ router.put("/profile", jwtAuth, async (req, res) => {
 
 router.get("/income", jwtAuth, async (req, res) => {
   try {
+    // Get token from req.user which is set by jwtAuth middleware
+    const token = req.user ? req.headers.authorization : null;
+    
     const response = await axios.get(`${INCOME_SERVICE_URL}/api/income`, {
       headers: {
-        Cookie: req.headers.cookie, // Pass token cookie along
+        Authorization: token, // Forward token as Authorization header
       },
     });
     res.status(response.status).json(response.data);
