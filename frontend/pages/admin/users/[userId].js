@@ -1814,10 +1814,6 @@ export default function UserDetails() {
                     {user.rank || 'Member'}
                   </span>
                 </li>
-                <li className="mb-2 d-flex justify-content-between align-items-center">
-                  <span className="fw-medium" style={{ color: textColor }}>Balance:</span>
-                  <span className="fw-bold" style={{ color: primaryColor }}>₹{user.balance?.toFixed(2) || '0.00'}</span>
-                </li>
               </ul>
             </div>
           </div>
