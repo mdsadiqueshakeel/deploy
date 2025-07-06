@@ -7,7 +7,7 @@ module.exports = (req, res, next) => {
   
   if (authHeader && authHeader.startsWith('Bearer ')) {
     token = authHeader.split(" ")[1];
-    console.log('Using token from Authorization header') ;
+    console.log('Using token from Authorization header');
   } else if (req.cookies?.token) {
     token = req.cookies.token;
     console.log('Using token from cookie');
