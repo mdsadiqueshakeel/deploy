@@ -9,7 +9,7 @@ import { getToken, getAdminToken, setToken, setAdminToken, clearAllTokens } from
 // This is critical for Docker Compose networking:
 // - From your browser: http://localhost:5000 (because Docker maps container port 5000 to host port 5000)
 // - From frontend container to API Gateway container: http://api-gateway:5000 (using Docker's internal DNS resolution)
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
+const API_URL = process.env.NEXT_PUBLIC_API_URL ;
 
 // Import browser detection utilities
 import { getBrowserInfo, getRequestHeaders } from './browserDetect';

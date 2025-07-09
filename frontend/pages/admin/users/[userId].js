@@ -13,8 +13,10 @@
 //   const [topupRequests, setTopupRequests] = useState([]);
 //   const [withdrawRequests, setWithdrawRequests] = useState([]);
 //   const [purchaseRequests, setPurchaseRequests] = useState([]);
+//   const [approvedPurchases, setApprovedPurchases] = useState([]);
 //   const [loadingTransactions, setLoadingTransactions] = useState(false);
 //   const [loadingPurchases, setLoadingPurchases] = useState(false);
+//   const [loadingApprovedPurchases, setLoadingApprovedPurchases] = useState(false);
 //   const [showApproveModal, setShowApproveModal] = useState(false);
 //   const [showDeclineModal, setShowDeclineModal] = useState(false);
 //   const [currentRequest, setCurrentRequest] = useState(null);
@@ -51,6 +53,7 @@
 //       fetchPendingTransactions();
 //     } else if (activeTab === 'products' && userId) {
 //       fetchPendingPurchases();
+//       fetchApprovedPurchases();
 //     }
 //   }, [activeTab, userId]);
 
@@ -82,6 +85,19 @@
 //     }
 //   };
 
+//   const fetchApprovedPurchases = async () => {
+//     setLoadingApprovedPurchases(true);
+//     try {
+//       const response = await api.get(`/api/purchase/products/admin/user/${userId}/approved-purchases`);
+//       setApprovedPurchases(Array.isArray(response.data) ? response.data : []);
+//     } catch (error) {
+//       console.error('Error fetching approved purchases:', error);
+//       setApprovedPurchases([]);
+//     } finally {
+//       setLoadingApprovedPurchases(false);
+//     }
+//   };
+
 //   const handleApproveClick = (request, type) => {
 //     setCurrentRequest({ ...request, type });
 //     setShowApproveModal(true);
@@ -92,36 +108,80 @@
 //     setShowDeclineModal(true);
 //   };
 
-//   const approveRequest = async () => {
-//     if (!currentRequest) return;
-    
-//     try {
-//       let endpoint;
-//       if (currentRequest.type === 'topup') {
+//  const approveRequest = async () => {
+//   if (!currentRequest) return;
+  
+//   try {
+//     let endpoint;
+//     let requestData = {
+//       // Include any required fields here
+//       approvedBy: 'admin', // Example field
+//       timestamp: new Date().toISOString()
+//     };
+
+//     // Determine endpoint based on request type
+//     switch(currentRequest.type) {
+//       case 'topup':
 //         endpoint = `/api/wallet/admin/topup-request/${currentRequest._id}/approve`;
-//       } else if (currentRequest.type === 'withdraw') {
+//         requestData.amount = currentRequest.amount; // Include amount if needed
+//         break;
+//       case 'withdraw':
 //         endpoint = `/api/wallet/admin/withdraw-request/${currentRequest._id}/approve`;
-//       } else if (currentRequest.type === 'purchase') {
+//         requestData.amount = currentRequest.amount;
+//         break;
+//       case 'purchase':
 //         endpoint = `/api/purchase/products/admin/${currentRequest._id}/approve`;
-//       }
-      
-//       await api.put(endpoint);
-      
-//       // Remove approved request from state
-//       if (currentRequest.type === 'topup') {
-//         setTopupRequests(topupRequests.filter(req => req._id !== currentRequest._id));
-//       } else if (currentRequest.type === 'withdraw') {
-//         setWithdrawRequests(withdrawRequests.filter(req => req._id !== currentRequest._id));
-//       } else if (currentRequest.type === 'purchase') {
-//         setPurchaseRequests(purchaseRequests.filter(req => req._id !== currentRequest._id));
-//       }
-      
-//       setShowApproveModal(false);
-//       setCurrentRequest(null);
-//     } catch (error) {
-//       console.error('Error approving request:', error);
+//         requestData.productId = currentRequest.productId; // Include product details
+//         requestData.quantity = currentRequest.quantity;
+//         break;
+//       default:
+//         throw new Error('Invalid request type');
 //     }
-//   };
+
+//     console.log('Approval request payload:', { endpoint, requestData }); // Debug log
+
+//     const response = await api.put(endpoint, requestData, {
+//       headers: {
+//         'Content-Type': 'application/json',
+//         'X-Requested-With': 'XMLHttpRequest'
+//       }
+//     });
+
+//     console.log('Approval response:', response.data); // Debug log
+
+//     // Update state
+//     if (currentRequest.type === 'topup') {
+//       setTopupRequests(topupRequests.filter(req => req._id !== currentRequest._id));
+//     } else if (currentRequest.type === 'withdraw') {
+//       setWithdrawRequests(withdrawRequests.filter(req => req._id !== currentRequest._id));
+//     } else if (currentRequest.type === 'purchase') {
+//       setPurchaseRequests(purchaseRequests.filter(req => req._id !== currentRequest._id));
+//       await fetchApprovedPurchases();
+//     }
+    
+//     setShowApproveModal(false);
+//     setCurrentRequest(null);
+
+//     // Show success message
+//     alert(`Request approved successfully!`);
+    
+//   } catch (error) {
+//     console.error('Approval error:', {
+//       message: error.message,
+//       response: error.response?.data,
+//       status: error.response?.status
+//     });
+    
+//     let errorMessage = 'Failed to approve request';
+//     if (error.response) {
+//       errorMessage = error.response.data?.message || 
+//                     error.response.data?.error || 
+//                     `Server responded with ${error.response.status}`;
+//     }
+    
+//     alert(errorMessage);
+//   }
+// };
 
 //   const declineRequest = async () => {
 //     if (!currentRequest) return;
@@ -151,6 +211,23 @@
 //       setCurrentRequest(null);
 //     } catch (error) {
 //       console.error('Error declining request:', error);
+//     }
+//   };
+
+//   const getStatusBadge = (status) => {
+//     switch (status.toLowerCase()) {
+//       case 'pending':
+//         return <span className="badge bg-warning text-dark">Pending</span>;
+//       case 'approved':
+//         return <span className="badge bg-success">Approved</span>;
+//       case 'rejected':
+//         return <span className="badge bg-danger">Rejected</span>;
+//       case 'shipped':
+//         return <span className="badge bg-info">Shipped</span>;
+//       case 'delivered':
+//         return <span className="badge bg-primary">Delivered</span>;
+//       default:
+//         return <span className="badge bg-secondary">{status}</span>;
 //     }
 //   };
 
@@ -184,7 +261,7 @@
 //                     style={{ borderRadius: '10px', backgroundColor: 'rgba(58, 134, 255, 0.05)' }}
 //                   >
 //                     <div className="d-flex justify-content-between align-items-center mb-2">
-//                       <span className="fw-bold" style={{ color: primaryDarkColor }}>Amount: ${request.amount}</span>
+//                       <span className="fw-bold" style={{ color: primaryDarkColor }}>Amount: ₹{request.amount}</span>
 //                       <span className="badge bg-warning text-dark">Pending</span>
 //                     </div>
                     
@@ -315,7 +392,7 @@
 //   };
 
 //   const renderProductPurchases = () => {
-//     if (loadingPurchases) {
+//     if (loadingPurchases || loadingApprovedPurchases) {
 //       return (
 //         <div className="d-flex justify-content-center align-items-center py-5">
 //           <div className="spinner-border" style={{ color: primaryColor }} role="status">
@@ -327,91 +404,134 @@
 
 //     return (
 //       <div>
-//         <h5 className="mb-4 fw-bold" style={{ color: primaryDarkColor }}>Pending Product Purchase Requests</h5>
-        
-//         {purchaseRequests.length === 0 ? (
-//           <div className="alert alert-info">
-//             No pending product purchase requests
-//           </div>
-//         ) : (
-//           <div className="row g-3">
-//             {purchaseRequests.map(request => (
-//               <div key={request._id} className="col-md-6">
-//                 <div 
-//                   className="card border-0 shadow-sm p-3" 
-//                   style={{ borderRadius: '10px', backgroundColor: 'rgba(255, 193, 7, 0.05)' }}
-//                 >
-//                   <div className="d-flex justify-content-between align-items-center mb-2">
-//                     <span className="fw-bold" style={{ color: primaryDarkColor }}>
-//                       {request.productName} (Code: {request.productCode})
-//                     </span>
-//                     <span className="badge bg-warning text-dark">Pending</span>
-//                   </div>
-                  
-//                   <div className="mb-2">
-//                     <span className="fw-medium">Quantity: </span>
-//                     <span>{request.quantity}</span>
-//                   </div>
-                  
-//                   <div className="mb-2">
-//                     <span className="fw-medium">Unit Price: </span>
-//                     <span>${request.unitPrice}</span>
-//                   </div>
-                  
-//                   <div className="mb-2">
-//                     <span className="fw-medium">Total Price: </span>
-//                     <span className="fw-bold" style={{ color: primaryColor }}>${request.totalPrice}</span>
-//                   </div>
-                  
-//                   <div className="mb-2">
-//                     <span className="fw-medium">Requested At: </span>
-//                     <span>{new Date(request.requestedAt).toLocaleString()}</span>
-//                   </div>
-                  
-//                   {request.shippingAddress && (
-//                     <div className="mb-3">
-//                       <span className="fw-medium">Shipping Address: </span>
-//                       <span>{request.shippingAddress}</span>
+//         {/* Pending Product Purchase Requests */}
+//         <div className="mb-5">
+//           <h5 className="mb-4 fw-bold" style={{ color: primaryDarkColor }}>Pending Product Purchase Requests</h5>
+          
+//           {purchaseRequests.length === 0 ? (
+//             <div className="alert alert-info">
+//               No pending product purchase requests
+//             </div>
+//           ) : (
+//             <div className="row g-3">
+//               {purchaseRequests.map(request => (
+//                 <div key={request._id} className="col-md-6">
+//                   <div 
+//                     className="card border-0 shadow-sm p-3" 
+//                     style={{ borderRadius: '10px', backgroundColor: 'rgba(255, 193, 7, 0.05)' }}
+//                   >
+//                     <div className="d-flex justify-content-between align-items-center mb-2">
+//                       <span className="fw-bold" style={{ color: primaryDarkColor }}>
+//                         {request.productName} (Code: {request.productCode})
+//                       </span>
+//                       <span className="badge bg-warning text-dark">Pending</span>
 //                     </div>
-//                   )}
-                  
-//                   <div className="d-flex gap-2">
-//                     <button 
-//                       className="btn btn-sm flex-grow-1"
-//                       onClick={() => handleApproveClick(request, 'purchase')}
-//                       style={{
-//                         backgroundColor: successColor,
-//                         color: 'white',
-//                         borderRadius: '8px',
-//                         padding: '8px 12px',
-//                         transition: 'all 0.2s ease',
-//                       }}
-//                       onMouseEnter={(e) => e.currentTarget.style.opacity = '0.8'}
-//                       onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
-//                     >
-//                       Approve
-//                     </button>
-//                     <button 
-//                       className="btn btn-sm flex-grow-1"
-//                       onClick={() => handleDeclineClick(request, 'purchase')}
-//                       style={{
-//                         backgroundColor: secondaryColor,
-//                         color: 'white',
-//                         borderRadius: '8px',
-//                         padding: '8px 12px',
-//                         transition: 'all 0.2s ease',
-//                       }}
-//                       onMouseEnter={(e) => e.currentTarget.style.opacity = '0.8'}
-//                       onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
-//                     >
-//                       Reject
-//                     </button>
+                    
+//                     <div className="mb-2">
+//                       <span className="fw-medium">Quantity: </span>
+//                       <span>{request.quantity}</span>
+//                     </div>
+                    
+//                     <div className="mb-2">
+//                       <span className="fw-medium">Unit Price: </span>
+//                       <span>₹{request.unitPrice}</span>
+//                     </div>
+                    
+//                     <div className="mb-2">
+//                       <span className="fw-medium">Total Price: </span>
+//                       <span className="fw-bold" style={{ color: primaryColor }}>₹{request.totalPrice}</span>
+//                     </div>
+                    
+//                     <div className="mb-2">
+//                       <span className="fw-medium">Requested At: </span>
+//                       <span>{new Date(request.requestedAt).toLocaleString()}</span>
+//                     </div>
+                    
+//                     {request.shippingAddress && (
+//                       <div className="mb-3">
+//                         <span className="fw-medium">Shipping Address: </span>
+//                         <span>{request.shippingAddress}</span>
+//                       </div>
+//                     )}
+                    
+//                     <div className="d-flex gap-2">
+//                       <button 
+//                         className="btn btn-sm flex-grow-1"
+//                         onClick={() => handleApproveClick(request, 'purchase')}
+//                         style={{
+//                           backgroundColor: successColor,
+//                           color: 'white',
+//                           borderRadius: '8px',
+//                           padding: '8px 12px',
+//                           transition: 'all 0.2s ease',
+//                         }}
+//                         onMouseEnter={(e) => e.currentTarget.style.opacity = '0.8'}
+//                         onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
+//                       >
+//                         Approve
+//                       </button>
+//                       <button 
+//                         className="btn btn-sm flex-grow-1"
+//                         onClick={() => handleDeclineClick(request, 'purchase')}
+//                         style={{
+//                           backgroundColor: secondaryColor,
+//                           color: 'white',
+//                           borderRadius: '8px',
+//                           padding: '8px 12px',
+//                           transition: 'all 0.2s ease',
+//                         }}
+//                         onMouseEnter={(e) => e.currentTarget.style.opacity = '0.8'}
+//                         onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
+//                       >
+//                         Reject
+//                       </button>
+//                     </div>
 //                   </div>
 //                 </div>
-//               </div>
-//             ))}
-//           </div>
-//         )}
+//               ))}
+//             </div>
+//           )}
+//         </div>
+
+//         {/* Approved Product Purchases */}
+//         <div>
+//           <h5 className="mb-4 fw-bold" style={{ color: primaryDarkColor }}>Approved Product Purchases</h5>
+          
+//           {approvedPurchases.length === 0 ? (
+//             <div className="alert alert-info">
+//               No approved product purchases
+//             </div>
+//           ) : (
+//             <div className="table-responsive">
+//               <table className="table table-hover">
+//                 <thead className="table-dark">
+//                   <tr>
+//                     <th>Product</th>
+//                     <th>Code</th>
+//                     <th>Quantity</th>
+//                     <th>Unit Price</th>
+//                     <th>Total</th>
+//                     <th>Status</th>
+//                     <th>Date & Time</th>
+//                   </tr>
+//                 </thead>
+//                 <tbody>
+//                   {approvedPurchases.map((purchase) => (
+//                     <tr key={purchase._id}>
+//                       <td>{purchase.productName}</td>
+//                       <td>{purchase.productCode}</td>
+//                       <td>{purchase.quantity}</td>
+//                       <td>₹{purchase.unitPrice}</td>
+//                       <td>₹{purchase.totalPrice}</td>
+//                       <td>{getStatusBadge(purchase.status)}</td>
+//                       <td>{new Date(purchase.requestedAt).toLocaleString()}</td>
+//                     </tr>
+//                   ))}
+//                 </tbody>
+//               </table>
+//             </div>
+//           )}
+//         </div>
 //       </div>
 //     );
 //   };
@@ -508,16 +628,16 @@
 //                           <strong>Quantity:</strong> {currentRequest.quantity}
 //                         </p>
 //                         <p className="mb-1">
-//                           <strong>Unit Price:</strong> ${currentRequest.unitPrice}
+//                           <strong>Unit Price:</strong> ₹{currentRequest.unitPrice}
 //                         </p>
 //                         <p className="mb-0">
-//                           <strong>Total Price:</strong> ${currentRequest.totalPrice}
+//                           <strong>Total Price:</strong> ₹{currentRequest.totalPrice}
 //                         </p>
 //                       </>
 //                     ) : (
 //                       <>
 //                         <p className="mb-1">
-//                           <strong>Amount:</strong> ${currentRequest.amount}
+//                           <strong>Amount:</strong> ₹{currentRequest.amount}
 //                         </p>
 //                         <p className="mb-0">
 //                           <strong>Type:</strong> {currentRequest.type === 'topup' ? 'Top-up' : 'Withdrawal'}
@@ -623,16 +743,16 @@
 //                           <strong>Quantity:</strong> {currentRequest.quantity}
 //                         </p>
 //                         <p className="mb-1">
-//                           <strong>Unit Price:</strong> ${currentRequest.unitPrice}
+//                           <strong>Unit Price:</strong> ₹{currentRequest.unitPrice}
 //                         </p>
 //                         <p className="mb-0">
-//                           <strong>Total Price:</strong> ${currentRequest.totalPrice}
+//                           <strong>Total Price:</strong> ₹{currentRequest.totalPrice}
 //                         </p>
 //                       </>
 //                     ) : (
 //                       <>
 //                         <p className="mb-1">
-//                           <strong>Amount:</strong> ${currentRequest.amount}
+//                           <strong>Amount:</strong> ₹{currentRequest.amount}
 //                         </p>
 //                         <p className="mb-0">
 //                           <strong>Type:</strong> {currentRequest.type === 'topup' ? 'Top-up' : 'Withdrawal'}
@@ -766,10 +886,6 @@
 //                   <span className="badge" style={{ backgroundColor: primaryColor, color: 'white', borderRadius: '15px', padding: '4px 10px' }}>
 //                     {user.rank || 'Member'}
 //                   </span>
-//                 </li>
-//                 <li className="mb-2 d-flex justify-content-between align-items-center">
-//                   <span className="fw-medium" style={{ color: textColor }}>Balance:</span>
-//                   <span className="fw-bold" style={{ color: primaryColor }}>${user.balance?.toFixed(2) || '0.00'}</span>
 //                 </li>
 //               </ul>
 //             </div>
@@ -969,27 +1085,107 @@
 //   );
 // }
 import { useRouter } from 'next/router';
-import { useEffect, useState } from 'react';
-import AdminLayout from '../../../components/admin/AdminLayout';
-import api from '../../../services/api';
+import { useState, memo } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import AdminLayout from '@components/admin/AdminLayout';
+import api from '@utils/api';
+
+const TransactionList = memo(({ transactions, onApprove, onDecline, type, primaryColor, successColor, secondaryColor, primaryDarkColor }) => (
+  <div className="row g-3">
+    {transactions.map((request) => (
+      <div key={request._id} className="col-md-6">
+        <div 
+          className="card border-0 shadow-sm p-3" 
+          style={{ borderRadius: '10px', backgroundColor: `rgba(${type === 'topup' ? '58, 134, 255' : '255, 82, 82'}, 0.05)` }}
+        >
+          <div className="d-flex justify-content-between align-items-center mb-2">
+            <span className="fw-bold" style={{ color: primaryDarkColor }}>
+              {type === 'purchase' 
+                ? `${request.productName || 'N/A'} (Code: ${request.productCode || 'N/A'})`
+                : `Amount: ₹${request.amount || '0'}`}
+            </span>
+            <span className="badge bg-warning text-dark">Pending</span>
+          </div>
+          
+          {type === 'purchase' && (
+            <>
+              <div className="mb-2">
+                <span className="fw-medium">Quantity: </span>
+                <span>{request.quantity || 'N/A'}</span>
+              </div>
+              <div className="mb-2">
+                <span className="fw-medium">Unit Price: </span>
+                <span>₹${request.unitPrice || '0'}</span>
+              </div>
+              <div className="mb-2">
+                <span className="fw-medium">Total Price: </span>
+                <span className="fw-bold" style={{ color: primaryColor }}>₹${request.totalPrice || '0'}</span>
+              </div>
+            </>
+          )}
+          
+          <div className="mb-2">
+            <span className="fw-medium">Created: </span>
+            <span>{request.createdAt ? new Date(request.createdAt).toLocaleString() : 'N/A'}</span>
+          </div>
+          
+          {request.note && (
+            <div className="mb-3">
+              <span className="fw-medium">Note: </span>
+              <span>{request.note}</span>
+            </div>
+          )}
+          
+          <div className="d-flex gap-2">
+            <button 
+              className="btn btn-sm flex-grow-1"
+              onClick={() => onApprove(request, type)}
+              disabled={request.isProcessing}
+              style={{
+                backgroundColor: successColor,
+                color: 'white',
+                borderRadius: '8px',
+                padding: '8px 12px',
+                transition: 'all 0.2s ease',
+                opacity: request.isProcessing ? 0.7 : 1
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.opacity = request.isProcessing ? '0.7' : '0.8'}
+              onMouseLeave={(e) => e.currentTarget.style.opacity = request.isProcessing ? '0.7' : '1'}
+            >
+              {request.isProcessing ? 'Processing...' : 'Approve'}
+            </button>
+            <button 
+              className="btn btn-sm flex-grow-1"
+              onClick={() => onDecline(request, type)}
+              style={{
+                backgroundColor: secondaryColor,
+                color: 'white',
+                borderRadius: '8px',
+                padding: '8px 12px',
+                transition: 'all 0.2s ease',
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.opacity = '0.8'}
+              onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
+            >
+              Decline
+            </button>
+          </div>
+        </div>
+      </div>
+    ))}
+  </div>
+));
 
 export default function UserDetails() {
   const router = useRouter();
   const { userId } = router.query;
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState('referral');
-  const [topupRequests, setTopupRequests] = useState([]);
-  const [withdrawRequests, setWithdrawRequests] = useState([]);
-  const [purchaseRequests, setPurchaseRequests] = useState([]);
-  const [approvedPurchases, setApprovedPurchases] = useState([]);
-  const [loadingTransactions, setLoadingTransactions] = useState(false);
-  const [loadingPurchases, setLoadingPurchases] = useState(false);
-  const [loadingApprovedPurchases, setLoadingApprovedPurchases] = useState(false);
   const [showApproveModal, setShowApproveModal] = useState(false);
   const [showDeclineModal, setShowDeclineModal] = useState(false);
   const [currentRequest, setCurrentRequest] = useState(null);
-  
+  const [cache] = useState({});
+
   // Color theme variables from AdminLayout
   const primaryColor = '#3A86FF';
   const primaryDarkColor = '#0A2463';
@@ -1001,71 +1197,216 @@ export default function UserDetails() {
   const sidebarGradient = 'linear-gradient(160deg, #0A2463 0%, #3A86FF 100%)';
   const hoverGradient = 'linear-gradient(135deg, rgba(58, 134, 255, 0.3) 0%, rgba(10, 36, 99, 0.3) 100%)';
 
-  useEffect(() => {
-    const fetchUserDetails = async () => {
-      if (!userId) return;
-      try {
-        const response = await api.get(`/api/admin/user/${userId}`);
-        setUser(response.data);
-      } catch (error) {
-        console.error('Error fetching user details:', error);
-      } finally {
-        setLoading(false);
-      }
+  // Cache-enabled API fetch
+  const fetchWithCache = async (url, fields = '') => {
+    const cacheKey = fields ? `${url}?fields=${fields}` : url;
+    if (cache[cacheKey] && Date.now() - cache[cacheKey].timestamp < 300000) {
+      return cache[cacheKey].data;
+    }
+    
+    const response = await api.get(fields ? `${url}?fields=${fields}` : url);
+    cache[cacheKey] = {
+      data: response.data,
+      timestamp: Date.now()
     };
-
-    fetchUserDetails();
-  }, [userId]);
-
-  useEffect(() => {
-    if (activeTab === 'transactions' && userId) {
-      fetchPendingTransactions();
-    } else if (activeTab === 'products' && userId) {
-      fetchPendingPurchases();
-      fetchApprovedPurchases();
-    }
-  }, [activeTab, userId]);
-
-  const fetchPendingTransactions = async () => {
-    setLoadingTransactions(true);
-    try {
-      const [topupRes, withdrawRes] = await Promise.all([
-        api.get(`/api/wallet/admin/user/${userId}/pending-topup-requests`),
-        api.get(`/api/wallet/admin/user/${userId}/pending-withdraw-requests`)
-      ]);
-      setTopupRequests(topupRes.data);
-      setWithdrawRequests(withdrawRes.data);
-    } catch (error) {
-      console.error('Error fetching transactions:', error);
-    } finally {
-      setLoadingTransactions(false);
-    }
+    return response.data;
   };
 
-  const fetchPendingPurchases = async () => {
-    setLoadingPurchases(true);
-    try {
-      const response = await api.get(`/api/purchase/products/admin/user/${userId}/pending-purchases`);
-      setPurchaseRequests(response.data);
-    } catch (error) {
-      console.error('Error fetching purchase requests:', error);
-    } finally {
-      setLoadingPurchases(false);
-    }
-  };
+  // Data fetching with React Query
+  const { data: user, isLoading: loading } = useQuery({
+    queryKey: ['user', userId],
+    queryFn: () => fetchWithCache(`/api/admin/user/${userId}`, 'name,email,phone,createdAt,status,rank,isActive,parentId,bankDetails,referralCodeLeft,referralCodeRight'),
+    enabled: !!userId,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    refetchOnWindowFocus: false,
+  });
 
-  const fetchApprovedPurchases = async () => {
-    setLoadingApprovedPurchases(true);
-    try {
-      const response = await api.get(`/api/purchase/products/admin/user/${userId}/approved-purchases`);
-      setApprovedPurchases(Array.isArray(response.data) ? response.data : []);
-    } catch (error) {
-      console.error('Error fetching approved purchases:', error);
-      setApprovedPurchases([]);
-    } finally {
-      setLoadingApprovedPurchases(false);
+  const { data: topupRequests = [], isLoading: loadingTopup } = useQuery({
+    queryKey: ['topupRequests', userId],
+    queryFn: () => fetchWithCache(`/api/wallet/admin/user/${userId}/pending-topup-requests`, 'amount,createdAt,note,_id'),
+    enabled: activeTab === 'transactions' && !!userId,
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
+  });
+
+  const { data: withdrawRequests = [], isLoading: loadingWithdraw } = useQuery({
+    queryKey: ['withdrawRequests', userId],
+    queryFn: () => fetchWithCache(`/api/wallet/admin/user/${userId}/pending-withdraw-requests`, 'amount,createdAt,updatedAt,_id'),
+    enabled: activeTab === 'transactions' && !!userId,
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
+  });
+
+  const { data: purchaseRequests = [], isLoading: loadingPurchases } = useQuery({
+    queryKey: ['purchaseRequests', userId],
+    queryFn: () => fetchWithCache(`/api/purchase/products/admin/user/${userId}/pending-purchases`, 'productName,productCode,quantity,unitPrice,totalPrice,requestedAt,shippingAddress,_id'),
+    enabled: activeTab === 'products' && !!userId,
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
+  });
+
+  const { data: approvedPurchases = [], isLoading: loadingApprovedPurchases } = useQuery({
+    queryKey: ['approvedPurchases', userId],
+    queryFn: () => fetchWithCache(`/api/purchase/products/admin/user/${userId}/approved-purchases`, 'productName,productCode,quantity,unitPrice,totalPrice,requestedAt,status,_id'),
+    enabled: activeTab === 'products' && !!userId,
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
+  });
+
+  const approveMutation = useMutation({
+    mutationFn: (request) => {
+      let endpoint;
+      let requestData = {
+        approvedBy: 'admin',
+        timestamp: new Date().toISOString()
+      };
+
+      switch(request.type) {
+        case 'topup':
+          endpoint = `/api/wallet/admin/topup-request/${request._id}/approve`;
+          requestData.amount = request.amount;
+          break;
+        case 'withdraw':
+          endpoint = `/api/wallet/admin/withdraw-request/${request._id}/approve`;
+          requestData.amount = request.amount;
+          break;
+        case 'purchase':
+          endpoint = `/api/purchase/products/admin/${request._id}/approve`;
+          requestData.productId = request.productId;
+          requestData.quantity = request.quantity;
+          break;
+        default:
+          throw new Error('Invalid request type');
+      }
+
+      return api.put(endpoint, requestData, {
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest'
+        }
+      });
+    },
+    onMutate: async (request) => {
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ['topupRequests', userId] });
+      await queryClient.cancelQueries({ queryKey: ['withdrawRequests', userId] });
+      await queryClient.cancelQueries({ queryKey: ['purchaseRequests', userId] });
+
+      // Snapshot the previous value
+      const previousTopup = queryClient.getQueryData(['topupRequests', userId]);
+      const previousWithdraw = queryClient.getQueryData(['withdrawRequests', userId]);
+      const previousPurchase = queryClient.getQueryData(['purchaseRequests', userId]);
+
+      // Optimistically update the UI
+      if (request.type === 'topup') {
+        queryClient.setQueryData(['topupRequests', userId], (old = []) => 
+          old.filter(req => req._id !== request._id)
+        );
+      } else if (request.type === 'withdraw') {
+        queryClient.setQueryData(['withdrawRequests', userId], (old = []) => 
+          old.filter(req => req._id !== request._id)
+        );
+      } else if (request.type === 'purchase') {
+        queryClient.setQueryData(['purchaseRequests', userId], (old = []) => 
+          old.filter(req => req._id !== request._id)
+        );
+      }
+
+      setShowApproveModal(false);
+      setCurrentRequest(null);
+
+      // Return context with previous values for rollback
+      return { previousTopup, previousWithdraw, previousPurchase };
+    },
+    onError: (error, request, context) => {
+      // Rollback on error
+      if (request.type === 'topup') {
+        queryClient.setQueryData(['topupRequests', userId], context.previousTopup);
+      } else if (request.type === 'withdraw') {
+        queryClient.setQueryData(['withdrawRequests', userId], context.previousWithdraw);
+      } else if (request.type === 'purchase') {
+        queryClient.setQueryData(['purchaseRequests', userId], context.previousPurchase);
+      }
+      
+      alert(error.response?.data?.message || 'Failed to approve request');
+    },
+    onSuccess: async (data, request) => {
+      // Invalidate relevant queries to refetch fresh data
+      if (request.type === 'topup') {
+        await queryClient.invalidateQueries({ queryKey: ['topupRequests', userId] });
+      } else if (request.type === 'withdraw') {
+        await queryClient.invalidateQueries({ queryKey: ['withdrawRequests', userId] });
+      } else if (request.type === 'purchase') {
+        await queryClient.invalidateQueries({ queryKey: ['purchaseRequests', userId] });
+        await queryClient.invalidateQueries({ queryKey: ['approvedPurchases', userId] });
+      }
+      alert('Request approved successfully!');
     }
-  };
+  });
+
+  const declineMutation = useMutation({
+    mutationFn: (request) => {
+      let endpoint;
+      if (request.type === 'topup') {
+        endpoint = `/api/wallet/admin/topup-request/${request._id}/decline`;
+      } else if (request.type === 'withdraw') {
+        endpoint = `/api/wallet/admin/withdraw-request/${request._id}/decline`;
+      } else if (request.type === 'purchase') {
+        endpoint = `/api/purchase/products/admin/${request._id}/reject`;
+      }
+      return api.put(endpoint);
+    },
+    onMutate: async (request) => {
+      await queryClient.cancelQueries({ queryKey: ['topupRequests', userId] });
+      await queryClient.cancelQueries({ queryKey: ['withdrawRequests', userId] });
+      await queryClient.cancelQueries({ queryKey: ['purchaseRequests', userId] });
+
+      const previousTopup = queryClient.getQueryData(['topupRequests', userId]);
+      const previousWithdraw = queryClient.getQueryData(['withdrawRequests', userId]);
+      const previousPurchase = queryClient.getQueryData(['purchaseRequests', userId]);
+
+      if (request.type === 'topup') {
+        queryClient.setQueryData(['topupRequests', userId], (old = []) => 
+          old.filter(req => req._id !== request._id)
+        );
+      } else if (request.type === 'withdraw') {
+        queryClient.setQueryData(['withdrawRequests', userId], (old = []) => 
+          old.filter(req => req._id !== request._id)
+        );
+      } else if (request.type === 'purchase') {
+        queryClient.setQueryData(['purchaseRequests', userId], (old = []) => 
+          old.filter(req => req._id !== request._id)
+        );
+      }
+
+      setShowDeclineModal(false);
+      setCurrentRequest(null);
+
+      return { previousTopup, previousWithdraw, previousPurchase };
+    },
+    onError: (error, request, context) => {
+      if (request.type === 'topup') {
+        queryClient.setQueryData(['topupRequests', userId], context.previousTopup);
+      } else if (request.type === 'withdraw') {
+        queryClient.setQueryData(['withdrawRequests', userId], context.previousWithdraw);
+      } else if (request.type === 'purchase') {
+        queryClient.setQueryData(['purchaseRequests', userId], context.previousPurchase);
+      }
+      
+      alert(error.response?.data?.message || 'Failed to decline request');
+    },
+    onSuccess: async (data, request) => {
+      // Invalidate relevant queries to refetch fresh data
+      if (request.type === 'topup') {
+        await queryClient.invalidateQueries({ queryKey: ['topupRequests', userId] });
+      } else if (request.type === 'withdraw') {
+        await queryClient.invalidateQueries({ queryKey: ['withdrawRequests', userId] });
+      } else if (request.type === 'purchase') {
+        await queryClient.invalidateQueries({ queryKey: ['purchaseRequests', userId] });
+      }
+      alert('Request declined successfully!');
+    }
+  });
 
   const handleApproveClick = (request, type) => {
     setCurrentRequest({ ...request, type });
@@ -1077,72 +1418,8 @@ export default function UserDetails() {
     setShowDeclineModal(true);
   };
 
-  const approveRequest = async () => {
-    if (!currentRequest) return;
-    
-    try {
-      let endpoint;
-      if (currentRequest.type === 'topup') {
-        endpoint = `/api/wallet/admin/topup-request/${currentRequest._id}/approve`;
-      } else if (currentRequest.type === 'withdraw') {
-        endpoint = `/api/wallet/admin/withdraw-request/${currentRequest._id}/approve`;
-      } else if (currentRequest.type === 'purchase') {
-        endpoint = `/api/purchase/products/admin/${currentRequest._id}/approve`;
-      }
-      
-      await api.put(endpoint);
-      
-      // Remove approved request from state
-      if (currentRequest.type === 'topup') {
-        setTopupRequests(topupRequests.filter(req => req._id !== currentRequest._id));
-      } else if (currentRequest.type === 'withdraw') {
-        setWithdrawRequests(withdrawRequests.filter(req => req._id !== currentRequest._id));
-      } else if (currentRequest.type === 'purchase') {
-        setPurchaseRequests(purchaseRequests.filter(req => req._id !== currentRequest._id));
-        // Refresh approved purchases after approval
-        await fetchApprovedPurchases();
-      }
-      
-      setShowApproveModal(false);
-      setCurrentRequest(null);
-    } catch (error) {
-      console.error('Error approving request:', error);
-    }
-  };
-
-  const declineRequest = async () => {
-    if (!currentRequest) return;
-    
-    try {
-      let endpoint;
-      if (currentRequest.type === 'topup') {
-        endpoint = `/api/wallet/admin/topup-request/${currentRequest._id}/decline`;
-      } else if (currentRequest.type === 'withdraw') {
-        endpoint = `/api/wallet/admin/withdraw-request/${currentRequest._id}/decline`;
-      } else if (currentRequest.type === 'purchase') {
-        endpoint = `/api/purchase/products/admin/${currentRequest._id}/reject`;
-      }
-      
-      await api.put(endpoint);
-      
-      // Remove declined request from state
-      if (currentRequest.type === 'topup') {
-        setTopupRequests(topupRequests.filter(req => req._id !== currentRequest._id));
-      } else if (currentRequest.type === 'withdraw') {
-        setWithdrawRequests(withdrawRequests.filter(req => req._id !== currentRequest._id));
-      } else if (currentRequest.type === 'purchase') {
-        setPurchaseRequests(purchaseRequests.filter(req => req._id !== currentRequest._id));
-      }
-      
-      setShowDeclineModal(false);
-      setCurrentRequest(null);
-    } catch (error) {
-      console.error('Error declining request:', error);
-    }
-  };
-
   const getStatusBadge = (status) => {
-    switch (status.toLowerCase()) {
+    switch (status?.toLowerCase()) {
       case 'pending':
         return <span className="badge bg-warning text-dark">Pending</span>;
       case 'approved':
@@ -1154,12 +1431,12 @@ export default function UserDetails() {
       case 'delivered':
         return <span className="badge bg-primary">Delivered</span>;
       default:
-        return <span className="badge bg-secondary">{status}</span>;
+        return <span className="badge bg-secondary">{status || 'Unknown'}</span>;
     }
   };
 
   const renderTransactions = () => {
-    if (loadingTransactions) {
+    if (loadingTopup || loadingWithdraw) {
       return (
         <div className="d-flex justify-content-center align-items-center py-5">
           <div className="spinner-border" style={{ color: primaryColor }} role="status">
@@ -1170,149 +1447,61 @@ export default function UserDetails() {
     }
 
     return (
-      <div>
-        {/* Pending Top-up Requests */}
-        <div className="mb-5">
-          <h5 className="mb-4 fw-bold" style={{ color: primaryDarkColor }}>Pending Top-up Requests</h5>
-          
-          {topupRequests.length === 0 ? (
-            <div className="alert alert-info">
-              No pending top-up requests
-            </div>
-          ) : (
-            <div className="row g-3">
-              {topupRequests.map(request => (
-                <div key={request._id} className="col-md-6">
-                  <div 
-                    className="card border-0 shadow-sm p-3" 
-                    style={{ borderRadius: '10px', backgroundColor: 'rgba(58, 134, 255, 0.05)' }}
-                  >
-                    <div className="d-flex justify-content-between align-items-center mb-2">
-                      <span className="fw-bold" style={{ color: primaryDarkColor }}>Amount: ₹{request.amount}</span>
-                      <span className="badge bg-warning text-dark">Pending</span>
-                    </div>
-                    
-                    <div className="mb-2">
-                      <span className="fw-medium">Created: </span>
-                      <span>{new Date(request.createdAt).toLocaleString()}</span>
-                    </div>
-                    
-                    {request.note && (
-                      <div className="mb-3">
-                        <span className="fw-medium">Note: </span>
-                        <span>{request.note}</span>
-                      </div>
-                    )}
-                    
-                    <div className="d-flex gap-2">
-                      <button 
-                        className="btn btn-sm flex-grow-1"
-                        onClick={() => handleApproveClick(request, 'topup')}
-                        style={{
-                          backgroundColor: successColor,
-                          color: 'white',
-                          borderRadius: '8px',
-                          padding: '8px 12px',
-                          transition: 'all 0.2s ease',
-                        }}
-                        onMouseEnter={(e) => e.currentTarget.style.opacity = '0.8'}
-                        onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
-                      >
-                        Approve
-                      </button>
-                      <button 
-                        className="btn btn-sm flex-grow-1"
-                        onClick={() => handleDeclineClick(request, 'topup')}
-                        style={{
-                          backgroundColor: secondaryColor,
-                          color: 'white',
-                          borderRadius: '8px',
-                          padding: '8px 12px',
-                          transition: 'all 0.2s ease',
-                        }}
-                        onMouseEnter={(e) => e.currentTarget.style.opacity = '0.8'}
-                        onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
-                      >
-                        Decline
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
+      <div className="row g-4">
+        {/* Top-up Requests Card */}
+        <div className="col-12">
+          <div 
+            className="card border-0 shadow-sm p-4" 
+            style={{ 
+              borderRadius: '15px',
+              backgroundColor: 'white',
+              borderLeft: `4px solid ${primaryColor}`
+            }}
+          >
+            <h5 className="mb-4 fw-bold" style={{ color: primaryDarkColor }}>
+              <i className="bi bi-arrow-down-circle me-2" style={{ color: primaryColor }}></i>
+              Pending Top-up Requests
+            </h5>
+            {topupRequests.length === 0 ? (
+              <div className="alert alert-info">No pending top-up requests</div>
+            ) : (
+              <TransactionList 
+                transactions={topupRequests} 
+                onApprove={handleApproveClick}
+                onDecline={handleDeclineClick}
+                type="topup"
+                {...{ primaryColor, successColor, secondaryColor, primaryDarkColor }}
+              />
+            )}
+          </div>
         </div>
 
-        {/* Pending Withdrawal Requests */}
-        <div>
-          <h5 className="mb-4 fw-bold" style={{ color: primaryDarkColor }}>Pending Withdrawal Requests</h5>
-          
-          {withdrawRequests.length === 0 ? (
-            <div className="alert alert-info">
-              No pending withdrawal requests
-            </div>
-          ) : (
-            <div className="row g-3">
-              {withdrawRequests.map(request => (
-                <div key={request._id} className="col-md-6">
-                  <div 
-                    className="card border-0 shadow-sm p-3" 
-                    style={{ borderRadius: '10px', backgroundColor: 'rgba(255, 82, 82, 0.05)' }}
-                  >
-                    <div className="d-flex justify-content-between align-items-center mb-2">
-                      <span className="fw-bold" style={{ color: primaryDarkColor }}>Amount: ₹{request.amount}</span>
-                      <span className="badge bg-warning text-dark">Pending</span>
-                    </div>
-                    
-                    <div className="mb-2">
-                      <span className="fw-medium">Created: </span>
-                      <span>{new Date(request.createdAt).toLocaleString()}</span>
-                    </div>
-                    
-                    {request.updatedAt && (
-                      <div className="mb-3">
-                        <span className="fw-medium">Updated: </span>
-                        <span>{new Date(request.updatedAt).toLocaleString()}</span>
-                      </div>
-                    )}
-                    
-                    <div className="d-flex gap-2">
-                      <button 
-                        className="btn btn-sm flex-grow-1"
-                        onClick={() => handleApproveClick(request, 'withdraw')}
-                        style={{
-                          backgroundColor: successColor,
-                          color: 'white',
-                          borderRadius: '8px',
-                          padding: '8px 12px',
-                          transition: 'all 0.2s ease',
-                        }}
-                        onMouseEnter={(e) => e.currentTarget.style.opacity = '0.8'}
-                        onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
-                      >
-                        Approve
-                      </button>
-                      <button 
-                        className="btn btn-sm flex-grow-1"
-                        onClick={() => handleDeclineClick(request, 'withdraw')}
-                        style={{
-                          backgroundColor: secondaryColor,
-                          color: 'white',
-                          borderRadius: '8px',
-                          padding: '8px 12px',
-                          transition: 'all 0.2s ease',
-                        }}
-                        onMouseEnter={(e) => e.currentTarget.style.opacity = '0.8'}
-                        onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
-                      >
-                        Decline
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
+        {/* Withdrawal Requests Card */}
+        <div className="col-12">
+          <div 
+            className="card border-0 shadow-sm p-4" 
+            style={{ 
+              borderRadius: '15px',
+              backgroundColor: 'white',
+              borderLeft: `4px solid ${secondaryColor}`
+            }}
+          >
+            <h5 className="mb-4 fw-bold" style={{ color: primaryDarkColor }}>
+              <i className="bi bi-arrow-up-circle me-2" style={{ color: secondaryColor }}></i>
+              Pending Withdrawal Requests
+            </h5>
+            {withdrawRequests.length === 0 ? (
+              <div className="alert alert-info">No pending withdrawal requests</div>
+            ) : (
+              <TransactionList 
+                transactions={withdrawRequests} 
+                onApprove={handleApproveClick}
+                onDecline={handleDeclineClick}
+                type="withdraw"
+                {...{ primaryColor, successColor, secondaryColor, primaryDarkColor }}
+              />
+            )}
+          </div>
         </div>
       </div>
     );
@@ -1331,103 +1520,25 @@ export default function UserDetails() {
 
     return (
       <div>
-        {/* Pending Product Purchase Requests */}
         <div className="mb-5">
           <h5 className="mb-4 fw-bold" style={{ color: primaryDarkColor }}>Pending Product Purchase Requests</h5>
-          
           {purchaseRequests.length === 0 ? (
-            <div className="alert alert-info">
-              No pending product purchase requests
-            </div>
+            <div className="alert alert-info">No pending product purchase requests</div>
           ) : (
-            <div className="row g-3">
-              {purchaseRequests.map(request => (
-                <div key={request._id} className="col-md-6">
-                  <div 
-                    className="card border-0 shadow-sm p-3" 
-                    style={{ borderRadius: '10px', backgroundColor: 'rgba(255, 193, 7, 0.05)' }}
-                  >
-                    <div className="d-flex justify-content-between align-items-center mb-2">
-                      <span className="fw-bold" style={{ color: primaryDarkColor }}>
-                        {request.productName} (Code: {request.productCode})
-                      </span>
-                      <span className="badge bg-warning text-dark">Pending</span>
-                    </div>
-                    
-                    <div className="mb-2">
-                      <span className="fw-medium">Quantity: </span>
-                      <span>{request.quantity}</span>
-                    </div>
-                    
-                    <div className="mb-2">
-                      <span className="fw-medium">Unit Price: </span>
-                      <span>₹{request.unitPrice}</span>
-                    </div>
-                    
-                    <div className="mb-2">
-                      <span className="fw-medium">Total Price: </span>
-                      <span className="fw-bold" style={{ color: primaryColor }}>₹{request.totalPrice}</span>
-                    </div>
-                    
-                    <div className="mb-2">
-                      <span className="fw-medium">Requested At: </span>
-                      <span>{new Date(request.requestedAt).toLocaleString()}</span>
-                    </div>
-                    
-                    {request.shippingAddress && (
-                      <div className="mb-3">
-                        <span className="fw-medium">Shipping Address: </span>
-                        <span>{request.shippingAddress}</span>
-                      </div>
-                    )}
-                    
-                    <div className="d-flex gap-2">
-                      <button 
-                        className="btn btn-sm flex-grow-1"
-                        onClick={() => handleApproveClick(request, 'purchase')}
-                        style={{
-                          backgroundColor: successColor,
-                          color: 'white',
-                          borderRadius: '8px',
-                          padding: '8px 12px',
-                          transition: 'all 0.2s ease',
-                        }}
-                        onMouseEnter={(e) => e.currentTarget.style.opacity = '0.8'}
-                        onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
-                      >
-                        Approve
-                      </button>
-                      <button 
-                        className="btn btn-sm flex-grow-1"
-                        onClick={() => handleDeclineClick(request, 'purchase')}
-                        style={{
-                          backgroundColor: secondaryColor,
-                          color: 'white',
-                          borderRadius: '8px',
-                          padding: '8px 12px',
-                          transition: 'all 0.2s ease',
-                        }}
-                        onMouseEnter={(e) => e.currentTarget.style.opacity = '0.8'}
-                        onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
-                      >
-                        Reject
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
+            <TransactionList 
+              transactions={purchaseRequests} 
+              onApprove={handleApproveClick}
+              onDecline={handleDeclineClick}
+              type="purchase"
+              {...{ primaryColor, successColor, secondaryColor, primaryDarkColor }}
+            />
           )}
         </div>
 
-        {/* Approved Product Purchases */}
         <div>
           <h5 className="mb-4 fw-bold" style={{ color: primaryDarkColor }}>Approved Product Purchases</h5>
-          
           {approvedPurchases.length === 0 ? (
-            <div className="alert alert-info">
-              No approved product purchases
-            </div>
+            <div className="alert alert-info">No approved product purchases</div>
           ) : (
             <div className="table-responsive">
               <table className="table table-hover">
@@ -1445,13 +1556,13 @@ export default function UserDetails() {
                 <tbody>
                   {approvedPurchases.map((purchase) => (
                     <tr key={purchase._id}>
-                      <td>{purchase.productName}</td>
-                      <td>{purchase.productCode}</td>
-                      <td>{purchase.quantity}</td>
-                      <td>₹{purchase.unitPrice}</td>
-                      <td>₹{purchase.totalPrice}</td>
+                      <td>{purchase.productName || 'N/A'}</td>
+                      <td>{purchase.productCode || 'N/A'}</td>
+                      <td>{purchase.quantity || '0'}</td>
+                      <td>₹{purchase.unitPrice || '0'}</td>
+                      <td>₹{purchase.totalPrice || '0'}</td>
                       <td>{getStatusBadge(purchase.status)}</td>
-                      <td>{new Date(purchase.requestedAt).toLocaleString()}</td>
+                      <td>{purchase.requestedAt ? new Date(purchase.requestedAt).toLocaleString() : 'N/A'}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -1496,7 +1607,6 @@ export default function UserDetails() {
 
   return (
     <AdminLayout title={`User: ${user.name}`}>
-      {/* Approval Confirmation Modal */}
       {showApproveModal && (
         <div 
           className="modal"
@@ -1549,22 +1659,22 @@ export default function UserDetails() {
                     {currentRequest.type === 'purchase' ? (
                       <>
                         <p className="mb-1">
-                          <strong>Product:</strong> {currentRequest.productName} (Code: {currentRequest.productCode})
+                          <strong>Product:</strong> {currentRequest.productName || 'N/A'} (Code: ${currentRequest.productCode || 'N/A'})
                         </p>
                         <p className="mb-1">
-                          <strong>Quantity:</strong> {currentRequest.quantity}
+                          <strong>Quantity:</strong> {currentRequest.quantity || '0'}
                         </p>
                         <p className="mb-1">
-                          <strong>Unit Price:</strong> ₹{currentRequest.unitPrice}
+                          <strong>Unit Price:</strong> ₹${currentRequest.unitPrice || '0'}
                         </p>
                         <p className="mb-0">
-                          <strong>Total Price:</strong> ₹{currentRequest.totalPrice}
+                          <strong>Total Price:</strong> ₹${currentRequest.totalPrice || '0'}
                         </p>
                       </>
                     ) : (
                       <>
                         <p className="mb-1">
-                          <strong>Amount:</strong> ₹{currentRequest.amount}
+                          <strong>Amount:</strong> ₹${currentRequest.amount || '0'}
                         </p>
                         <p className="mb-0">
                           <strong>Type:</strong> {currentRequest.type === 'topup' ? 'Top-up' : 'Withdrawal'}
@@ -1594,16 +1704,18 @@ export default function UserDetails() {
                 <button 
                   type="button" 
                   className="btn"
-                  onClick={approveRequest}
+                  onClick={() => approveMutation.mutate(currentRequest)}
+                  disabled={approveMutation.isLoading}
                   style={{
                     borderRadius: '8px',
                     padding: '8px 20px',
                     backgroundColor: successColor,
                     color: 'white',
-                    border: 'none'
+                    border: 'none',
+                    opacity: approveMutation.isLoading ? 0.7 : 1
                   }}
                 >
-                  Yes, Approve
+                  {approveMutation.isLoading ? 'Processing...' : 'Yes, Approve'}
                 </button>
               </div>
             </div>
@@ -1611,7 +1723,6 @@ export default function UserDetails() {
         </div>
       )}
 
-      {/* Decline Confirmation Modal */}
       {showDeclineModal && (
         <div 
           className="modal"
@@ -1664,22 +1775,22 @@ export default function UserDetails() {
                     {currentRequest.type === 'purchase' ? (
                       <>
                         <p className="mb-1">
-                          <strong>Product:</strong> {currentRequest.productName} (Code: {currentRequest.productCode})
+                          <strong>Product:</strong> {currentRequest.productName || 'N/A'} (Code: ${currentRequest.productCode || 'N/A'})
                         </p>
                         <p className="mb-1">
-                          <strong>Quantity:</strong> {currentRequest.quantity}
+                          <strong>Quantity:</strong> {currentRequest.quantity || '0'}
                         </p>
                         <p className="mb-1">
-                          <strong>Unit Price:</strong> ₹{currentRequest.unitPrice}
+                          <strong>Unit Price:</strong> ₹${currentRequest.unitPrice || '0'}
                         </p>
                         <p className="mb-0">
-                          <strong>Total Price:</strong> ₹{currentRequest.totalPrice}
+                          <strong>Total Price:</strong> ₹${currentRequest.totalPrice || '0'}
                         </p>
                       </>
                     ) : (
                       <>
                         <p className="mb-1">
-                          <strong>Amount:</strong> ₹{currentRequest.amount}
+                          <strong>Amount:</strong> ₹${currentRequest.amount || '0'}
                         </p>
                         <p className="mb-0">
                           <strong>Type:</strong> {currentRequest.type === 'topup' ? 'Top-up' : 'Withdrawal'}
@@ -1709,16 +1820,18 @@ export default function UserDetails() {
                 <button 
                   type="button" 
                   className="btn"
-                  onClick={declineRequest}
+                  onClick={() => declineMutation.mutate(currentRequest)}
+                  disabled={declineMutation.isLoading}
                   style={{
                     borderRadius: '8px',
                     padding: '8px 20px',
                     backgroundColor: secondaryColor,
                     color: 'white',
-                    border: 'none'
+                    border: 'none',
+                    opacity: declineMutation.isLoading ? 0.7 : 1
                   }}
                 >
-                  Yes, Decline
+                  {declineMutation.isLoading ? 'Processing...' : 'Yes, Decline'}
                 </button>
               </div>
             </div>
@@ -1726,7 +1839,6 @@ export default function UserDetails() {
         </div>
       )}
 
-      {/* Back Button */}
       <div className="mb-4">
         <button
           className="btn btn-sm"
@@ -1749,7 +1861,6 @@ export default function UserDetails() {
       </div>
 
       <div className="row">
-        {/* User Profile Card */}
         <div className="col-md-4 mb-4">
           <div
             className="card shadow-sm"
@@ -1775,8 +1886,8 @@ export default function UserDetails() {
               >
                 <i className="bi bi-person-circle fs-1" style={{ color: primaryDarkColor }}></i>
               </div>
-              <h4 className="mt-3 mb-1 fw-bold">{user.name}</h4>
-              <p className="mb-1" style={{ opacity: 0.9 }}>{user.email}</p>
+              <h4 className="mt-3 mb-1 fw-bold">{user.name || 'N/A'}</h4>
+              <p className="mb-1" style={{ opacity: 0.9 }}>{user.email || 'N/A'}</p>
               <span
                 className="badge fw-medium"
                 style={{
@@ -1802,11 +1913,11 @@ export default function UserDetails() {
                 </li>
                 <li className="mb-2 d-flex justify-content-between align-items-center">
                   <span className="fw-medium" style={{ color: textColor }}>Joined:</span>
-                  <span style={{ color: textColor, opacity: 0.8 }}>{new Date(user.createdAt).toLocaleDateString()}</span>
+                  <span style={{ color: textColor, opacity: 0.8 }}>{user.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'N/A'}</span>
                 </li>
                 <li className="mb-2 d-flex justify-content-between align-items-center">
                   <span className="fw-medium" style={{ color: textColor }}>Status:</span>
-                  <span style={{ color: textColor, opacity: 0.8 }}>{user.status}</span>
+                  <span style={{ color: textColor, opacity: 0.8 }}>{user.status || 'N/A'}</span>
                 </li>
                 <li className="mb-2 d-flex justify-content-between align-items-center">
                   <span className="fw-medium" style={{ color: textColor }}>Rank:</span>
@@ -1819,7 +1930,6 @@ export default function UserDetails() {
           </div>
         </div>
 
-        {/* User Details Tabs */}
         <div className="col-md-8">
           <div
             className="card shadow-sm"
@@ -1839,80 +1949,30 @@ export default function UserDetails() {
               }}
             >
               <ul className="nav nav-tabs card-header-tabs" style={{ borderBottom: 'none' }}>
-                <li className="nav-item">
-                  <a
-                    className={`nav-link ${activeTab === 'referral' ? 'active' : ''}`}
-                    href="#"
-                    onClick={(e) => { e.preventDefault(); setActiveTab('referral'); }}
-                    style={{
-                      color: activeTab === 'referral' ? primaryDarkColor : textColor,
-                      borderColor: activeTab === 'referral' ? `transparent transparent ${primaryColor} transparent` : 'transparent',
-                      borderWidth: '2px',
-                      fontWeight: activeTab === 'referral' ? 'bold' : 'normal',
-                      backgroundColor: 'transparent',
-                      opacity: activeTab === 'referral' ? 1 : 0.7
-                    }}
-                  >
-                    Referral Info
-                  </a>
-                </li>
-                <li className="nav-item">
-                  <a
-                    className={`nav-link ${activeTab === 'transactions' ? 'active' : ''}`}
-                    href="#"
-                    onClick={(e) => { e.preventDefault(); setActiveTab('transactions'); }}
-                    style={{
-                      color: activeTab === 'transactions' ? primaryDarkColor : textColor,
-                      borderColor: activeTab === 'transactions' ? `transparent transparent ${primaryColor} transparent` : 'transparent',
-                      borderWidth: '2px',
-                      fontWeight: activeTab === 'transactions' ? 'bold' : 'normal',
-                      backgroundColor: 'transparent',
-                      opacity: activeTab === 'transactions' ? 1 : 0.7
-                    }}
-                  >
-                    Transactions
-                  </a>
-                </li>
-                <li className="nav-item">
-                  <a
-                    className={`nav-link ${activeTab === 'products' ? 'active' : ''}`}
-                    href="#"
-                    onClick={(e) => { e.preventDefault(); setActiveTab('products'); }}
-                    style={{
-                      color: activeTab === 'products' ? primaryDarkColor : textColor,
-                      borderColor: activeTab === 'products' ? `transparent transparent ${primaryColor} transparent` : 'transparent',
-                      borderWidth: '2px',
-                      fontWeight: activeTab === 'products' ? 'bold' : 'normal',
-                      backgroundColor: 'transparent',
-                      opacity: activeTab === 'products' ? 1 : 0.7
-                    }}
-                  >
-                    Product Purchases
-                  </a>
-                </li>
-                <li className="nav-item">
-                  <a
-                    className={`nav-link ${activeTab === 'settings' ? 'active' : ''}`}
-                    href="#"
-                    onClick={(e) => { e.preventDefault(); setActiveTab('settings'); }}
-                    style={{
-                      color: activeTab === 'settings' ? primaryDarkColor : textColor,
-                      borderColor: activeTab === 'settings' ? `transparent transparent ${primaryColor} transparent` : 'transparent',
-                      borderWidth: '2px',
-                      fontWeight: activeTab === 'settings' ? 'bold' : 'normal',
-                      backgroundColor: 'transparent',
-                      opacity: activeTab === 'settings' ? 1 : 0.7
-                    }}
-                  >
-                    Settings
-                  </a>
-                </li>
+                {['referral', 'transactions', 'products', 'settings'].map(tab => (
+                  <li key={tab} className="nav-item">
+                    <a
+                      className={`nav-link ${activeTab === tab ? 'active' : ''}`}
+                      href="#"
+                      onClick={(e) => { e.preventDefault(); setActiveTab(tab); }}
+                      style={{
+                        color: activeTab === tab ? primaryDarkColor : textColor,
+                        borderColor: activeTab === tab ? `transparent transparent ${primaryColor} transparent` : 'transparent',
+                        borderWidth: '2px',
+                        fontWeight: activeTab === tab ? 'bold' : 'normal',
+                        backgroundColor: 'transparent',
+                        opacity: activeTab === tab ? 1 : 0.7
+                      }}
+                    >
+                      {tab.charAt(0).toUpperCase() + tab.slice(1)}
+                    </a>
+                  </li>
+                ))}
               </ul>
             </div>
             <div className="card-body p-4">
               {activeTab === 'referral' ? (
                 <>
-                  {/* Referral Information */}
                   <div>
                     <h5 className="mb-4 fw-bold" style={{ color: primaryDarkColor }}>Referral Information</h5>
                     <div className="row g-3">
@@ -1958,7 +2018,6 @@ export default function UserDetails() {
                     </div>
                   </div>
 
-                  {/* Bank Details Section */}
                   <div className="mt-4">
                     <h6 className="text-uppercase mb-3 fw-bold" style={{ color: primaryDarkColor, opacity: 0.8 }}>
                       Bank Information
@@ -1978,9 +2037,10 @@ export default function UserDetails() {
                       </li>
                       <li className="mb-2 d-flex justify-content-between align-items-center">
                         <span className="fw-medium" style={{ color: textColor }}>Account Number:</span>
-                        <span style={{ color: textColor, opacity: 0.8 }}>
+                        <span style={{ color: textColor, opacity: '0.8' }}>
                           {user.bankDetails?.accountNumber 
-                            ? `****${user.bankDetails.accountNumber.toString().slice(-4)}` 
+                            ? 
+                            `****${user.accountNumber.toString().slice(-4)}` 
                             : 'N/A'}
                         </span>
                       </li>
