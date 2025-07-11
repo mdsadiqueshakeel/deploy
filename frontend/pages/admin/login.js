@@ -412,15 +412,7 @@ export default function AdminLogin() {
             </button>
           </form>
 
-          <div className="text-center mt-3">
-            <Link
-              href="/admin/forgot-credentials"
-              className="text-decoration-none small fw-medium"
-              style={{ color: '#0A2463' }}
-            >
-              Forget admin credentials? →
-            </Link>
-          </div>
+          
         </div>
       </div>
     </>

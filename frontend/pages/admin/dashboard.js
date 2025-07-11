@@ -1,4 +1,3 @@
-
 // import Head from 'next/head';
 // import { useRouter } from 'next/router';
 // import { useEffect, useState } from 'react';
@@ -11,21 +10,17 @@
 //   const [loading, setLoading] = useState(true);
 //   const [error, setError] = useState(null);
 //   const [searchTerm, setSearchTerm] = useState('');
-//   const [pendingRequests, setPendingRequests] = useState({ topup: { count: 0 }, withdraw: { count: 0 } });
 //   const [pendingProductCount, setPendingProductCount] = useState(0);
 //   const router = useRouter();
 
 //   useEffect(() => {
 //     const fetchDashboardData = async () => {
 //       try {
-//         const [usersRes, pendingRes] = await Promise.all([
+//         const [usersRes] = await Promise.all([
 //           api.get('/api/admin/users'),
-//           api.get('/api/wallet/admin/pending-requests')
 //         ]);
 
-//         setPendingRequests(pendingRes.data || { topup: { count: 0 }, withdraw: { count: 0 } });
-
-//         let productCount = 0;
+//         let totalProductCount = 0;
 
 //         const enrichedUsers = await Promise.all(
 //           (Array.isArray(usersRes.data) ? usersRes.data : []).map(async (user) => {
@@ -37,26 +32,36 @@
 //                 api.get(`/api/purchase/products/admin/user/${user._id}/pending-purchases`)
 //               ]);
 
-//               const hasPendingTopup = Array.isArray(topupRes.data) && topupRes.data.length > 0;
-//               const hasPendingWithdraw = Array.isArray(withdrawRes.data) && withdrawRes.data.length > 0;
-//               const hasPendingProduct = Array.isArray(productRes.data) && productRes.data.length > 0;
+//               const topupCount = Array.isArray(topupRes.data) ? topupRes.data.length : 0;
+//               const withdrawCount = Array.isArray(withdrawRes.data) ? withdrawRes.data.length : 0;
+//               const productCount = Array.isArray(productRes.data) ? productRes.data.length : 0;
 
-//               if (hasPendingProduct) productCount += productRes.data.length;
+//               totalProductCount += productCount;
 
 //               return {
 //                 ...user,
 //                 ...(detailsRes.data || {}),
-//                 hasPending: hasPendingTopup || hasPendingWithdraw || hasPendingProduct
+//                 pendingTopupWithdraw: topupCount + withdrawCount,
+//                 pendingProduct: productCount,
+//                 hasPending: (topupCount + withdrawCount + productCount) > 0,
+//                 pendingCount: topupCount + withdrawCount + productCount
 //               };
 //             } catch (error) {
 //               console.error(`Error fetching details for user ${user._id}:`, error);
-//               return { ...user, hasPending: false };
+//               return { ...user, pendingTopupWithdraw: 0, pendingProduct: 0, hasPending: false, pendingCount: 0 };
 //             }
 //           })
 //         );
 
-//         setUsers(enrichedUsers);
-//         setPendingProductCount(productCount);
+//         const sortedUsers = enrichedUsers.sort((a, b) => {
+//           if (a.hasPending && !b.hasPending) return -1;
+//           if (!a.hasPending && b.hasPending) return 1;
+//           if (a.hasPending && b.hasPending) return b.pendingCount - a.pendingCount;
+//           return new Date(b.createdAt) - new Date(a.createdAt);
+//         });
+
+//         setUsers(sortedUsers);
+//         setPendingProductCount(totalProductCount);
 //       } catch (error) {
 //         console.error('Error fetching dashboard data:', error);
 //         setError(error.response?.data?.message || 'Failed to fetch dashboard data');
@@ -94,7 +99,10 @@
 //     return name.includes(term) || email.includes(term) || phone.includes(term);
 //   });
 
-//   const totalPendingRequests = pendingRequests?.topup?.count + pendingRequests?.withdraw?.count;
+//   const totalPendingRequests = users.reduce(
+//     (sum, user) => sum + (user.pendingTopupWithdraw || 0),
+//     0
+//   );
 
 //   return (
 //     <AdminProtectedRoute>
@@ -232,7 +240,11 @@
 //                           <tr
 //                             key={user._id}
 //                             onClick={() => router.push(`/admin/users/${user._id}`)}
-//                             style={{ cursor: 'pointer', color: '#0A2463' }}
+//                             style={{
+//                               cursor: 'pointer',
+//                               color: '#0A2463',
+//                               backgroundColor: user.hasPending ? 'rgba(255, 193, 7, 0.1)' : 'transparent'
+//                             }}
 //                           >
 //                             <td className="d-none d-sm-table-cell">{user.name || '-'}</td>
 //                             <td>
@@ -255,11 +267,18 @@
 //                             </td>
 //                             <td>
 //                               {user.hasPending ? (
-//                                 <i
-//                                   className="bi bi-bell-fill"
-//                                   style={{ color: '#ff9800', fontSize: '1.2rem' }}
-//                                   title="User has pending requests"
-//                                 ></i>
+//                                 <div className="d-flex align-items-center gap-1">
+//                                   <i
+//                                     className="bi bi-bell-fill"
+//                                     style={{ color: '#ff9800', fontSize: '1.2rem' }}
+//                                     title="User has pending requests"
+//                                   ></i>
+//                                   {user.pendingCount > 1 && (
+//                                     <span className="badge bg-danger rounded-pill" style={{ fontSize: '0.6rem' }}>
+//                                       {user.pendingCount}
+//                                     </span>
+//                                   )}
+//                                 </div>
 //                               ) : (
 //                                 <span className="text-muted">—</span>
 //                               )}
@@ -295,10 +314,14 @@ import api from '../../services/api';
 
 function AdminDashboard() {
   const [users, setUsers] = useState([]);
+  const [allUsers, setAllUsers] = useState([]); // Store all users for filtering
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [pendingProductCount, setPendingProductCount] = useState(0);
+  const [pendingTopupCount, setPendingTopupCount] = useState(0);
+  const [pendingWithdrawCount, setPendingWithdrawCount] = useState(0);
+  const [activeFilter, setActiveFilter] = useState('all'); // 'all', 'topup', 'withdraw', 'product'
   const router = useRouter();
 
   useEffect(() => {
@@ -309,6 +332,8 @@ function AdminDashboard() {
         ]);
 
         let totalProductCount = 0;
+        let totalTopupCount = 0;
+        let totalWithdrawCount = 0;
 
         const enrichedUsers = await Promise.all(
           (Array.isArray(usersRes.data) ? usersRes.data : []).map(async (user) => {
@@ -325,18 +350,21 @@ function AdminDashboard() {
               const productCount = Array.isArray(productRes.data) ? productRes.data.length : 0;
 
               totalProductCount += productCount;
+              totalTopupCount += topupCount;
+              totalWithdrawCount += withdrawCount;
 
               return {
                 ...user,
                 ...(detailsRes.data || {}),
-                pendingTopupWithdraw: topupCount + withdrawCount,
+                pendingTopup: topupCount,
+                pendingWithdraw: withdrawCount,
                 pendingProduct: productCount,
                 hasPending: (topupCount + withdrawCount + productCount) > 0,
                 pendingCount: topupCount + withdrawCount + productCount
               };
             } catch (error) {
               console.error(`Error fetching details for user ${user._id}:`, error);
-              return { ...user, pendingTopupWithdraw: 0, pendingProduct: 0, hasPending: false, pendingCount: 0 };
+              return { ...user, pendingTopup: 0, pendingWithdraw: 0, pendingProduct: 0, hasPending: false, pendingCount: 0 };
             }
           })
         );
@@ -349,7 +377,10 @@ function AdminDashboard() {
         });
 
         setUsers(sortedUsers);
+        setAllUsers(sortedUsers); // Store all users for filtering
         setPendingProductCount(totalProductCount);
+        setPendingTopupCount(totalTopupCount);
+        setPendingWithdrawCount(totalWithdrawCount);
       } catch (error) {
         console.error('Error fetching dashboard data:', error);
         setError(error.response?.data?.message || 'Failed to fetch dashboard data');
@@ -379,6 +410,24 @@ function AdminDashboard() {
     setSearchTerm(e.target.value);
   };
 
+  const handleFilterClick = (filterType) => {
+    setActiveFilter(filterType);
+    
+    if (filterType === 'all') {
+      setUsers(allUsers);
+      return;
+    }
+
+    const filtered = allUsers.filter(user => {
+      if (filterType === 'topup') return user.pendingTopup > 0;
+      if (filterType === 'withdraw') return user.pendingWithdraw > 0;
+      if (filterType === 'product') return user.pendingProduct > 0;
+      return true;
+    });
+    
+    setUsers(filtered);
+  };
+
   const filteredUsers = users.filter((user) => {
     const name = String(user?.name || '').toLowerCase();
     const email = String(user?.email || '').toLowerCase();
@@ -386,11 +435,6 @@ function AdminDashboard() {
     const term = searchTerm.toLowerCase();
     return name.includes(term) || email.includes(term) || phone.includes(term);
   });
-
-  const totalPendingRequests = users.reduce(
-    (sum, user) => sum + (user.pendingTopupWithdraw || 0),
-    0
-  );
 
   return (
     <AdminProtectedRoute>
@@ -432,12 +476,19 @@ function AdminDashboard() {
           ) : (
             <>
               <div className="row g-3 mb-4">
+                {/* Total Users Card */}
                 <div className="col-12 col-sm-6 col-md-4 col-lg-3">
-                  <div className="card text-white h-100" style={{
-                    borderRadius: '15px',
-                    background: 'linear-gradient(135deg, #3A86FF 0%, #0A2463 100%)',
-                    boxShadow: '0 4px 15px rgba(58, 134, 255, 0.4)'
-                  }}>
+                  <div 
+                    className="card text-white h-100" 
+                    style={{
+                      borderRadius: '15px',
+                      background: 'linear-gradient(135deg, #3A86FF 0%, #0A2463 100%)',
+                      boxShadow: '0 4px 15px rgba(58, 134, 255, 0.4)',
+                      cursor: 'pointer',
+                      border: activeFilter === 'all' ? '3px solid #fff' : 'none'
+                    }}
+                    onClick={() => handleFilterClick('all')}
+                  >
                     <div className="card-body d-flex flex-column">
                       <h5 className="card-title">Total Users</h5>
                       <div className="d-flex justify-content-between align-items-end mt-auto">
@@ -448,28 +499,65 @@ function AdminDashboard() {
                   </div>
                 </div>
 
+                {/* Pending Top-up Requests Card */}
                 <div className="col-12 col-sm-6 col-md-4 col-lg-3">
-                  <div className="card text-white h-100" style={{
-                    borderRadius: '15px',
-                    background: 'linear-gradient(135deg, #FF7F50 0%, #FF4500 100%)',
-                    boxShadow: '0 4px 15px rgba(255, 99, 71, 0.4)'
-                  }}>
+                  <div 
+                    className="card text-white h-100" 
+                    style={{
+                      borderRadius: '15px',
+                      background: 'linear-gradient(135deg, #FF7F50 0%, #FF4500 100%)',
+                      boxShadow: '0 4px 15px rgba(255, 99, 71, 0.4)',
+                      cursor: 'pointer',
+                      border: activeFilter === 'topup' ? '3px solid #fff' : 'none'
+                    }}
+                    onClick={() => handleFilterClick('topup')}
+                  >
                     <div className="card-body d-flex flex-column">
-                      <h5 className="card-title">Pending Requests</h5>
+                      <h5 className="card-title">Pending Top-up Requests</h5>
                       <div className="d-flex justify-content-between align-items-end mt-auto">
-                        <h2 className="fw-bold mb-0">{totalPendingRequests}</h2>
-                        <i className="bi bi-hourglass-split fs-3"></i>
+                        <h2 className="fw-bold mb-0">{pendingTopupCount}</h2>
+                        <i className="bi bi-arrow-up-circle fs-3"></i>
                       </div>
                     </div>
                   </div>
                 </div>
 
+                {/* Pending Withdraw Requests Card */}
                 <div className="col-12 col-sm-6 col-md-4 col-lg-3">
-                  <div className="card text-white h-100" style={{
-                    borderRadius: '15px',
-                    background: 'linear-gradient(135deg, #00b894 0%, #00cec9 100%)',
-                    boxShadow: '0 4px 15px rgba(0, 184, 148, 0.4)'
-                  }}>
+                  <div 
+                    className="card text-white h-100" 
+                    style={{
+                      borderRadius: '15px',
+                      background: 'linear-gradient(135deg, #FF6B6B 0%, #FF0000 100%)',
+                      boxShadow: '0 4px 15px rgba(255, 107, 107, 0.4)',
+                      cursor: 'pointer',
+                      border: activeFilter === 'withdraw' ? '3px solid #fff' : 'none'
+                    }}
+                    onClick={() => handleFilterClick('withdraw')}
+                  >
+                    <div className="card-body d-flex flex-column">
+                      <h5 className="card-title">Pending Withdraw Requests</h5>
+                      <div className="d-flex justify-content-between align-items-end mt-auto">
+                        <h2 className="fw-bold mb-0">{pendingWithdrawCount}</h2>
+                        <i className="bi bi-arrow-down-circle fs-3"></i>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Pending Product Requests Card */}
+                <div className="col-12 col-sm-6 col-md-4 col-lg-3">
+                  <div 
+                    className="card text-white h-100" 
+                    style={{
+                      borderRadius: '15px',
+                      background: 'linear-gradient(135deg, #00b894 0%, #00cec9 100%)',
+                      boxShadow: '0 4px 15px rgba(0, 184, 148, 0.4)',
+                      cursor: 'pointer',
+                      border: activeFilter === 'product' ? '3px solid #fff' : 'none'
+                    }}
+                    onClick={() => handleFilterClick('product')}
+                  >
                     <div className="card-body d-flex flex-column">
                       <h5 className="card-title">Pending Product Requests</h5>
                       <div className="d-flex justify-content-between align-items-end mt-auto">
