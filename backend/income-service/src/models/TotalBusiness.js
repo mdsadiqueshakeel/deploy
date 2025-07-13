@@ -17,7 +17,7 @@ const totalBusinessSchema = new mongoose.Schema({
       level: Number,
       teamCount: { type: Number, default: 0 },
       businessVolume: { type: Number, default: 0 },
-      commission: { type: Number, default: 0 }, // optional, if you want to store commission per level
+      commissionEarned:  { type: Number, default: 0 }, // optional, if you want to store commission per level
     },
   ],
 
