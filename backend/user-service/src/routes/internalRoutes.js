@@ -61,6 +61,27 @@ router.put("/activate-user/:id", async (req, res) => {
 });
 
 
+router.patch("/internal/update-rank/:userId", async (req, res) => {
+  try {
+    const { rank } = req.body;
+    if (!rank) return res.status(400).json({ message: "Rank is required" });
+
+    const user = await User.findByIdAndUpdate(
+      req.params.userId,
+      { rank },
+      { new: true }
+    );
+
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    res.status(200).json({ message: "Rank updated", user });
+  } catch (err) {
+    console.error("❌ Error updating rank:", err.message);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+
 
 router.put("/internal/update-status", updateStatus);
 

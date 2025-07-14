@@ -13,7 +13,7 @@ const walletLogSchema = new mongoose.Schema(
     },
     type: {
       type: String,
-      enum: ["topup", "withdraw", "income", "matching", "level"],
+      enum: ["topup", "withdraw", "income", "matching", "level","rank_reward"],
       default: "income",
     },
     creditedBy: {

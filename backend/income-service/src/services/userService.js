@@ -24,3 +24,15 @@ exports.updateUserStatus = async (payload) => {
     throw err;
   }
 };
+
+exports.updateUserRank = async (userId, newRank) => {
+  try {
+    await axios.patch(`${USER_SERVICE_URL}/internal/update-rank/${userId}`, {
+      rank: newRank,
+    });
+    console.log(`📌 User ${userId} rank updated to ${newRank} via user-service`);
+  } catch (err) {
+    console.error("❌ Failed to update user rank:", err.response?.data || err.message);
+    throw err;
+  }
+};

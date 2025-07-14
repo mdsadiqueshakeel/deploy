@@ -5,6 +5,7 @@ const { getUserById } = require("../services/userService");
 const { clearBusinessCache } = require("../utils/clearCache");
 const {clearWalletCacheRemote} = require("../utils/triggerWalletClear");
 const {updateTotalBusiness} = require("../utils/updateTotalBuisness");
+const {evaluateRankUpgrade} = require("../utils/rankUtils");
 
 const recursivelyUpgradeParents = async (childUserId) => {
   try {
@@ -67,8 +68,6 @@ exports.handleTopupTrigger = async (req, res) => {
       calculateMatchingIncome(userId, coins),
       calculateLevelIncome(userId, coins)
     ]);
-
-    await updateTotalBusiness(userId);
 
     // 5. Clear cache for this user (wallet + business report)
 await Promise.all([

@@ -1,6 +1,7 @@
+const axios = require("axios");
+
 // src/index.js
 const dotenv = require("dotenv");
-// Load the default .env file directly
 dotenv.config();
 const express = require("express");
 const mongoose = require("mongoose");
@@ -8,8 +9,12 @@ const cors = require("cors");
 // income-service/index.js
 const cookieParser = require("cookie-parser");
 const cron = require("node-cron");
+const USER_SERVICE_URL = process.env.USER_SERVICE_URL;
 
+const { evaluateRankUpgrade } = require("./utils/rankUtils");
 const { resetAllCarryMatchedToday } = require("./utils/resetCarryForNewDay");
+const { expireUnclaimedRewards } = require("./utils/expireUnclamedAmounts");
+
 
 dotenv.config();
 const app = express();
@@ -27,7 +32,10 @@ app.use((req, res, next) => {
 // Mount routes
 app.use("/", require("./routes/businessRoutes"));
 app.use("/api/income", require("./routes/incomeRoutes"));
+app.use(require('./routes/rankRoutes'));
+app.use(require('./routes/internalRoutes'));
 app.use('/test', require('./routes/testRoutes')); // Test routes
+
 
 // Add a direct route for topup-trigger for testing
 const { handleTopupTrigger } = require('./controllers/incomeController');
@@ -41,9 +49,42 @@ app.get("/ping", (req, res) => res.send("💸 Income Service is Alive"));
 cron.schedule("0 0 * * *", async () => {
   console.log("🌅 Running midnight carry reset cron...");
   await resetAllCarryMatchedToday();
+
+   console.log("🕐 Checking for expired rank rewards...");
+  await expireUnclaimedRewards();
 }, {
   timezone: "Asia/Kolkata"
 });
+
+
+
+cron.schedule("*/2 * * * *", async () => {
+  try {
+    console.log("📆 Running rank evaluation for all users (every 15 days)...");
+
+    const { data } = await axios.get(`${USER_SERVICE_URL}/api/admin/users`);
+    const users = data || [];
+
+    for (const user of users) {
+      console.log(`🔍 Evaluating rank for: ${user.name} (${user._id})`);
+      await evaluateRankUpgrade(user._id);
+    }
+
+    console.log("✅ 15-day rank evaluation complete.");
+  } catch (err) {
+    console.error("❌ Error in 15-day rank cron:", err.message);
+  }
+}, {
+  timezone: "Asia/Kolkata"
+});
+
+
+// app.post("/test/expire-rewards", async (req, res) => {
+//   await expireUnclaimedRewards();
+//   res.send("✅ Expired checked");
+// });
+
+
 
 const PORT = process.env.PORT || 5004;
 mongoose

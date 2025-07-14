@@ -8,6 +8,9 @@ const { generateReferralCode } = require("../utils/referralUtils");
 const { findBinaryPlacement, updateLevelTree } = require("../utils/placment");
 const { buildBinaryTree } = require("../utils/buildBinaryTree");
 const { clearUserCache } = require("../utils/cacheUtils");
+const axios = require("axios");
+
+const INCOME_SERVICE_URL = process.env.INCOME_SERVICE_URL
 
 
 // for reset and forget password
@@ -176,6 +179,13 @@ exports.login = async (req, res) => {
   const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
     expiresIn: "1d",
   });
+
+  try {
+  await axios.post(`${INCOME_SERVICE_URL}/internal/post-login-update/${user._id}`);
+  console.log("✅ Post-login update triggered successfully");
+} catch (err) {
+  console.warn("⚠️ Failed to trigger post-login update:", err.response?.data || err.message);
+}
 
   // Just return the token; API Gateway will set the cookie
   res.json({ token, expiresIn: "1d" });
