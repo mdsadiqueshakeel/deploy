@@ -187,6 +187,8 @@ exports.login = async (req, res) => {
   console.warn("⚠️ Failed to trigger post-login update:", err.response?.data || err.message);
 }
 
+  await clearUserCache(user._id);
+
   // Just return the token; API Gateway will set the cookie
   res.json({ token, expiresIn: "1d" });
 };
