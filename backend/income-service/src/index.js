@@ -58,7 +58,7 @@ cron.schedule("0 0 * * *", async () => {
 
 
 
-cron.schedule("*/2 * * * *", async () => {
+cron.schedule("0 0 */15 * *", async () => {
   try {
     console.log("📆 Running rank evaluation for all users (every 15 days)...");
 
