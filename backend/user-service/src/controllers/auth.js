@@ -180,13 +180,6 @@ exports.login = async (req, res) => {
     expiresIn: "1d",
   });
 
-  try {
-  await axios.post(`${INCOME_SERVICE_URL}/internal/post-login-update/${user._id}`);
-  console.log("✅ Post-login update triggered successfully");
-} catch (err) {
-  console.warn("⚠️ Failed to trigger post-login update:", err.response?.data || err.message);
-}
-
   await clearUserCache(user._id);
 
   // Just return the token; API Gateway will set the cookie
