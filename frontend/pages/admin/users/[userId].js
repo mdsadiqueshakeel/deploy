@@ -1084,6 +1084,7 @@
 //     </AdminLayout>
 //   );
 // }
+
 import { useRouter } from 'next/router';
 import { useState, memo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -1115,11 +1116,11 @@ const TransactionList = memo(({ transactions, onApprove, onDecline, type, primar
               </div>
               <div className="mb-2">
                 <span className="fw-medium">Unit Price: </span>
-                <span>₹${request.unitPrice || '0'}</span>
+                <span>₹{request.unitPrice || '0'}</span>
               </div>
               <div className="mb-2">
                 <span className="fw-medium">Total Price: </span>
-                <span className="fw-bold" style={{ color: primaryColor }}>₹${request.totalPrice || '0'}</span>
+                <span className="fw-bold" style={{ color: primaryColor }}>₹{request.totalPrice || '0'}</span>
               </div>
             </>
           )}
@@ -1217,7 +1218,7 @@ export default function UserDetails() {
     queryKey: ['user', userId],
     queryFn: () => fetchWithCache(`/api/admin/user/${userId}`, 'name,email,phone,createdAt,status,rank,isActive,parentId,bankDetails,referralCodeLeft,referralCodeRight'),
     enabled: !!userId,
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 5 * 60 * 1000,
     refetchOnWindowFocus: false,
   });
 
@@ -1249,6 +1250,14 @@ export default function UserDetails() {
     queryKey: ['approvedPurchases', userId],
     queryFn: () => fetchWithCache(`/api/purchase/products/admin/user/${userId}/approved-purchases`, 'productName,productCode,quantity,unitPrice,totalPrice,requestedAt,status,_id'),
     enabled: activeTab === 'products' && !!userId,
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
+  });
+
+  const { data: rankData = {}, isLoading: loadingRank } = useQuery({
+    queryKey: ['rankSummary', userId],
+    queryFn: () => fetchWithCache(`/api/income/user-summary/${userId}`),
+    enabled: activeTab === 'rankAndReward' && !!userId,
     staleTime: 5 * 60 * 1000,
     refetchOnWindowFocus: false,
   });
@@ -1287,17 +1296,14 @@ export default function UserDetails() {
       });
     },
     onMutate: async (request) => {
-      // Cancel any outgoing refetches
       await queryClient.cancelQueries({ queryKey: ['topupRequests', userId] });
       await queryClient.cancelQueries({ queryKey: ['withdrawRequests', userId] });
       await queryClient.cancelQueries({ queryKey: ['purchaseRequests', userId] });
 
-      // Snapshot the previous value
       const previousTopup = queryClient.getQueryData(['topupRequests', userId]);
       const previousWithdraw = queryClient.getQueryData(['withdrawRequests', userId]);
       const previousPurchase = queryClient.getQueryData(['purchaseRequests', userId]);
 
-      // Optimistically update the UI
       if (request.type === 'topup') {
         queryClient.setQueryData(['topupRequests', userId], (old = []) => 
           old.filter(req => req._id !== request._id)
@@ -1315,11 +1321,9 @@ export default function UserDetails() {
       setShowApproveModal(false);
       setCurrentRequest(null);
 
-      // Return context with previous values for rollback
       return { previousTopup, previousWithdraw, previousPurchase };
     },
     onError: (error, request, context) => {
-      // Rollback on error
       if (request.type === 'topup') {
         queryClient.setQueryData(['topupRequests', userId], context.previousTopup);
       } else if (request.type === 'withdraw') {
@@ -1331,7 +1335,6 @@ export default function UserDetails() {
       alert(error.response?.data?.message || 'Failed to approve request');
     },
     onSuccess: async (data, request) => {
-      // Invalidate relevant queries to refetch fresh data
       if (request.type === 'topup') {
         await queryClient.invalidateQueries({ queryKey: ['topupRequests', userId] });
       } else if (request.type === 'withdraw') {
@@ -1396,7 +1399,6 @@ export default function UserDetails() {
       alert(error.response?.data?.message || 'Failed to decline request');
     },
     onSuccess: async (data, request) => {
-      // Invalidate relevant queries to refetch fresh data
       if (request.type === 'topup') {
         await queryClient.invalidateQueries({ queryKey: ['topupRequests', userId] });
       } else if (request.type === 'withdraw') {
@@ -1406,6 +1408,17 @@ export default function UserDetails() {
       }
       alert('Request declined successfully!');
     }
+  });
+
+  const claimTripMutation = useMutation({
+    mutationFn: (rewardId) => api.patch(`/api/income/claim-trip/${rewardId}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['rankSummary', userId] });
+      alert('🎉 Trip successfully claimed!');
+    },
+    onError: (err) => {
+      alert(err?.response?.data?.message || 'Failed to claim trip.');
+    },
   });
 
   const handleApproveClick = (request, type) => {
@@ -1448,7 +1461,6 @@ export default function UserDetails() {
 
     return (
       <div className="row g-4">
-        {/* Top-up Requests Card */}
         <div className="col-12">
           <div 
             className="card border-0 shadow-sm p-4" 
@@ -1476,7 +1488,6 @@ export default function UserDetails() {
           </div>
         </div>
 
-        {/* Withdrawal Requests Card */}
         <div className="col-12">
           <div 
             className="card border-0 shadow-sm p-4" 
@@ -1574,39 +1585,95 @@ export default function UserDetails() {
     );
   };
 
-  if (loading) {
+  const renderRankAndReward = () => {
+    if (loadingRank) {
+      return (
+        <div className="d-flex justify-content-center py-5">
+          <div className="spinner-border" style={{ color: primaryColor }} role="status"></div>
+        </div>
+      );
+    }
+
+    const ranks = rankData.ranks || [];
     return (
-      <AdminLayout title="User Details">
-        <div className="d-flex justify-content-center align-items-center" style={{ height: '300px' }}>
-          <div className="spinner-border" style={{ color: primaryColor }} role="status">
-            <span className="visually-hidden">Loading...</span>
+      <div>
+        <div className="row g-3 text-center mb-4">
+          <div className="col-12 col-md-4">
+            <div className="bg-light shadow rounded-4 p-3 p-sm-4 h-100">
+              <i className="bi bi-check-circle-fill text-success fs-2 mb-2"></i>
+              <h4>{rankData.summary?.claimedTrips || 0}</h4>
+              <p className="text-muted">Claimed Trips</p>
+            </div>
           </div>
         </div>
-      </AdminLayout>
-    );
-  }
 
-  if (!user) {
-    return (
-      <AdminLayout title="User Details">
-        <div
-          className="alert py-2 px-3 mb-0"
-          style={{
-            borderRadius: '10px',
-            borderLeft: `4px solid ${secondaryColor}`,
-            backgroundColor: 'rgba(255, 82, 82, 0.1)',
-            color: secondaryColor,
-            fontWeight: 'bold'
-          }}
-        >
-          User not found.
+        <div className="table-responsive">
+          <table className="table table-hover">
+            <thead className="table-light">
+              <tr>
+                <th>Rank</th>
+                <th>Cash (₹)</th>
+                <th>Trip</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {ranks
+                .filter(r => r.status !== 'NOT_ELIGIBLE')
+                .map((rank, i) => (
+                  <tr key={i} className="table-success">
+                    <td>{rank.title}</td>
+                    <td>₹{rank.cashAmount.toLocaleString('en-IN')}</td>
+                    <td>
+                      {rank.trip !== 'NONE' ? (
+                        <>
+                          {rank.trip}
+                          {rank.tripClaimed ? (
+                            <span className="badge bg-success ms-2">Claimed</span>
+                          ) : rank.status !== 'EXPIRED' ? (
+                            <button
+                              className="btn btn-sm btn-outline-primary ms-2"
+                              onClick={() => claimTripMutation.mutate(rank.id)}
+                              disabled={claimTripMutation.isPending}
+                            >
+                              {claimTripMutation.isPending ? 'Claiming...' : 'Claim Trip'}
+                            </button>
+                          ) : null}
+                        </>
+                      ) : (
+                        '-'
+                      )}
+                    </td>
+                    <td>
+                      <span
+                        className={`badge rounded-pill ${
+                          rank.status === 'CLAIMED'
+                            ? 'bg-success'
+                            : rank.status === 'EXPIRED'
+                            ? 'bg-danger'
+                            : 'bg-warning'
+                        }`}
+                      >
+                        {rank.status.replace(/_/g, ' ')}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+            </tbody>
+          </table>
         </div>
-      </AdminLayout>
+        {!loadingRank && ranks?.length === 0 && (
+          <div className="text-center py-5">
+            <i className="bi bi-emoji-frown fs-1 text-muted"></i>
+            <p className="fs-5 text-muted mt-3">No rank data available</p>
+          </div>
+        )}
+      </div>
     );
-  }
+  };
 
   return (
-    <AdminLayout title={`User: ${user.name}`}>
+    <AdminLayout title={`User: ${user?.name || 'Loading...'}`}>
       {showApproveModal && (
         <div 
           className="modal"
@@ -1659,22 +1726,22 @@ export default function UserDetails() {
                     {currentRequest.type === 'purchase' ? (
                       <>
                         <p className="mb-1">
-                          <strong>Product:</strong> {currentRequest.productName || 'N/A'} (Code: ${currentRequest.productCode || 'N/A'})
+                          <strong>Product:</strong> {currentRequest.productName || 'N/A'} (Code: {currentRequest.productCode || 'N/A'})
                         </p>
                         <p className="mb-1">
                           <strong>Quantity:</strong> {currentRequest.quantity || '0'}
                         </p>
                         <p className="mb-1">
-                          <strong>Unit Price:</strong> ₹${currentRequest.unitPrice || '0'}
+                          <strong>Unit Price:</strong> ₹{currentRequest.unitPrice || '0'}
                         </p>
                         <p className="mb-0">
-                          <strong>Total Price:</strong> ₹${currentRequest.totalPrice || '0'}
+                          <strong>Total Price:</strong> ₹{currentRequest.totalPrice || '0'}
                         </p>
                       </>
                     ) : (
                       <>
                         <p className="mb-1">
-                          <strong>Amount:</strong> ₹${currentRequest.amount || '0'}
+                          <strong>Amount:</strong> ₹{currentRequest.amount || '0'}
                         </p>
                         <p className="mb-0">
                           <strong>Type:</strong> {currentRequest.type === 'topup' ? 'Top-up' : 'Withdrawal'}
@@ -1775,22 +1842,22 @@ export default function UserDetails() {
                     {currentRequest.type === 'purchase' ? (
                       <>
                         <p className="mb-1">
-                          <strong>Product:</strong> {currentRequest.productName || 'N/A'} (Code: ${currentRequest.productCode || 'N/A'})
+                          <strong>Product:</strong> {currentRequest.productName || 'N/A'} (Code: {currentRequest.productCode || 'N/A'})
                         </p>
                         <p className="mb-1">
                           <strong>Quantity:</strong> {currentRequest.quantity || '0'}
                         </p>
                         <p className="mb-1">
-                          <strong>Unit Price:</strong> ₹${currentRequest.unitPrice || '0'}
+                          <strong>Unit Price:</strong> ₹{currentRequest.unitPrice || '0'}
                         </p>
                         <p className="mb-0">
-                          <strong>Total Price:</strong> ₹${currentRequest.totalPrice || '0'}
+                          <strong>Total Price:</strong> ₹{currentRequest.totalPrice || '0'}
                         </p>
                       </>
                     ) : (
                       <>
                         <p className="mb-1">
-                          <strong>Amount:</strong> ₹${currentRequest.amount || '0'}
+                          <strong>Amount:</strong> ₹{currentRequest.amount || '0'}
                         </p>
                         <p className="mb-0">
                           <strong>Type:</strong> {currentRequest.type === 'topup' ? 'Top-up' : 'Withdrawal'}
@@ -1841,8 +1908,8 @@ export default function UserDetails() {
 
       <div className="mb-4">
         <button
-          className="btn btn-sm"
           onClick={() => router.back()}
+          className="btn btn-sm"
           style={{
             backgroundColor: 'white',
             color: primaryDarkColor,
@@ -1860,214 +1927,228 @@ export default function UserDetails() {
         </button>
       </div>
 
-      <div className="row">
-        <div className="col-md-4 mb-4">
-          <div
-            className="card shadow-sm"
-            style={{
-              border: 'none',
-              borderRadius: '15px',
-              overflow: 'hidden',
-              background: 'white',
-              boxShadow: '0 10px 25px rgba(58, 134, 255, 0.1)'
-            }}
-          >
+      {loading ? (
+        <div className="text-center py-5">
+          <div className="spinner-border" style={{ color: primaryColor }} role="status"></div>
+        </div>
+      ) : !user ? (
+        <div
+          className="alert py-2 px-3 mb-0"
+          style={{
+            borderRadius: '10px',
+            borderLeft: `4px solid ${secondaryColor}`,
+            backgroundColor: 'rgba(255, 82, 82, 0.1)',
+            color: secondaryColor,
+            fontWeight: 'bold'
+          }}
+        >
+          User not found.
+        </div>
+      ) : (
+        <div className="row">
+          <div className="col-md-4 mb-4">
             <div
-              className="card-header text-white text-center py-4"
+              className="card shadow-sm"
               style={{
-                background: cardGradient,
-                borderTopLeftRadius: '15px',
-                borderTopRightRadius: '15px'
+                border: 'none',
+                borderRadius: '15px',
+                overflow: 'hidden',
+                background: 'white',
+                boxShadow: '0 10px 25px rgba(58, 134, 255, 0.1)'
               }}
             >
               <div
-                className="bg-white rounded-circle mx-auto d-flex align-items-center justify-content-center mb-3"
-                style={{ width: '100px', height: '100px', boxShadow: '0 0 15px rgba(0,0,0,0.2)' }}
-              >
-                <i className="bi bi-person-circle fs-1" style={{ color: primaryDarkColor }}></i>
-              </div>
-              <h4 className="mt-3 mb-1 fw-bold">{user.name || 'N/A'}</h4>
-              <p className="mb-1" style={{ opacity: 0.9 }}>{user.email || 'N/A'}</p>
-              <span
-                className="badge fw-medium"
+                className="card-header text-white text-center py-4"
                 style={{
-                  padding: '6px 12px',
-                  borderRadius: '20px',
-                  backgroundColor: user.isActive ? successColor : secondaryColor,
-                  color: 'white',
-                  marginTop: '5px'
+                  background: cardGradient,
+                  borderTopLeftRadius: '15px',
+                  borderTopRightRadius: '15px'
                 }}
               >
-                {user.isActive ? 'Active' : 'Inactive'}
-              </span>
-            </div>
+                <div
+                  className="bg-white rounded-circle mx-auto d-flex align-items-center justify-content-center mb-3"
+                  style={{ width: '100px', height: '100px', boxShadow: '0 0 15px rgba(0,0,0,0.2)' }}
+                >
+                  <i className="bi bi-person-circle fs-1" style={{ color: primaryDarkColor }}></i>
+                </div>
+                <h4 className="mt-3 mb-1 fw-bold">{user.name || 'N/A'}</h4>
+                <p className="mb-1" style={{ opacity: 0.9 }}>{user.email || 'N/A'}</p>
+                <span
+                  className="badge fw-medium"
+                  style={{
+                    padding: '6px 12px',
+                    borderRadius: '20px',
+                    backgroundColor: user.isActive ? successColor : secondaryColor,
+                    color: 'white',
+                    marginTop: '5px'
+                  }}
+                >
+                  {user.isActive ? 'Active' : 'Inactive'}
+                </span>
+              </div>
 
-            <div className="card-body p-4">
-              <h6 className="text-uppercase mb-3 fw-bold" style={{ color: primaryDarkColor, opacity: 0.8 }}>
-                Account Information
-              </h6>
-              <ul className="list-unstyled mb-0">
-                <li className="mb-2 d-flex justify-content-between align-items-center">
-                  <span className="fw-medium" style={{ color: textColor }}>Phone:</span>
-                  <span style={{ color: textColor, opacity: 0.8 }}>{user.phone || 'N/A'}</span>
-                </li>
-                <li className="mb-2 d-flex justify-content-between align-items-center">
-                  <span className="fw-medium" style={{ color: textColor }}>Joined:</span>
-                  <span style={{ color: textColor, opacity: 0.8 }}>{user.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'N/A'}</span>
-                </li>
-                <li className="mb-2 d-flex justify-content-between align-items-center">
-                  <span className="fw-medium" style={{ color: textColor }}>Status:</span>
-                  <span style={{ color: textColor, opacity: 0.8 }}>{user.status || 'N/A'}</span>
-                </li>
-                <li className="mb-2 d-flex justify-content-between align-items-center">
-                  <span className="fw-medium" style={{ color: textColor }}>Rank:</span>
-                  <span className="badge" style={{ backgroundColor: primaryColor, color: 'white', borderRadius: '15px', padding: '4px 10px' }}>
-                    {user.rank || 'Member'}
-                  </span>
-                </li>
-              </ul>
+              <div className="card-body p-4">
+                <h6 className="text-uppercase mb-3 fw-bold" style={{ color: primaryDarkColor, opacity: 0.8 }}>
+                  Account Information
+                </h6>
+                <ul className="list-unstyled mb-0">
+                  <li className="mb-2 d-flex justify-content-between align-items-center">
+                    <span className="fw-medium" style={{ color: textColor }}>Phone:</span>
+                    <span style={{ color: textColor, opacity: 0.8 }}>{user.phone || 'N/A'}</span>
+                  </li>
+                  <li className="mb-2 d-flex justify-content-between align-items-center">
+                    <span className="fw-medium" style={{ color: textColor }}>Joined:</span>
+                    <span style={{ color: textColor, opacity: 0.8 }}>{user.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'N/A'}</span>
+                  </li>
+                  <li className="mb-2 d-flex justify-content-between align-items-center">
+                    <span className="fw-medium" style={{ color: textColor }}>Status:</span>
+                    <span style={{ color: textColor, opacity: 0.8 }}>{user.status || 'N/A'}</span>
+                  </li>
+                  <li className="mb-2 d-flex justify-content-between align-items-center">
+                    <span className="fw-medium" style={{ color: textColor }}>Rank:</span>
+                    <span className="badge" style={{ backgroundColor: primaryColor, color: 'white', borderRadius: '15px', padding: '4px 10px' }}>
+                      {user.rank || 'Member'}
+                    </span>
+                  </li>
+                </ul>
+              </div>
             </div>
           </div>
-        </div>
 
-        <div className="col-md-8">
-          <div
-            className="card shadow-sm"
-            style={{
-              border: 'none',
-              borderRadius: '15px',
-              boxShadow: '0 10px 25px rgba(58, 134, 255, 0.1)'
-            }}
-          >
+          <div className="col-md-8">
             <div
-              className="card-header"
+              className="card shadow-sm"
               style={{
-                backgroundColor: 'white',
-                borderBottom: `1px solid ${lightBackground}`,
-                borderTopLeftRadius: '15px',
-                borderTopRightRadius: '15px'
+                border: 'none',
+                borderRadius: '15px',
+                boxShadow: '0 10px 25px rgba(58, 134, 255, 0.1)'
               }}
             >
-              <ul className="nav nav-tabs card-header-tabs" style={{ borderBottom: 'none' }}>
-                {['referral', 'transactions', 'products', 'settings'].map(tab => (
-                  <li key={tab} className="nav-item">
-                    <a
-                      className={`nav-link ${activeTab === tab ? 'active' : ''}`}
-                      href="#"
-                      onClick={(e) => { e.preventDefault(); setActiveTab(tab); }}
-                      style={{
-                        color: activeTab === tab ? primaryDarkColor : textColor,
-                        borderColor: activeTab === tab ? `transparent transparent ${primaryColor} transparent` : 'transparent',
-                        borderWidth: '2px',
-                        fontWeight: activeTab === tab ? 'bold' : 'normal',
-                        backgroundColor: 'transparent',
-                        opacity: activeTab === tab ? 1 : 0.7
-                      }}
-                    >
-                      {tab.charAt(0).toUpperCase() + tab.slice(1)}
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <div className="card-body p-4">
-              {activeTab === 'referral' ? (
-                <>
-                  <div>
-                    <h5 className="mb-4 fw-bold" style={{ color: primaryDarkColor }}>Referral Information</h5>
-                    <div className="row g-3">
-                      <div className="col-md-6">
-                        <div
-                          className="border rounded p-3"
-                          style={{
-                            borderColor: lightBackground,
-                            backgroundColor: 'white',
-                            boxShadow: '0 2px 10px rgba(0, 0, 0, 0.03)',
-                            borderRadius: '10px'
-                          }}
-                        >
-                          <h6 className="text-uppercase mb-2 small" style={{ color: textColor, opacity: 0.7 }}>
-                            Referred By
-                          </h6>
-                          <p className="mb-0 fw-medium" style={{ color: primaryColor }}>
-                            {user.parentId?.name || 'Root User'}
-                          </p>
+              <div
+                className="card-header"
+                style={{
+                  backgroundColor: 'white',
+                  borderBottom: `1px solid ${lightBackground}`,
+                  borderTopLeftRadius: '15px',
+                  borderTopRightRadius: '15px'
+                }}
+              >
+                <ul className="nav nav-tabs card-header-tabs" style={{ borderBottom: 'none' }}>
+                  {['referral', 'transactions', 'products', 'rankAndReward'].map(tab => (
+                    <li key={tab} className="nav-item">
+                      <a
+                        className={`nav-link ${activeTab === tab ? 'active' : ''}`}
+                        href="#"
+                        onClick={(e) => { e.preventDefault(); setActiveTab(tab); }}
+                        style={{
+                          color: activeTab === tab ? primaryDarkColor : textColor,
+                          borderColor: activeTab === tab ? `transparent transparent ${primaryColor} transparent` : 'transparent',
+                          borderWidth: '2px',
+                          fontWeight: activeTab === tab ? 'bold' : 'normal',
+                          backgroundColor: 'transparent',
+                          opacity: activeTab === tab ? 1 : 0.7
+                        }}
+                      >
+                        {tab === 'rankAndReward' ? 'Rank and Reward' : tab.charAt(0).toUpperCase() + tab.slice(1)}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <div className="card-body p-4">
+                {activeTab === 'referral' ? (
+                  <>
+                    <div>
+                      <h5 className="mb-4 fw-bold" style={{ color: primaryDarkColor }}>Referral Information</h5>
+                      <div className="row g-3">
+                        <div className="col-md-6">
+                          <div
+                            className="border rounded p-3"
+                            style={{
+                              borderColor: lightBackground,
+                              backgroundColor: 'white',
+                              boxShadow: '0 2px 10px rgba(0, 0, 0, 0.03)',
+                              borderRadius: '10px'
+                            }}
+                          >
+                            <h6 className="text-uppercase mb-2 small" style={{ color: textColor, opacity: 0.7 }}>
+                              Referred By
+                            </h6>
+                            <p className="mb-0 fw-medium" style={{ color: primaryColor }}>
+                              {user.parentId?.name || 'Root User'}
+                            </p>
+                          </div>
                         </div>
-                      </div>
-                      <div className="col-md-6">
-                        <div
-                          className="border rounded p-3"
-                          style={{
-                            borderColor: lightBackground,
-                            backgroundColor: 'white',
-                            boxShadow: '0 2px 10px rgba(0, 0, 0, 0.03)',
-                            borderRadius: '10px'
-                          }}
-                        >
-                          <h6 className="text-uppercase mb-2 small" style={{ color: textColor, opacity: 0.7 }}>
-                            Referral Codes
-                          </h6>
-                          <p className="mb-1" style={{ color: textColor }}>
-                            <span className="fw-medium">Left:</span> {user.referralCodeLeft || 'N/A'}
-                          </p>
-                          <p className="mb-0" style={{ color: textColor }}>
-                            <span className="fw-medium">Right:</span> {user.referralCodeRight || 'N/A'}
-                          </p>
+                        <div className="col-md-6">
+                          <div
+                            className="border rounded p-3"
+                            style={{
+                              borderColor: lightBackground,
+                              backgroundColor: 'white',
+                              boxShadow: '0 2px 10px rgba(0, 0, 0, 0.03)',
+                              borderRadius: '10px'
+                            }}
+                          >
+                            <h6 className="text-uppercase mb-2 small" style={{ color: textColor, opacity: 0.7 }}>
+                              Referral Codes
+                            </h6>
+                            <p className="mb-1" style={{ color: textColor }}>
+                              <span className="fw-medium">Left:</span> {user.referralCodeLeft || 'N/A'}
+                            </p>
+                            <p className="mb-0" style={{ color: textColor }}>
+                              <span className="fw-medium">Right:</span> {user.referralCodeRight || 'N/A'}
+                            </p>
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
 
-                  <div className="mt-4">
-                    <h6 className="text-uppercase mb-3 fw-bold" style={{ color: primaryDarkColor, opacity: 0.8 }}>
-                      Bank Information
-                    </h6>
-                    <ul className="list-unstyled mb-0">
-                      <li className="mb-2 d-flex justify-content-between align-items-center">
-                        <span className="fw-medium" style={{ color: textColor }}>Account Number:</span>
-                        <span style={{ color: textColor, opacity: 0.8 }}>
-                          {user.bankDetails?.accountNumber || 'N/A'}
-                        </span>
-                      </li>
-                      <li className="mb-2 d-flex justify-content-between align-items-center">
-                        <span className="fw-medium" style={{ color: textColor }}>Bank Name:</span>
-                        <span style={{ color: textColor, opacity: 0.8 }}>
-                          {user.bankDetails?.bankName || 'N/A'}
-                        </span>
-                      </li>
-                      <li className="mb-2 d-flex justify-content-between align-items-center">
-                        <span className="fw-medium" style={{ color: textColor }}>Account Number:</span>
-                        <span style={{ color: textColor, opacity: '0.8' }}>
-                          {user.bankDetails?.accountNumber 
-                            ? 
-                            `****${user.accountNumber.toString().slice(-4)}` 
-                            : 'N/A'}
-                        </span>
-                      </li>
-                      <li className="d-flex justify-content-between align-items-center">
-                        <span className="fw-medium" style={{ color: textColor }}>IFSC Code:</span>
-                        <span style={{ color: textColor, opacity: 0.8 }}>
-                          {user.bankDetails?.ifscCode || 'N/A'}
-                        </span>
-                      </li>
-                    </ul>
-                  </div>
-                </>
-              ) : activeTab === 'transactions' ? (
-                renderTransactions()
-              ) : activeTab === 'products' ? (
-                renderProductPurchases()
-              ) : (
-                <div className="text-center py-5">
-                  <i className="bi bi-gear fs-1 mb-3" style={{ color: primaryColor }}></i>
-                  <h5 style={{ color: primaryDarkColor }}>User Settings</h5>
-                  <p className="text-muted">User settings will be available soon</p>
-                </div>
-              )}
+                    <div className="mt-4">
+                      <h6 className="text-uppercase mb-3 fw-bold" style={{ color: primaryDarkColor, opacity: 0.8 }}>
+                        Bank Information
+                      </h6>
+                      <ul className="list-unstyled mb-0">
+                        <li className="mb-2 d-flex justify-content-between align-items-center">
+                          <span className="fw-medium" style={{ color: textColor }}>Account Number:</span>
+                          <span style={{ color: textColor, opacity: 0.8 }}>
+                            {user.bankDetails?.accountNumber || 'N/A'}
+                          </span>
+                        </li>
+                        <li className="mb-2 d-flex justify-content-between align-items-center">
+                          <span className="fw-medium" style={{ color: textColor }}>Bank Name:</span>
+                          <span style={{ color: textColor, opacity: 0.8 }}>
+                            {user.bankDetails?.bankName || 'N/A'}
+                          </span>
+                        </li>
+                        <li className="mb-2 d-flex justify-content-between align-items-center">
+                          <span className="fw-medium" style={{ color: textColor }}>Account Number:</span>
+                          <span style={{ color: textColor, opacity: '0.8' }}>
+                            {user.bankDetails?.accountNumber 
+                              ? `****${user.bankDetails.accountNumber.toString().slice(-4)}` 
+                              : 'N/A'}
+                          </span>
+                        </li>
+                        <li className="d-flex justify-content-between align-items-center">
+                          <span className="fw-medium" style={{ color: textColor }}>IFSC Code:</span>
+                          <span style={{ color: textColor, opacity: 0.8 }}>
+                            {user.bankDetails?.ifscCode || 'N/A'}
+                            </span>
+                        </li>
+                      </ul>
+                    </div>
+                  </>
+                ) : activeTab === 'transactions' ? (
+                  renderTransactions()
+                ) : activeTab === 'products' ? (
+                  renderProductPurchases()
+                ) : activeTab === 'rankAndReward' ? (
+                  renderRankAndReward()
+                ) : null}
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      )}
     </AdminLayout>
   );
 }

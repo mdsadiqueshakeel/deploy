@@ -20,7 +20,6 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar, setActiveSection, activeSection
     { label: 'Wallet', path: '/dashboard/wallet', icon: 'bi-wallet2' },
     { label: 'Status', path: '/dashboard/status', icon: 'bi-graph-up' },
     { label: 'Rank & Rewards', path: '/dashboard/rank', icon: 'bi-trophy' },
-    { label: 'Support', path: '/dashboard/support', icon: 'bi-headset' },
   ], []);
 
   const handleNavItemClick = (item) => {

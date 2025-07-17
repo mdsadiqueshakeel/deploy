@@ -9,7 +9,6 @@ import DashboardPage from '../../components/DashboardPage';
 import BusinessPage from './business';
 import RankRewards from './rank';
 import StatusPage from './status';
-import Support from './support';
 import WalletPage from './wallet';
 
 
@@ -45,7 +44,7 @@ export default function Dashboard({ initialUser }) {
     Wallet: <WalletPage />,
     Status: <StatusPage />,
     'Rank & Rewards': <RankRewards />,
-    Support: <Support />,
+
     Profile: <ProfileCard user={user} setUser={setUser} />,
   };
 
