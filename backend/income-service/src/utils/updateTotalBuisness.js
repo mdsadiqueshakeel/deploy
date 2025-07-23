@@ -37,8 +37,11 @@ const sumTopupInSubtree = async (userId, cache = {}) => {
   return total;
 };
 
-const updateTotalBusiness = async (userId) => {
+const updateTotalBusiness = async (userId, visited = new Set()) => {
   try {
+    if (!userId || visited.has(userId)) return;
+    visited.add(userId);
+
     const user = await getUserById(userId);
     if (!user) {
       console.error(`❌ User not found: ${userId}`);
@@ -77,7 +80,6 @@ const updateTotalBusiness = async (userId) => {
       businessDoc.totalRightCarry = totalRightCarry;
     }
 
-    // 💡 Rebuild levelStats fresh from levelTree
     const rawLevelStats = (user.levelTree || []).map((lvl) => {
       const level = Number(lvl.level);
       const userIds = lvl.users || [];
@@ -88,7 +90,6 @@ const updateTotalBusiness = async (userId) => {
       };
     });
 
-    // 🧠 Calculate business volume per level using wallet.topup
     const resolvedLevelStats = await Promise.all(
       rawLevelStats.map(async (lvl) => {
         const volumeSum = await Promise.all(
@@ -113,35 +114,22 @@ const updateTotalBusiness = async (userId) => {
 
     businessDoc.levelStats = resolvedLevelStats.sort((a, b) => a.level - b.level);
 
-    // 🧮 Income Aggregates
     const levelIncome = await LevelLog.aggregate([
       { $match: { userId: new Types.ObjectId(userId) } },
       { $group: { _id: null, total: { $sum: "$incomeEarned" } } },
     ]).then((res) => res[0]?.total || 0);
 
-const matchingIncome = await MatchingLog.aggregate([
-  {
-    $match: {
-      userId: new Types.ObjectId(userId),
-    },
-  },
-  {
-    $group: {
-      _id: null,
-      total: { $sum: "$incomeEarned" },
-    },
-  },
-])
-  .then((res) => {
-    const income = res[0]?.total || 0;
-    console.log(`🔍 Matching income for ${userId}: ₹${income}`);
-    return income;
-  })
-  .catch((err) => {
-    console.error("❌ MatchingLog aggregation failed:", err);
-    return 0;
-  });
-
+    const matchingIncome = await MatchingLog.aggregate([
+      { $match: { userId: new Types.ObjectId(userId) } },
+      { $group: { _id: null, total: { $sum: "$incomeEarned" } } },
+    ]).then((res) => {
+      const income = res[0]?.total || 0;
+      console.log(`🔍 Matching income for ${userId}: ₹${income}`);
+      return income;
+    }).catch((err) => {
+      console.error("❌ MatchingLog aggregation failed:", err);
+      return 0;
+    });
 
     businessDoc.totalLevelIncome = levelIncome;
     businessDoc.totalMatchingIncome = matchingIncome;
@@ -151,9 +139,16 @@ const matchingIncome = await MatchingLog.aggregate([
 
     await businessDoc.save();
     console.log(`✅ Total business updated for ${userId}`);
+
+    // 🧬 Recursively update parent after current user
+    if (user.parentId) {
+      await updateTotalBusiness(user.parentId.toString(), visited);
+    }
+
   } catch (err) {
     console.error("❌ updateTotalBusiness Error:", err.message);
   }
 };
+
 
 module.exports = { updateTotalBusiness };
