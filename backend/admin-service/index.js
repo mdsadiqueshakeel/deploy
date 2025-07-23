@@ -1,6 +1,5 @@
 const dotenv = require("dotenv");
-// Load the default .env file directly
-dotenv.config();
+
 
 const express = require("express");
 const mongoose = require("mongoose");

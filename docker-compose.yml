@@ -1,0 +1,74 @@
+version: "3.8"
+
+services:
+  mongo:
+    image: mongo
+    container_name: mongo
+    ports:
+      - "27017:27017"
+
+  redis:
+    image: redis
+    container_name: redis
+    ports:
+      - "6379:6379"
+
+  user-service:
+    build: ./backend/user-service
+    container_name: user-service
+    depends_on:
+      - mongo
+      - redis
+    ports:
+      - "5001:5001"
+
+  admin-service:
+    build: ./backend/admin-service
+    container_name: admin-service
+    depends_on:
+      - mongo
+      - redis
+    ports:
+      - "5002:5002"
+
+  wallet-service:
+    build: ./backend/wallet-service
+    container_name: wallet-service
+    depends_on:
+      - mongo
+      - redis
+    ports:
+      - "5003:5003"
+
+  income-service:
+    build: ./backend/income-service
+    container_name: income-service
+    depends_on:
+      - mongo
+      - redis
+    ports:
+      - "5004:5004"
+
+  api-gateway:
+    build: ./api-gateway
+    container_name: api-gateway
+    depends_on:
+      - user-service
+      - wallet-service
+      - income-service
+      - admin-service
+    environment:
+      - WALLET_SERVICE_URL=http://wallet-service:5003
+      - ADMIN_SERVICE_URL=http://admin-service:5002
+      - USER_SERVICE_URL=http://user-service:5001
+      - INCOME_SERVICE_URL=http://income-service:5004
+    ports:
+      - "5000:5000"
+
+  frontend:
+    build: ./frontend
+    container_name: frontend
+    depends_on:
+      - api-gateway
+    ports:
+      - "3000:3000"
