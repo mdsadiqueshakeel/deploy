@@ -29,6 +29,7 @@ app.use(cookieParser());
 
 app.use("/api/admin", adminRoutes);
 
+
 // Global Error Handler
 app.use((err, req, res, next) => {
   console.error("❌ ERROR:", err.stack);

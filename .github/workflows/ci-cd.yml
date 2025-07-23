@@ -43,19 +43,19 @@ jobs:
         push: true
         tags: mlmproject2025/admin-service:latest
 
-    - name: Build and push business-volume-service
+    - name: Build and push wallet-service
       uses: docker/build-push-action@v4
       with:
-        context: ./backend/business-volume-service
+        context: ./backend/wallet-service
         push: true
-        tags: mlmproject2025/business-volume-service:latest
+        tags: mlmproject2025/wallet-service:latest
 
-    - name: Build and push matching-income-service
+    - name: Build and push income-service
       uses: docker/build-push-action@v4
       with:
-        context: ./backend/matching-income-service
+        context: ./backend/income-service
         push: true
-        tags: mlmproject2025/matching-income-service:latest
+        tags: mlmproject2025/income-service:latest
 
     - name: Build and push frontend
       uses: docker/build-push-action@v4
