@@ -69,6 +69,10 @@ exports.handleTopupTrigger = async (req, res) => {
       calculateLevelIncome(userId, coins)
     ]);
 
+
+    const visited = new Set();
+    await updateTotalBusiness(userId, visited);
+
     // 5. Clear cache for this user (wallet + business report)
 await Promise.all([
 
