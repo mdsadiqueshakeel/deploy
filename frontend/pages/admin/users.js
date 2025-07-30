@@ -155,7 +155,7 @@ export default function UserManagement() {
                       <th>Email</th>
                       <th>Join Date</th>
                       <th>Status</th>
-                      <th>Balance</th>
+                      {/* <th>Balance</th> */}
                       <th>Rank</th>
                       <th>Actions</th>
                     </tr>
@@ -172,7 +172,7 @@ export default function UserManagement() {
                             <span className="badge" style={{ background: '#FF5252', padding: '5px 10px', borderRadius: '20px', color: 'white' }}>Inactive</span>
                           }
                         </td>
-                        <td style={{ color: '#0A2463' }}>₹{user.balance?.toFixed(2)}</td>
+                        {/* <td style={{ color: '#0A2463' }}>₹{user.balance?.toFixed(2)}</td> */}
                         <td style={{ color: '#0A2463' }}>{user.rank || 'Member'}</td>
                         <td>
                           <button
