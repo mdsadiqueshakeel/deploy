@@ -16,6 +16,6 @@ router.put('/profile', jwtAuth, wrapAsync(auth.updateProfile));
 router.put('/change-password', jwtAuth, wrapAsync(auth.changePassword));
 
 
-router.get("/me",cacheMiddleware, jwtAuth, wrapAsync(auth.getProfile));
+router.get("/me", jwtAuth, wrapAsync(auth.getProfile));
 
 module.exports = router;

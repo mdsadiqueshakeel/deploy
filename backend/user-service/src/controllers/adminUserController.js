@@ -1,5 +1,5 @@
 const User = require("../models/User");
-const { clearUserCache } = require("../utils/cacheUtils");
+// const { clearUserCache } = require("../utils/cacheUtils");
 
 // 🔁 GET /api/admin/users - List all users (name, email, phone only)
 exports.getAllUsers = async (req, res) => {
@@ -79,7 +79,7 @@ if (user.leftUser) {
 
   // ✅ Delete user
   await User.findByIdAndDelete(user._id);
-  await clearUserCache(user._id); // clear profile cache after delete
+  // await clearUserCache(user._id); // clear profile cache after delete
 
   res.json({ message: "User deleted successfully and tree updated" });
 };

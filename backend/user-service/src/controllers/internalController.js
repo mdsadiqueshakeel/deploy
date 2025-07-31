@@ -1,7 +1,7 @@
 // user-service/src/controllers/internalController.js
 const User = require("../models/User");
 const STATUS_TIERS = ["Consumer", "One Star", "Two Star", "Three Star", "Four Star", "Five Star"];
-const { clearUserCache } = require("../utils/cacheUtils");
+// const { clearUserCache } = require("../utils/cacheUtils");
 
 exports.updateStatus = async (req, res) => {
   try {
@@ -36,7 +36,7 @@ exports.updateStatus = async (req, res) => {
     }
 
     console.log(`✅ Status updated for ${updatedUser.name}: ${status}`);
-    await clearUserCache(userId); // 🧹
+    // await clearUserCache(userId); 
 
     return res.json({ 
       success: true,

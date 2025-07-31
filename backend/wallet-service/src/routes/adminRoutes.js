@@ -16,7 +16,7 @@ router.put("/withdraw-request/:id/approve", isAuthenticated, isAdmin, approveWit
 router.put("/topup-request/:id/decline", isAuthenticated, isAdmin, declineTopupRequest);
 router.put("/withdraw-request/:id/decline", isAuthenticated, isAdmin, declineWithdrawRequest);
 router.post("/credit-income", isAuthenticated, isAdmin, creditIncome);
-router.get("/pending-requests", cacheMiddleware, getPendingRequestsSummary); // OK to cache
+router.get("/pending-requests", getPendingRequestsSummary); // OK to cache
 
 // Test route to verify income service connectivity
 router.get("/test-income-service", async (req, res) => {
@@ -53,7 +53,7 @@ router.get("/test-income-service", async (req, res) => {
     });
   }
 });
-router.get("/user/:userId/pending-topup-requests", isAuthenticated, isAdmin, cacheMiddleware, getPendingTopupRequestsByUser);
-router.get("/user/:userId/pending-withdraw-requests", isAuthenticated, isAdmin, cacheMiddleware, getPendingWithdrawRequestsByUser);
+router.get("/user/:userId/pending-topup-requests", isAuthenticated, isAdmin, getPendingTopupRequestsByUser);
+router.get("/user/:userId/pending-withdraw-requests", isAuthenticated, isAdmin, getPendingWithdrawRequestsByUser);
 
 module.exports = router;

@@ -28,7 +28,7 @@ const recursivelyUpgradeParents = async (childUserId) => {
     // Attempt upgrade
     const newStatus = await checkAndUpgradeStatus(parentId);
 
-    await clearBusinessCache(parentId); // if parent earns income
+    // await clearBusinessCache(parentId); // if parent earns income
     
     // Continue with parent's parent if exists, regardless of status change
     if (parentBefore.referredBy) {
@@ -74,11 +74,11 @@ exports.handleTopupTrigger = async (req, res) => {
     await updateTotalBusiness(userId, visited);
 
     // 5. Clear cache for this user (wallet + business report)
-await Promise.all([
+// await Promise.all([
 
-  clearBusinessCache(userId),
-  clearWalletCacheRemote(userId) // This will trigger the wallet service to clear its cache
-]);
+//   clearBusinessCache(userId),
+//   clearWalletCacheRemote(userId) // This will trigger the wallet service to clear its cache
+// ]);
 
 
     res.status(200).json({

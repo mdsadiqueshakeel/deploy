@@ -6,7 +6,7 @@ const { clearWalletCache } = require("../utils/clearWalletCache");
 const { cacheMiddleware } = require("../middlewares/cacheMiddleware");
 
 // Unprotected internal call from income-service
-router.post("/internal/credit-income",cacheMiddleware, async (req, res) => {
+router.post("/internal/credit-income", async (req, res) => {
   const { userId, amount, type } = req.body;
 
   if (!userId || !amount)
@@ -40,12 +40,12 @@ router.post("/internal/credit-income",cacheMiddleware, async (req, res) => {
     creditedBy: "system",
     comment: "Credited by income-service",
   });
-  await clearWalletCache(userId);
+  // await clearWalletCache(userId);
 
   res.status(200).json({ message: "Credited successfully" });
 });
 // send the all wallet data of individual user to income-service  
-router.get("/internal/wallet/:userId", cacheMiddleware, async (req, res) => {
+router.get("/internal/wallet/:userId", async (req, res) => {
   const { userId } = req.params;
 
   if (!userId) return res.status(400).json({ message: "userId required" });
@@ -76,7 +76,7 @@ router.post("/internal/clear-wallet-cache", async (req, res) => {
   const { userId } = req.body;
   if (!userId) return res.status(400).json({ message: "userId required" });
 
-  await clearWalletCache(userId);
+  // await clearWalletCache(userId);
   res.status(200).json({ message: "Wallet cache cleared" });
 });
 

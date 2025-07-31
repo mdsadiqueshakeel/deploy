@@ -28,7 +28,7 @@ exports.approveTopupRequest = async (req, res) => {
   wallet.topupWallet += request.amount;
   wallet.totalTopup += request.amount; // Update totalTopup
   await wallet.save();
-  await clearWalletCache(request.userId);
+  // await clearWalletCache(request.userId);
 
   // ✅ trigger income-service!
   try {
@@ -149,7 +149,7 @@ exports.approveWithdrawRequest = async (req, res) => {
   
   request.status = "approved";
   await request.save();
-  await clearWalletCache(request.userId);
+  // await clearWalletCache(request.userId);
 
   res.json({ message: "Withdraw request approved", wallet });
 };
@@ -183,7 +183,7 @@ exports.creditIncome = async (req, res) => {
     creditedBy: "system", // or adminId if manual
     comment: "System credited income",
   });
-  await clearWalletCache(userId);
+  // await clearWalletCache(userId);
 
   res.status(200).json({ message: "Income credited successfully" });
 };
@@ -278,7 +278,7 @@ exports.declineTopupRequest = async (req, res) => {
 
     request.status = "rejected";
     await request.save();
-    await clearWalletCache(request.userId); // Clear cache for this user
+    // await clearWalletCache(request.userId); // Clear cache for this user
 
     res.json({ message: "Top-up request rejected", request });
 
@@ -301,7 +301,7 @@ exports.declineWithdrawRequest = async (req, res) => {
 
     request.status = "rejected";
     await request.save();
-    await clearWalletCache(request.userId); // Clear cache for this user
+    // await clearWalletCache(request.userId); // Clear cache for this user
 
     res.json({ message: "Withdraw request rejected", request });
 

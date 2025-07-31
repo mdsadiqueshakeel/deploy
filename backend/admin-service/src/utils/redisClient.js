@@ -1,15 +1,15 @@
-// src/utils/redisClient.js
-const Redis = require("ioredis");
+// // src/utils/redisClient.js
+// const Redis = require("ioredis");
 
-const redis = new Redis(process.env.REDIS_URL);
+// const redis = new Redis(process.env.REDIS_URL);
 
-redis.on("connect", () => {
-  console.log("Reddis Connected");
+// redis.on("connect", () => {
+//   console.log("Reddis Connected");
 
-});
+// });
 
-redis.on("error", (err) => {
-  console.error("❌ Redis error (admin-service):", err);
-});
+// redis.on("error", (err) => {
+//   console.error("❌ Redis error (admin-service):", err);
+// });
 
-module.exports = redis;
+// module.exports = redis;

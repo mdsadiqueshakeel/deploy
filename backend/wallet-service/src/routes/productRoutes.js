@@ -17,11 +17,11 @@ router.use(extractUser);
 
 // ✅ USER ROUTES
 router.post("/request" ,isAuthenticated, requestProduct);
-router.get("/my-purchases", isAuthenticated, cacheMiddleware, getMyPurchases);
+router.get("/my-purchases", isAuthenticated, getMyPurchases);
 
 // ✅ ADMIN ROUTES
-router.get("/admin/user/:userId/pending-purchases", cacheMiddleware, isAuthenticated, isAdmin, getPendingPurchasesByUser);
-router.get("/admin/user/:userId/approved-purchases", cacheMiddleware, isAuthenticated, isAdmin, getApprovedPurchasesByUser);
+router.get("/admin/user/:userId/pending-purchases", isAuthenticated, isAdmin, getPendingPurchasesByUser);
+router.get("/admin/user/:userId/approved-purchases", isAuthenticated, isAdmin, getApprovedPurchasesByUser);
 router.put("/admin/:purchaseId/approve", isAuthenticated, isAdmin, approvePurchase);
 router.put("/admin/:purchaseId/reject", isAuthenticated, isAdmin, rejectPurchase);
 

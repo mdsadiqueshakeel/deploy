@@ -36,7 +36,7 @@ exports.requestProduct = async (req, res) => {
   });
 
   // Clear cache after creating a new purchase request
-  await clearWalletCache(userId);
+  // await clearWalletCache(userId);
 
   res.status(201).json({ message: "Product request submitted", purchase });
 };
@@ -115,7 +115,7 @@ exports.approvePurchase = async (req, res, next) => {
     purchase.status = "approved";
     purchase.approvedAt = new Date();
     await purchase.save();
-    await clearWalletCache(purchase.userId);
+    // await clearWalletCache(purchase.userId);
 
     res.json({ message: "Purchase approved", purchase });
   } catch (err) {
@@ -137,7 +137,7 @@ exports.rejectPurchase = async (req, res, next) => {
     purchase.status = "rejected";
     purchase.rejectedAt = new Date();
     await purchase.save();
-    await clearWalletCache(purchase.userId);
+    // await clearWalletCache(purchase.userId);
 
     res.json({ message: "Purchase request rejected", purchase });
   } catch (err) {

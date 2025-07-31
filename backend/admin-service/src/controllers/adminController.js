@@ -41,7 +41,7 @@ exports.login = async (req, res) => {
     );
 
     // ✅ Clear cache for admin
-    await clearAdminCache(); // only clears general cache like `/me`, `/dashboard`
+    // await clearAdminCache(); // only clears general cache like `/me`, `/dashboard`
 
     res.json({ token });
   } catch (err) {
@@ -188,7 +188,7 @@ exports.deleteUser = async (req, res) => {
     });
 
     // ✅ Bust Redis cache for user list & single user
-    await clearAdminCache(id);
+    // await clearAdminCache(id);
 
     res.status(response.status).json(response.data);
   } catch (err) {

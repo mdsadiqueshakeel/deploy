@@ -7,7 +7,7 @@ dotenv = require("dotenv").config();
 const { generateReferralCode } = require("../utils/referralUtils");
 const { findBinaryPlacement, updateLevelTree } = require("../utils/placment");
 const { buildBinaryTree } = require("../utils/buildBinaryTree");
-const { clearUserCache } = require("../utils/cacheUtils");
+// const { clearUserCache } = require("../utils/cacheUtils");
 const axios = require("axios");
 
 const INCOME_SERVICE_URL = process.env.INCOME_SERVICE_URL
@@ -134,7 +134,7 @@ exports.register = async (req, res) => {
     const levelDepth = await updateLevelTree(sponsor._id, newUser._id);
     newUser.levelDepth = levelDepth;
     await newUser.save();
-    clearUserCache(newUser._id);
+    // clearUserCache(newUser._id);
 
     res
       .status(201)
@@ -180,7 +180,7 @@ exports.login = async (req, res) => {
     expiresIn: "1d",
   });
 
-  await clearUserCache(user._id);
+  // await clearUserCache(user._id);
 
   // Just return the token; API Gateway will set the cookie
   res.json({ token, expiresIn: "1d" });
@@ -438,7 +438,7 @@ exports.updateProfile = async (req, res) => {
     Object.assign(user, updates);
 
     await user.save();
-    await clearUserCache(req.user.userId);
+    // await clearUserCache(req.user.userId);
     res.json({ message: "Profile updated", user: user.toObject() });
   } catch (error) {
     res.status(500).json({ message: "Server error", error: error.message });
@@ -491,7 +491,7 @@ exports.changePassword = async (req, res) => {
 
     user.password = newPassword; // will be hashed via mongoose pre-save
     await user.save();
-    await clearUserCache(req.user.userId);
+    // await clearUserCache(req.user.userId);
 
 
     res.json({ message: "Password changed successfully" });

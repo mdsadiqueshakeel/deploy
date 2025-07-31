@@ -11,7 +11,7 @@ const {cacheMiddleware} = require("../middlewares/cacheMiddleware");
 
 router.use(extractUser);
 
-router.get("/:id/wallet" , cacheMiddleware, isAuthenticated,async (req, res) => {
+router.get("/:id/wallet" , isAuthenticated,async (req, res) => {
   try {
     let wallet = await Wallet.findOne({ userId: req.params.id });
     
@@ -37,8 +37,8 @@ router.get("/:id/wallet" , cacheMiddleware, isAuthenticated,async (req, res) => 
 
 router.post("/withdraw-request", isAuthenticated, createWithdrawRequest);
 router.post("/topup-request", isAuthenticated, createTopupRequest);
-router.get("/topup/:userId", cacheMiddleware,isAuthenticated, getTopupRequests);
-router.get("/withdraw/:userId",cacheMiddleware, isAuthenticated, getWithdrawRequests);
+router.get("/topup/:userId",isAuthenticated, getTopupRequests);
+router.get("/withdraw/:userId", isAuthenticated, getWithdrawRequests);
 // Endpoint to ensure a wallet exists for a user
 router.post("/ensure-wallet", isAuthenticated, async (req, res) => {
   try {
