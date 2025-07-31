@@ -1076,7 +1076,7 @@ const DashboardPage = () => {
 
         // Fetch business data for rank calculation
         try {
-          const businessRes = await api.get(`/api/business/user/${userId}`);
+          const businessRes = await api.get(`/api/income/business/${userId}`);
           setBusinessData(businessRes.data || {
             leftBusiness: 0,
             rightBusiness: 0,
